@@ -18,13 +18,15 @@ type Menu = {
 export default async function Home() {
   // Supabaseから献立を取得（新しい順）
   const { data: menus, error } = await supabase
-    .from('menus')
-    .select('*')
-    .order('served_date', { ascending: false })
+  .from('menus')
+  .select('*')
+  .order('served_date', { ascending: false })
+  .returns<Menu[]>()
 
   if (error) {
     return <p style={{ padding: '1rem' }}>データの取得に失敗しました</p>
   }
+  
 
   return (
     <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem' }}>
