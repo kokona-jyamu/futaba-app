@@ -8,6 +8,8 @@ export default function AdminPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     served_date: '',
@@ -30,7 +32,30 @@ export default function AdminPage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  // ↓ handleSubmitの外に出した
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoFile) return null
+    const ext = photoFile.name.split('.').pop()
+    const fileName = `${Date.now()}.${ext}`
+    const { error } = await supabase.storage
+      .from('menu-photos')
+      .upload(fileName, photoFile)
+    if (error) {
+      setMessage('写真のアップロードに失敗しました：' + error.message)
+      return null
+    }
+    const { data } = supabase.storage
+      .from('menu-photos')
+      .getPublicUrl(fileName)
+    return data.publicUrl
+  }
+
   const toggleAllergen = (key: string) => {
     setForm({
       ...form,
@@ -47,6 +72,8 @@ export default function AdminPage() {
     setLoading(true)
     setMessage('')
 
+    const photoUrl = await uploadPhoto()
+
     const { error } = await supabase.from('menus').insert({
       school_id: 'aaaaaaaa-0000-0000-0000-000000000001',
       served_date: form.served_date,
@@ -60,6 +87,7 @@ export default function AdminPage() {
       salt:     form.salt     ? parseFloat(form.salt)     : null,
       calcium:  form.calcium  ? parseFloat(form.calcium)  : null,
       allergens: form.allergens,
+      photo_url: photoUrl,
     })
 
     setLoading(false)
@@ -68,6 +96,8 @@ export default function AdminPage() {
       setMessage('エラー：' + error.message)
     } else {
       setMessage('投稿しました！')
+      setPhotoFile(null)
+      setPhotoPreview(null)
       setForm({
         served_date: '', title: '', nutritionist_comment: '',
         why_eat_note: '', kcal: '', carb: '', protein: '',
@@ -108,6 +138,39 @@ export default function AdminPage() {
       <label style={labelStyle}>献立名 *</label>
       <input type="text" name="title" value={form.title} onChange={handleChange} placeholder="例：さばの味噌煮定食" style={inputStyle} />
 
+      {/* 写真アップロード */}
+      <label style={labelStyle}>写真</label>
+      <div
+        style={{
+          border: '2px dashed #e0e0e0', borderRadius: '12px',
+          padding: '16px', textAlign: 'center', marginTop: '4px',
+          backgroundColor: '#fafafa', cursor: 'pointer'
+        }}
+        onClick={() => document.getElementById('photo-input')?.click()}
+      >
+        {photoPreview ? (
+          <img
+            src={photoPreview}
+            alt="プレビュー"
+            style={{ width: '100%', borderRadius: '8px', objectFit: 'cover', maxHeight: '200px' }}
+          />
+        ) : (
+          <div>
+            <p style={{ fontSize: '24px', marginBottom: '6px' }}>📷</p>
+            <p style={{ fontSize: '13px', color: '#888' }}>タップして写真を選ぶ</p>
+            <p style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>JPG・PNG対応</p>
+          </div>
+        )}
+      </div>
+      <input
+        id="photo-input"
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoChange}
+        style={{ display: 'none' }}
+      />
+
+      {/* 栄養価 */}
       <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f7f4', borderRadius: '10px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#085041', marginBottom: '8px' }}>栄養価</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -133,6 +196,7 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* アレルギー */}
       <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fff8f0', borderRadius: '10px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#BA7517', marginBottom: '10px' }}>
           ⚠️ アレルギー（タップでON/OFF）
