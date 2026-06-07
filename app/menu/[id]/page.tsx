@@ -62,6 +62,7 @@ export default async function MenuDetail({ params }: Props) {
           <p style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>栄養価</p>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+         <tbody>
           {[
             { label: 'エネルギー', value: menu.kcal,    unit: 'kcal' },
             { label: '炭水化物',   value: menu.carb,    unit: 'g' },
@@ -77,6 +78,7 @@ export default async function MenuDetail({ params }: Props) {
               </td>
             </tr>
           ))}
+         </tbody> 
         </table>
       </div>
 
