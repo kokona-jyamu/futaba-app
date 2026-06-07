@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import AllergenBadges from '@/components/AllergenBadges'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -80,6 +81,17 @@ export default async function MenuDetail({ params }: Props) {
           ))}
          </tbody> 
         </table>
+      </div>
+
+      {/* アレルギー情報 */}
+      <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
+          ⚠️ アレルギー情報（特定原材料8品目）
+        </p>
+        <AllergenBadges allergens={menu.allergens as { [key: string]: boolean } | null} />
+        <p style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>
+          色付きの項目が含まれています。グレーは不使用。
+        </p>
       </div>
 
       <div style={{ backgroundColor: '#f0f7f4', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>

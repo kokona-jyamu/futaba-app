@@ -20,10 +20,22 @@ export default function AdminPage() {
     fat: '',
     salt: '',
     calcium: '',
+    allergens: {
+      egg: false, milk: false, wheat: false, buckwheat: false,
+      peanut: false, shrimp: false, crab: false, walnut: false,
+    }
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  // ↓ handleSubmitの外に出した
+  const toggleAllergen = (key: string) => {
+    setForm({
+      ...form,
+      allergens: { ...form.allergens, [key]: !form.allergens[key as keyof typeof form.allergens] }
+    })
   }
 
   const handleSubmit = async () => {
@@ -47,6 +59,7 @@ export default function AdminPage() {
       fat:      form.fat      ? parseFloat(form.fat)      : null,
       salt:     form.salt     ? parseFloat(form.salt)     : null,
       calcium:  form.calcium  ? parseFloat(form.calcium)  : null,
+      allergens: form.allergens,
     })
 
     setLoading(false)
@@ -59,17 +72,25 @@ export default function AdminPage() {
         served_date: '', title: '', nutritionist_comment: '',
         why_eat_note: '', kcal: '', carb: '', protein: '',
         fat: '', salt: '', calcium: '',
+        allergens: {
+          egg: false, milk: false, wheat: false, buckwheat: false,
+          peanut: false, shrimp: false, crab: false, walnut: false,
+        }
       })
       setTimeout(() => router.push('/'), 1000)
     }
   }
 
-  const inputStyle = {
+  const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: '14px',
     border: '1px solid #e0e0e0', borderRadius: '8px',
     marginTop: '4px', outline: 'none',
   }
-  const labelStyle = { fontSize: '12px', fontWeight: '500' as const, color: '#555', marginTop: '12px', display: 'block' as const }
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '12px', fontWeight: 500, color: '#555',
+    marginTop: '12px', display: 'block'
+  }
 
   return (
     <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem 1rem 4rem' }}>
@@ -81,14 +102,12 @@ export default function AdminPage() {
         <p style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>栄養士専用画面</p>
       </div>
 
-      {/* 基本情報 */}
       <label style={labelStyle}>日付 *</label>
       <input type="date" name="served_date" value={form.served_date} onChange={handleChange} style={inputStyle} />
 
       <label style={labelStyle}>献立名 *</label>
       <input type="text" name="title" value={form.title} onChange={handleChange} placeholder="例：さばの味噌煮定食" style={inputStyle} />
 
-      {/* 栄養価 */}
       <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f7f4', borderRadius: '10px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#085041', marginBottom: '8px' }}>栄養価</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -104,7 +123,7 @@ export default function AdminPage() {
               <label style={{ fontSize: '11px', color: '#555' }}>{f.label}</label>
               <input
                 type="number" name={f.name}
-                value={form[f.name as keyof typeof form]}
+                value={form[f.name as keyof typeof form] as string}
                 onChange={handleChange}
                 placeholder="0"
                 style={{ ...inputStyle, marginTop: '2px' }}
@@ -114,7 +133,46 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* コメント */}
+      <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fff8f0', borderRadius: '10px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#BA7517', marginBottom: '10px' }}>
+          ⚠️ アレルギー（タップでON/OFF）
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {[
+            { key: 'egg',       label: '卵',     emoji: '🥚' },
+            { key: 'milk',      label: '乳',     emoji: '🥛' },
+            { key: 'wheat',     label: '小麦',   emoji: '🌾' },
+            { key: 'buckwheat', label: 'そば',   emoji: '🍜' },
+            { key: 'peanut',    label: '落花生', emoji: '🥜' },
+            { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
+            { key: 'crab',      label: 'かに',   emoji: '🦀' },
+            { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
+          ].map(a => {
+            const active = form.allergens[a.key as keyof typeof form.allergens]
+            return (
+              <div
+                key={a.key}
+                onClick={() => toggleAllergen(a.key)}
+                style={{
+                  width: '52px', height: '52px', borderRadius: '50%',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: active ? '#FFF0E6' : '#f0f0f0',
+                  border: `2px solid ${active ? '#BA7517' : '#e0e0e0'}`,
+                  opacity: active ? 1 : 0.4,
+                  cursor: 'pointer', transition: 'all .15s',
+                }}
+              >
+                <span style={{ fontSize: '20px' }}>{a.emoji}</span>
+                <span style={{ fontSize: '9px', color: active ? '#BA7517' : '#999', fontWeight: active ? 'bold' : 'normal' }}>
+                  {a.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       <label style={labelStyle}>栄養士コメント</label>
       <textarea
         name="nutritionist_comment" value={form.nutritionist_comment}
@@ -129,7 +187,6 @@ export default function AdminPage() {
         rows={3} style={{ ...inputStyle, resize: 'vertical' }}
       />
 
-      {/* 送信ボタン */}
       {message && (
         <p style={{ marginTop: '12px', fontSize: '13px', color: message.startsWith('エラー') ? '#c00' : '#085041' }}>
           {message}
