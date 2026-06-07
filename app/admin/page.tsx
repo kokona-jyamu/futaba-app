@@ -133,7 +133,7 @@ export default function AdminPage() {
       </div>
 
       <label style={labelStyle}>日付 *</label>
-      <input type="date" name="served_date" value={form.served_date} onChange={handleChange} style={inputStyle} />
+      <input type="date" name="served_date" value={form.served_date} onChange={handleChange} style={{ ...inputStyle, display: 'block' }} />
 
       <label style={labelStyle}>献立名 *</label>
       <input type="text" name="title" value={form.title} onChange={handleChange} placeholder="例：さばの味噌煮定食" style={inputStyle} />
