@@ -2,14 +2,16 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function MenuDetail({ params }: Props) {
+  const { id } = await params
+
   const { data: menu, error } = await supabase
     .from('menus')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !menu) {
@@ -24,24 +26,20 @@ export default async function MenuDetail({ params }: Props) {
   return (
     <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem' }}>
 
-      {/* 戻るリンク */}
       <Link href="/" style={{ fontSize: '13px', color: '#1D9E75' }}>
         ← 一覧に戻る
       </Link>
 
-      {/* 日付 */}
       <p style={{ fontSize: '12px', color: '#888', marginTop: '12px' }}>
         {new Date(menu.served_date).toLocaleDateString('ja-JP', {
           year: 'numeric', month: 'long', day: 'numeric'
         })}
       </p>
 
-      {/* 献立名 */}
       <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1a1a1a', margin: '6px 0 16px' }}>
         {menu.title}
       </h1>
 
-      {/* 写真 */}
       {menu.photo_url ? (
         <img
           src={menu.photo_url}
@@ -59,7 +57,6 @@ export default async function MenuDetail({ params }: Props) {
         </div>
       )}
 
-      {/* 栄養価テーブル */}
       <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
         <div style={{ backgroundColor: '#085041', padding: '8px 14px' }}>
           <p style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>栄養価</p>
@@ -83,13 +80,11 @@ export default async function MenuDetail({ params }: Props) {
         </table>
       </div>
 
-      {/* 栄養士コメント */}
       <div style={{ backgroundColor: '#f0f7f4', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#085041', marginBottom: '6px' }}>🌿 栄養士より</p>
         <p style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{menu.nutritionist_comment}</p>
       </div>
 
-      {/* なぜ食べたか */}
       <div style={{ backgroundColor: '#fff8f0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#BA7517', marginBottom: '6px' }}>🍴 今日の食べっぷり</p>
         <p style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{menu.why_eat_note}</p>
