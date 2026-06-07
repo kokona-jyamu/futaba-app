@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import AllergenBadges from '@/components/AllergenBadges'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -63,23 +62,23 @@ export default async function MenuDetail({ params }: Props) {
           <p style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>栄養価</p>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-         <tbody>
-          {[
-            { label: 'エネルギー', value: menu.kcal,    unit: 'kcal' },
-            { label: '炭水化物',   value: menu.carb,    unit: 'g' },
-            { label: 'タンパク質', value: menu.protein, unit: 'g' },
-            { label: '脂質',       value: menu.fat,     unit: 'g' },
-            { label: '食塩相当量', value: menu.salt,    unit: 'g' },
-            { label: 'カルシウム', value: menu.calcium, unit: 'mg' },
-          ].map((row, i) => (
-            <tr key={row.label} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-              <td style={{ padding: '8px 14px', color: '#555', borderBottom: '1px solid #f0f0f0' }}>{row.label}</td>
-              <td style={{ padding: '8px 14px', textAlign: 'right', color: '#1a1a1a', fontWeight: '500', borderBottom: '1px solid #f0f0f0' }}>
-                {row.value ?? '—'} {row.unit}
-              </td>
-            </tr>
-          ))}
-         </tbody> 
+          <tbody>
+            {[
+              { label: 'エネルギー', value: menu.kcal,    unit: 'kcal' },
+              { label: '炭水化物',   value: menu.carb,    unit: 'g' },
+              { label: 'タンパク質', value: menu.protein, unit: 'g' },
+              { label: '脂質',       value: menu.fat,     unit: 'g' },
+              { label: '食塩相当量', value: menu.salt,    unit: 'g' },
+              { label: 'カルシウム', value: menu.calcium, unit: 'mg' },
+            ].map((row, i) => (
+              <tr key={row.label} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                <td style={{ padding: '8px 14px', color: '#555', borderBottom: '1px solid #f0f0f0' }}>{row.label}</td>
+                <td style={{ padding: '8px 14px', textAlign: 'right', color: '#1a1a1a', fontWeight: '500', borderBottom: '1px solid #f0f0f0' }}>
+                  {row.value ?? '—'} {row.unit}
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
@@ -88,7 +87,36 @@ export default async function MenuDetail({ params }: Props) {
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
           ⚠️ アレルギー情報（特定原材料8品目）
         </p>
-        <AllergenBadges allergens={menu.allergens as { [key: string]: boolean } | null} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {[
+            { key: 'egg',       label: '卵',     emoji: '🥚' },
+            { key: 'milk',      label: '乳',     emoji: '🥛' },
+            { key: 'wheat',     label: '小麦',   emoji: '🌾' },
+            { key: 'buckwheat', label: 'そば',   emoji: '🍜' },
+            { key: 'peanut',    label: '落花生', emoji: '🥜' },
+            { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
+            { key: 'crab',      label: 'かに',   emoji: '🦀' },
+            { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
+          ].map(a => {
+            const allergens = menu.allergens as { [key: string]: boolean } | null
+            const active = allergens?.[a.key] === true
+            return (
+              <div key={a.key} style={{
+                width: '48px', height: '48px', borderRadius: '50%',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: active ? '#FFF0E6' : '#f0f0f0',
+                border: `2px solid ${active ? '#BA7517' : '#e0e0e0'}`,
+                opacity: active ? 1 : 0.4,
+              }}>
+                <span style={{ fontSize: '18px' }}>{a.emoji}</span>
+                <span style={{ fontSize: '9px', color: active ? '#BA7517' : '#999', fontWeight: active ? 'bold' : 'normal', marginTop: '1px' }}>
+                  {a.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
         <p style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>
           色付きの項目が含まれています。グレーは不使用。
         </p>
