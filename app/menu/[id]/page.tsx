@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import MessageSection from '@/components/MessageSection'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -82,7 +83,6 @@ export default async function MenuDetail({ params }: Props) {
         </table>
       </div>
 
-      {/* アレルギー情報 */}
       <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
           ⚠️ アレルギー情報（特定原材料8品目）
@@ -131,6 +131,9 @@ export default async function MenuDetail({ params }: Props) {
         <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#BA7517', marginBottom: '6px' }}>🍴 今日の食べっぷり</p>
         <p style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{menu.why_eat_note}</p>
       </div>
+
+      {/* メッセージセクション */}
+      <MessageSection menuId={menu.id} />
 
     </main>
   )
