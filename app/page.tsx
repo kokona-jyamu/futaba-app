@@ -69,6 +69,17 @@ export default function Home() {
         </p>
       </div>
 
+      <Link href="/food-education" style={{ textDecoration: 'none' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          backgroundColor: '#FFF8F0', border: '1px solid #FAC775',
+          borderRadius: '10px', padding: '10px 14px', marginTop: '12px', marginBottom: '4px',
+        }}>
+          <span style={{ fontSize: '13px', color: '#BA7517', fontWeight: 'bold' }}>🌾 食育のあしあと</span>
+          <span style={{ fontSize: '12px', color: '#BA7517' }}>見る →</span>
+        </div>
+      </Link>
+
       {/* カレンダー */}
       <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '14px', marginBottom: '16px', backgroundColor: '#fff' }}>
 
