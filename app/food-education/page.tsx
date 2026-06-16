@@ -55,26 +55,28 @@ export default function FoodEducationPage() {
       {/* タブ */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
         <button
-          onClick={() => setTab('records')}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-            backgroundColor: tab === 'records' ? '#085041' : '#f0f0f0',
-            color: tab === 'records' ? '#fff' : '#888',
-            fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
-          }}
-        >
-          記録・予告
-        </button>
-        <button
-          onClick={() => setTab('recipes')}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-            backgroundColor: tab === 'recipes' ? '#085041' : '#f0f0f0',
-            color: tab === 'recipes' ? '#fff' : '#888',
-            fontWeight: 'bold', fontSize: '13px', cursor: 'pointer',
-          }}
-        >
-          家でやる食育
+            onClick={() => setTab('records')}
+            style={{
+                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+                backgroundColor: tab === 'records' ? '#085041' : '#f0f0f0',
+                color: tab === 'records' ? '#fff' : '#888',
+                fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                whiteSpace: 'nowrap',
+            }}
+            >
+            記録・予告
+            </button>
+            <button
+            onClick={() => setTab('recipes')}
+            style={{
+                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+                backgroundColor: tab === 'recipes' ? '#085041' : '#f0f0f0',
+                color: tab === 'recipes' ? '#fff' : '#888',
+                fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                whiteSpace: 'nowrap',
+            }}
+            >
+            家でやる食育
         </button>
       </div>
 
