@@ -37,7 +37,7 @@ export default function FoodEducationPage() {
   const withRecipe = events.filter(e => e.recipe_title)
 
   return (
-    <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem' }}>
+    <main style={{ width: '100%', maxWidth: '480px', margin: '0 auto', padding: '1rem' }}>
 
       <Link href="/" style={{ fontSize: '13px', color: '#1D9E75' }}>
         ← 給食だよりに戻る
