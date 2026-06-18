@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -20,6 +20,18 @@ export default function FoodEducationPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [tab, setTab] = useState<'records' | 'recipes'>('records')
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(null)
+  const [likedEvents, setLikedEvents] = useState<{[key: string]: number}>({})
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
+
+  const visitorId = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    let id = window.localStorage.getItem('visitor_id')
+    if (!id) {
+      id = 'visitor_' + Math.random().toString(36).slice(2, 10)
+      window.localStorage.setItem('visitor_id', id)
+    }
+    return id
+  }, [])
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -31,6 +43,35 @@ export default function FoodEducationPage() {
     }
     fetchEvents()
   }, [])
+
+  useEffect(() => {
+    const fetchLikes = async () => {
+      const { data } = await supabase.from('event_likes').select('*')
+      if (data) {
+        const counts: {[key: string]: number} = {}
+        const mine = new Set<string>()
+        data.forEach(like => {
+          counts[like.event_id] = (counts[like.event_id] || 0) + 1
+          if (like.liked_by === visitorId) mine.add(like.event_id)
+        })
+        setLikedEvents(counts)
+        setMyLikes(mine)
+      }
+    }
+    if (visitorId) fetchLikes()
+  }, [visitorId])
+
+  const toggleLike = async (eventId: string) => {
+    if (myLikes.has(eventId)) {
+      await supabase.from('event_likes').delete().eq('event_id', eventId).eq('liked_by', visitorId)
+      setMyLikes(prev => { const next = new Set(prev); next.delete(eventId); return next })
+      setLikedEvents(prev => ({ ...prev, [eventId]: Math.max((prev[eventId] || 1) - 1, 0) }))
+    } else {
+      await supabase.from('event_likes').insert({ event_id: eventId, liked_by: visitorId })
+      setMyLikes(prev => new Set(prev).add(eventId))
+      setLikedEvents(prev => ({ ...prev, [eventId]: (prev[eventId] || 0) + 1 }))
+    }
+  }
 
   const upcoming = events.filter(e => e.status === 'upcoming')
   const past = events.filter(e => e.status === 'past')
@@ -55,28 +96,28 @@ export default function FoodEducationPage() {
       {/* タブ */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
         <button
-            onClick={() => setTab('records')}
-            style={{
-                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
-                backgroundColor: tab === 'records' ? '#085041' : '#f0f0f0',
-                color: tab === 'records' ? '#fff' : '#888',
-                fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
-                whiteSpace: 'nowrap',
-            }}
-            >
-            記録・予告
-            </button>
-            <button
-            onClick={() => setTab('recipes')}
-            style={{
-                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
-                backgroundColor: tab === 'recipes' ? '#085041' : '#f0f0f0',
-                color: tab === 'recipes' ? '#fff' : '#888',
-                fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
-                whiteSpace: 'nowrap',
-            }}
-            >
-            家でやる食育
+          onClick={() => setTab('records')}
+          style={{
+            flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+            backgroundColor: tab === 'records' ? '#085041' : '#f0f0f0',
+            color: tab === 'records' ? '#fff' : '#888',
+            fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          記録・予告
+        </button>
+        <button
+          onClick={() => setTab('recipes')}
+          style={{
+            flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+            backgroundColor: tab === 'recipes' ? '#085041' : '#f0f0f0',
+            color: tab === 'recipes' ? '#fff' : '#888',
+            fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          家でやる食育
         </button>
       </div>
 
@@ -137,12 +178,29 @@ export default function FoodEducationPage() {
                     {e.description && (
                       <p style={{ fontSize: '12px', color: '#666', lineHeight: '1.6' }}>{e.description}</p>
                     )}
+
+                    {/* いいねボタン */}
+                    <button
+                      onClick={() => toggleLike(e.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        marginTop: '8px', background: 'none', border: 'none',
+                        cursor: 'pointer', padding: '4px 0',
+                      }}
+                    >
+                      <span style={{ fontSize: '16px' }}>{myLikes.has(e.id) ? '❤️' : '🤍'}</span>
+                      <span style={{ fontSize: '12px', color: myLikes.has(e.id) ? '#E24B4A' : '#999' }}>
+                        {likedEvents[e.id] || 0}
+                      </span>
+                    </button>
+
                     {e.recipe_title && (
                       <button
                         onClick={() => { setTab('recipes'); setOpenRecipeId(e.id) }}
                         style={{
                           marginTop: '8px', fontSize: '12px', color: '#1D9E75',
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          display: 'block',
                         }}
                       >
                         🍳 家でも作れるレシピを見る →
