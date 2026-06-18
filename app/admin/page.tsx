@@ -11,8 +11,11 @@ export default function AdminPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [messages, setMessages] = useState<{id: string, body: string, sender_name: string, is_nutritionist: boolean, menu_id: string}[]>([])
+  const [allMenus, setAllMenus] = useState<any[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<any>({})
   const [replyBody, setReplyBody] = useState<{[key: string]: string}>({})
-  const [activeTab, setActiveTab] = useState<'post' | 'messages'>('post')
+  const [activeTab, setActiveTab] = useState<'post' | 'edit' | 'messages'>('post')
 
   const [form, setForm] = useState({
     served_date: '',
@@ -41,6 +44,17 @@ export default function AdminPage() {
       if (data) setMessages(data)
     }
     fetchMessages()
+  }, [])
+
+  useEffect(() => {
+    const fetchMenus = async () => {
+      const { data } = await supabase
+        .from('menus')
+        .select('*')
+        .order('served_date', { ascending: false })
+      if (data) setAllMenus(data)
+    }
+    fetchMenus()
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -99,6 +113,48 @@ export default function AdminPage() {
       .order('created_at', { ascending: false })
     if (data) setMessages(data)
   }
+
+  const startEdit = (menu: any) => {
+  setEditingId(menu.id)
+  setEditForm({ ...menu })
+}
+
+const cancelEdit = () => {
+  setEditingId(null)
+  setEditForm({})
+}
+
+const saveEdit = async () => {
+  const { error } = await supabase
+    .from('menus')
+    .update({
+      served_date: editForm.served_date,
+      title: editForm.title,
+      nutritionist_comment: editForm.nutritionist_comment,
+      why_eat_note: editForm.why_eat_note,
+      kcal: editForm.kcal ? parseFloat(editForm.kcal) : null,
+      carb: editForm.carb ? parseFloat(editForm.carb) : null,
+      protein: editForm.protein ? parseFloat(editForm.protein) : null,
+      fat: editForm.fat ? parseFloat(editForm.fat) : null,
+      salt: editForm.salt ? parseFloat(editForm.salt) : null,
+      calcium: editForm.calcium ? parseFloat(editForm.calcium) : null,
+    })
+    .eq('id', editingId)
+
+  if (!error) {
+    setAllMenus(prev => prev.map(m => m.id === editingId ? { ...m, ...editForm } : m))
+    setEditingId(null)
+    setEditForm({})
+  }
+}
+
+const deleteMenu = async (id: string) => {
+  if (!confirm('この献立を削除しますか？元に戻せません。')) return
+  const { error } = await supabase.from('menus').delete().eq('id', id)
+  if (!error) {
+    setAllMenus(prev => prev.filter(m => m.id !== id))
+  }
+}
 
   const handleSubmit = async () => {
     if (!form.served_date || !form.title) {
@@ -163,7 +219,7 @@ export default function AdminPage() {
     <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem 1rem 4rem' }}>
 
       {/* タブ */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
         <button
           onClick={() => setActiveTab('post')}
           style={{
@@ -174,6 +230,18 @@ export default function AdminPage() {
           }}
         >
           📝 献立を投稿
+        </button>
+        <button
+          onClick={() => setActiveTab('edit')}
+          style={{
+            flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+            backgroundColor: activeTab === 'edit' ? '#085041' : '#f0f0f0',
+            color: activeTab === 'edit' ? '#fff' : '#888',
+            fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ✏️ 献立を編集
         </button>
         <button
           onClick={() => setActiveTab('messages')}
@@ -325,6 +393,111 @@ export default function AdminPage() {
       )}
 
       {/* 返信タブ */}
+      {activeTab === 'edit' && (
+      <div>
+        <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#085041', marginBottom: '16px' }}>
+          ✏️ 投稿済みの献立
+        </h2>
+
+        {allMenus.length === 0 && (
+          <p style={{ fontSize: '13px', color: '#999', textAlign: 'center', padding: '20px' }}>
+            まだ献立がありません
+          </p>
+        )}
+
+        {allMenus.map(menu => (
+          <div key={menu.id} style={{
+            border: '1px solid #e0e0e0', borderRadius: '12px',
+            padding: '14px', marginBottom: '12px', backgroundColor: '#fff',
+          }}>
+            {editingId === menu.id ? (
+              <>
+                <label style={labelStyle}>日付</label>
+                <input
+                  type="date" value={editForm.served_date}
+                  onChange={e => setEditForm({ ...editForm, served_date: e.target.value })}
+                  style={{ ...inputStyle, width: '100%', WebkitAppearance: 'none', appearance: 'none' }}
+                />
+                <label style={labelStyle}>献立名</label>
+                <input
+                  type="text" value={editForm.title}
+                  onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                  style={inputStyle}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+                  {[
+                    { label: 'kcal', name: 'kcal' },
+                    { label: '炭水化物', name: 'carb' },
+                    { label: 'タンパク質', name: 'protein' },
+                    { label: '脂質', name: 'fat' },
+                    { label: '塩分', name: 'salt' },
+                    { label: 'カルシウム', name: 'calcium' },
+                  ].map(f => (
+                    <div key={f.name}>
+                      <label style={{ fontSize: '11px', color: '#555' }}>{f.label}</label>
+                      <input
+                        type="number" value={editForm[f.name] || ''}
+                        onChange={e => setEditForm({ ...editForm, [f.name]: e.target.value })}
+                        style={{ ...inputStyle, marginTop: '2px' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <label style={labelStyle}>栄養士コメント</label>
+                <textarea
+                  value={editForm.nutritionist_comment || ''}
+                  onChange={e => setEditForm({ ...editForm, nutritionist_comment: e.target.value })}
+                  rows={2} style={{ ...inputStyle, resize: 'vertical' }}
+                />
+                <label style={labelStyle}>今日の食べっぷり</label>
+                <textarea
+                  value={editForm.why_eat_note || ''}
+                  onChange={e => setEditForm({ ...editForm, why_eat_note: e.target.value })}
+                  rows={2} style={{ ...inputStyle, resize: 'vertical' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button
+                    onClick={saveEdit}
+                    style={{ flex: 1, padding: '10px', backgroundColor: '#085041', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    保存する
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    style={{ flex: 1, padding: '10px', backgroundColor: '#f0f0f0', color: '#888', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: '11px', color: '#999', marginBottom: '4px' }}>
+                  {new Date(menu.served_date).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
+                </p>
+                <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
+                  {menu.title}
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => startEdit(menu)}
+                    style={{ flex: 1, padding: '8px', backgroundColor: '#E6F1FB', color: '#0C447C', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => deleteMenu(menu.id)}
+                    style={{ flex: 1, padding: '8px', backgroundColor: '#FCEBEB', color: '#791F1F', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    削除
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+        </div>
+      )}
       {activeTab === 'messages' && (
         <div>
           <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#085041', marginBottom: '16px' }}>
