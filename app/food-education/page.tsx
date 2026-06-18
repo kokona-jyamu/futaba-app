@@ -188,7 +188,7 @@ export default function FoodEducationPage() {
                         cursor: 'pointer', padding: '4px 0',
                       }}
                     >
-                      <span style={{ fontSize: '16px' }}>{myLikes.has(e.id) ? '💛' : '♡'}</span>
+                      <span style={{ fontSize: '16px' }}>{myLikes.has(e.id) ? '❤️' : '🤍'}</span>
                       <span style={{ fontSize: '12px', color: myLikes.has(e.id) ? '#E24B4A' : '#999' }}>
                         {likedEvents[e.id] || 0}
                       </span>
