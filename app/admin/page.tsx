@@ -332,6 +332,7 @@ const deleteMenu = async (id: string) => {
                 { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
                 { key: 'crab',      label: 'かに',   emoji: '🦀' },
                 { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
+                { key: 'cashew',    label: 'カシューナッツ', emoji: 'c' },
               ].map(a => {
                 const active = form.allergens[a.key as keyof typeof form.allergens]
                 return (
