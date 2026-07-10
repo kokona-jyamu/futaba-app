@@ -332,7 +332,7 @@ const deleteMenu = async (id: string) => {
                 { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
                 { key: 'crab',      label: 'かに',   emoji: '🦀' },
                 { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
-                { key: 'cashew',    label: 'カシュー', emoji: 'c' },
+                { key: 'cashew', label: 'カシュー', content: 'https://tpqocjthnpesuytfgnek.supabase.co/storage/v1/object/public/menu-photos/cashew.png', isImg: true },
               ].map(a => {
                 const active = form.allergens[a.key as keyof typeof form.allergens]
                 return (
