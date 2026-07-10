@@ -349,6 +349,10 @@ const deleteMenu = async (id: string) => {
                       cursor: 'pointer', transition: 'all .15s',
                     }}
                   >
+                  {a.isImg
+                    ? <img src={a.content} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    : <span style={{ fontSize: '20px' }}>{a.content}</span>
+                  }
                     <span style={{ fontSize: '20px' }}>{a.emoji}</span>
                     <span style={{ fontSize: '9px', color: active ? '#BA7517' : '#999', fontWeight: active ? 'bold' : 'normal' }}>
                       {a.label}
