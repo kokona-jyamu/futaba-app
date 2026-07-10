@@ -9,7 +9,7 @@ const ALLERGENS_8 = [
   { key: 'shrimp',   label: 'えび',   emoji: '🦐' },
   { key: 'crab',     label: 'かに',   emoji: '🦀' },
   { key: 'walnut',   label: 'くるみ', emoji: '🌰' },
-  { key: 'cashew',    label: 'カシューナッツ', emoji: 'c' },
+  { key: 'cashew',   label: 'カシュー', emoji: 'c' },
 ]
 
 type Props = {
