@@ -97,7 +97,7 @@ export default async function MenuDetail({ params }: Props) {
             { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
             { key: 'crab',      label: 'かに',   emoji: '🦀' },
             { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
-            { key: 'cashew',    label: 'カシュー', content: 'https://tpqocjthnpesuytfgnek.supabase.co/storage/v1/object/public/menu-photos/cashew.png', isImg: true },
+            { key: 'cashew',    label: 'カシュー'},
           ].map(a => {
             const allergens = menu.allergens as { [key: string]: boolean } | null
             const active = allergens?.[a.key] === true

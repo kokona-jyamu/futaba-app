@@ -332,7 +332,7 @@ const deleteMenu = async (id: string) => {
                 { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
                 { key: 'crab',      label: 'かに',   emoji: '🦀' },
                 { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
-                { key: 'cashew', label: 'カシュー', content: 'https://tpqocjthnpesuytfgnek.supabase.co/storage/v1/object/public/menu-photos/cashew.png', isImg: true },
+                { key: 'cashew', label: 'カシュー',},
               ].map(a => {
                 const active = form.allergens[a.key as keyof typeof form.allergens]
                 return (
@@ -349,10 +349,6 @@ const deleteMenu = async (id: string) => {
                       cursor: 'pointer', transition: 'all .15s',
                     }}
                   >
-                  {a.isImg
-                    ? <img src={a.content} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                    : <span style={{ fontSize: '20px' }}>{a.content}</span>
-                  }
                     <span style={{ fontSize: '20px' }}>{a.emoji}</span>
                     <span style={{ fontSize: '9px', color: active ? '#BA7517' : '#999', fontWeight: active ? 'bold' : 'normal' }}>
                       {a.label}
