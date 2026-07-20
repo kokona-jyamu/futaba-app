@@ -200,7 +200,6 @@ const deleteMenu = async (id: string) => {
           peanut: false, shrimp: false, crab: false, walnut: false,
         }
       })
-      setTimeout(() => router.push('/'), 1000)
     }
   }
 
