@@ -1,0 +1,343 @@
+/* ==================================================================
+   futaba-app 共通スタイル
+   app/globals.css の先頭で  @import './styles/futaba.css';  して使う
+   （もしくは app/layout.tsx で import './styles/futaba.css')
+   ================================================================== */
+
+:root {
+  /* 色 ------------------------------------------------------------ */
+  --fa-bg: #F7F6F1;
+  --fa-card: #FFFFFF;
+  --fa-ink: #3C4A44;
+  --fa-ink-2: #6B7772;
+  --fa-muted: #909C96;
+  --fa-line: #E9E6DD;
+
+  --fa-matcha: #6FA98D;
+  --fa-matcha-deep: #35695A;
+  --fa-matcha-soft: #E9F3ED;
+
+  --fa-apricot: #E0A15C;
+  --fa-apricot-ink: #96652A;
+  --fa-apricot-soft: #FDF2E4;
+
+  --fa-sky: #7FA9D6;
+  --fa-sky-ink: #47719D;
+  --fa-sky-soft: #EAF2FA;
+
+  --fa-rose-ink: #A96460;
+  --fa-rose-soft: #FBECEA;
+
+  /* 形 ------------------------------------------------------------ */
+  --fa-r: 16px;
+  --fa-r-sm: 11px;
+  --fa-shadow: 0 1px 2px rgba(60, 74, 68, .04), 0 8px 24px rgba(60, 74, 68, .05);
+
+  /* 横幅（全ページ共通の基準） -------------------------------------- */
+  --fa-w: 100%;      /* スマホ */
+  --fa-pad: 16px;
+
+  --fa-font: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans",
+    "Noto Sans JP", system-ui, sans-serif;
+}
+
+/* 幅のブレークポイントを :root 側で切り替える。
+   これで .fa-page を使うどのページも必ず同じ幅になる。 */
+@media (min-width: 700px) {
+  :root { --fa-w: 880px; --fa-pad: 28px; }
+}
+@media (min-width: 1080px) {
+  :root { --fa-w: 1180px; --fa-pad: 40px; }
+}
+
+/* ------------------------------------------------------------------
+   ページ幅がタブ/ページごとにズレる原因のほとんどは
+   「中身の高さでスクロールバーが出たり消えたりする」こと。
+   scrollbar-gutter を常時確保して幅の揺れを止める。
+   ------------------------------------------------------------------ */
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;      /* 未対応ブラウザ用フォールバック */
+}
+
+body {
+  margin: 0;
+  background: var(--fa-bg);
+  color: var(--fa-ink);
+  font-family: var(--fa-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==================================================================
+   1. ページの器（全ページこれで包む）
+   ================================================================== */
+.fa-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--fa-w);
+  margin-inline: auto;
+  padding: 20px var(--fa-pad) 64px;
+  min-height: 100vh;
+}
+@media (min-width: 700px) { .fa-page { padding-top: 32px; padding-bottom: 80px; } }
+@media (min-width: 1080px) { .fa-page { padding-top: 40px; padding-bottom: 96px; } }
+
+.fa-page *,
+.fa-page *::before,
+.fa-page *::after { box-sizing: border-box; }
+.fa-page p, .fa-page h1, .fa-page h2, .fa-page h3 { margin: 0; }
+
+/* 中身の高さ差でレイアウトが跳ねないよう最低高さを揃える */
+.fa-panel-area { min-height: 60vh; }
+
+/* ==================================================================
+   2. ヘッダー / タブ
+   ================================================================== */
+.fa-head { margin-bottom: 20px; }
+.fa-eyebrow {
+  font-size: 11px; letter-spacing: .12em; font-weight: 700;
+  color: var(--fa-matcha); margin-bottom: 2px;
+}
+.fa-title {
+  font-size: 22px; font-weight: 700; letter-spacing: .02em;
+  color: var(--fa-matcha-deep);
+}
+
+/* タブ：スマホは3等分、PC/タブレットは中身に合わせた同じ形 */
+.fa-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 16px;
+}
+.fa-tab {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  min-width: 0; padding: 11px 6px;
+  border: 1px solid var(--fa-line); border-radius: 999px;
+  background: var(--fa-card); color: var(--fa-muted);
+  font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.fa-tab:hover { border-color: var(--fa-matcha); color: var(--fa-matcha-deep); }
+.fa-tab.is-on {
+  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
+  color: var(--fa-matcha-deep); box-shadow: inset 0 0 0 1px var(--fa-matcha);
+}
+.fa-tab-icon { font-size: 14px; }
+.fa-badge {
+  display: inline-block; min-width: 18px; padding: 1px 5px;
+  border-radius: 999px; background: var(--fa-apricot-soft);
+  color: var(--fa-apricot-ink);
+  font-size: 10px; line-height: 16px; font-weight: 700;
+}
+
+@media (min-width: 700px) {
+  .fa-head {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  }
+  .fa-title { font-size: 26px; }
+  .fa-tabs {
+    margin-top: 0;
+    grid-template-columns: repeat(3, minmax(140px, max-content));
+    justify-content: end;
+  }
+  .fa-tab { padding: 11px 18px; font-size: 13.5px; }
+}
+
+/* ==================================================================
+   3. 通知
+   ================================================================== */
+.fa-toast {
+  margin-bottom: 16px; padding: 11px 14px; border-radius: 12px;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  font-size: 13px; font-weight: 700;
+}
+.fa-toast.is-error { background: var(--fa-rose-soft); color: var(--fa-rose-ink); }
+
+/* ==================================================================
+   4. カード / パネル
+   ================================================================== */
+.fa-card {
+  background: var(--fa-card); border: 1px solid var(--fa-line);
+  border-radius: var(--fa-r); padding: 18px; box-shadow: var(--fa-shadow);
+}
+@media (min-width: 700px) { .fa-card { padding: 22px; } }
+
+.fa-cardtitle, .fa-sectiontitle {
+  font-size: 15px; font-weight: 700; color: var(--fa-matcha-deep);
+}
+.fa-sectiontitle { margin-bottom: 14px; }
+
+.fa-tint { margin-top: 16px; padding: 14px; border-radius: 14px; }
+.fa-tint:first-child { margin-top: 0; }
+.fa-tint--green { background: var(--fa-matcha-soft); }
+.fa-tint--apricot { background: var(--fa-apricot-soft); }
+.fa-tint--sky { background: var(--fa-sky-soft); }
+.fa-tinttitle {
+  font-size: 12px; font-weight: 700; color: var(--fa-matcha-deep); margin-bottom: 10px;
+}
+.fa-tinttitle--apricot { color: var(--fa-apricot-ink); }
+.fa-hint { margin-left: 8px; font-size: 10px; font-weight: 500; opacity: .75; }
+
+/* ==================================================================
+   5. フォーム
+   ================================================================== */
+.fa-label {
+  display: block; margin: 16px 0 5px;
+  font-size: 12px; font-weight: 700; color: var(--fa-ink-2);
+}
+.fa-cardtitle + .fa-label { margin-top: 14px; }
+.fa-req {
+  margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+  font-size: 10px; font-weight: 700;
+}
+.fa-input {
+  display: block; width: 100%; max-width: 100%;
+  padding: 11px 13px; border: 1px solid var(--fa-line); border-radius: var(--fa-r-sm);
+  background: #FDFDFB; color: var(--fa-ink);
+  font: inherit; font-size: 14px; outline: none;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fa-input::placeholder { color: #BAC3BE; }
+.fa-input:focus {
+  border-color: var(--fa-matcha); background: #fff;
+  box-shadow: 0 0 0 3px rgba(111, 169, 141, .16);
+}
+.fa-input--sm { padding: 8px 10px; font-size: 13px; }
+.fa-textarea { resize: vertical; line-height: 1.65; }
+
+.fa-mini {
+  display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px;
+  font-size: 11px; font-weight: 700; color: var(--fa-ink-2);
+}
+.fa-unit { font-size: 10px; font-weight: 500; color: var(--fa-muted); }
+
+/* 栄養価グリッド：2列 → 3列 */
+.fa-nutri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 700px) { .fa-nutri { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .fa-nutri { gap: 12px; } }
+
+/* 写真 */
+.fa-drop {
+  margin-top: 5px; padding: 14px; border: 2px dashed #DCE5E0; border-radius: 14px;
+  background: #FBFCFA; text-align: center; cursor: pointer; transition: border-color .15s;
+}
+.fa-drop:hover { border-color: var(--fa-matcha); }
+.fa-drop-empty { display: flex; flex-direction: column; gap: 3px; padding: 14px 0; }
+.fa-drop-icon { font-size: 26px; }
+.fa-drop-text { font-size: 13px; font-weight: 700; color: #7C8A84; }
+.fa-drop-sub { font-size: 11px; color: #B4BEB9; }
+.fa-preview {
+  display: block; width: 100%; max-height: 260px; border-radius: 10px; object-fit: cover;
+}
+
+/* アレルギー丸チップ */
+.fa-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.fa-chip {
+  width: 56px; height: 56px; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border: 2px solid #EBE7DE; border-radius: 50%;
+  background: #F6F5F1; color: #A9B2AD; font: inherit; cursor: pointer;
+  transition: transform .15s, background .15s, border-color .15s, color .15s;
+}
+.fa-chip:hover { transform: translateY(-2px); }
+.fa-chip.is-on {
+  background: #fff; border-color: var(--fa-apricot); color: var(--fa-apricot-ink);
+  box-shadow: 0 2px 8px rgba(224, 161, 92, .22);
+}
+.fa-chip-emoji { font-size: 19px; filter: grayscale(.7); opacity: .55; transition: filter .15s, opacity .15s; }
+.fa-chip.is-on .fa-chip-emoji { filter: none; opacity: 1; }
+.fa-chip-label { font-size: 9px; font-weight: 700; }
+@media (min-width: 1080px) {
+  .fa-chip { width: 60px; height: 60px; }
+  .fa-chip-emoji { font-size: 21px; }
+}
+
+/* ==================================================================
+   6. ボタン
+   ================================================================== */
+.fa-actions { margin-top: 22px; }
+.fa-btnrow { display: flex; gap: 8px; margin-top: 14px; }
+.fa-btn {
+  flex: 1; padding: 13px 18px; border: none; border-radius: 12px;
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: filter .15s, background .15s;
+}
+.fa-btn:hover:not(:disabled) { filter: brightness(.96); }
+.fa-btn:disabled { opacity: .5; cursor: not-allowed; }
+.fa-btn--primary { width: 100%; background: var(--fa-matcha-deep); color: #fff; }
+.fa-btn--ghost { background: #F2F1EC; color: #86918B; }
+.fa-btn--sky { background: var(--fa-sky-soft); color: var(--fa-sky-ink); padding: 10px; font-size: 13px; }
+.fa-btn--rose { background: var(--fa-rose-soft); color: var(--fa-rose-ink); padding: 10px; font-size: 13px; }
+.fa-btn--send { flex: 0 0 auto; width: auto; white-space: nowrap; }
+@media (min-width: 700px) {
+  .fa-btn--primary { width: auto; min-width: 220px; }
+  .fa-actions { display: flex; justify-content: flex-end; }
+}
+
+/* ==================================================================
+   7. レイアウト（同じ画面をCSSで可変）
+   ================================================================== */
+/* 2カラム：PCのみ左右に割れる */
+.fa-cols { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 1080px) {
+  .fa-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 24px; align-items: start; }
+}
+
+/* カード一覧：1 → 2 → 3列 */
+.fa-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 700px) { .fa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .fa-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; } }
+
+/* 常に2列止まりにしたい一覧（質問など文章量が多いもの） */
+.fa-grid--2 { }
+@media (min-width: 1080px) { .fa-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* 一覧の中で開いた編集フォームだけ全幅に伸ばす */
+.fa-span-all { grid-column: 1 / -1; }
+@media (min-width: 1080px) {
+  .fa-span-all .fa-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* ==================================================================
+   8. 一覧アイテム
+   ================================================================== */
+.fa-empty {
+  padding: 32px 16px; border: 1px dashed var(--fa-line); border-radius: var(--fa-r);
+  background: var(--fa-card); text-align: center; font-size: 13px; color: var(--fa-muted);
+}
+.fa-thumb { width: 100%; height: 148px; margin-bottom: 12px; border-radius: 12px; object-fit: cover; }
+@media (min-width: 700px) { .fa-thumb { height: 168px; } }
+.fa-date { font-size: 11px; font-weight: 700; color: var(--fa-matcha); }
+.fa-menuname { margin-top: 4px; font-size: 15px; font-weight: 700; color: var(--fa-ink); }
+.fa-tagrow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.fa-tag {
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+  font-size: 10px; font-weight: 700;
+}
+
+/* ==================================================================
+   9. 質問・返信
+   ================================================================== */
+.fa-bubble {
+  margin-top: 10px; padding: 12px 14px;
+  border-radius: 14px 14px 14px 4px; background: var(--fa-sky-soft);
+}
+.fa-sender { font-size: 11px; font-weight: 700; color: var(--fa-sky-ink); opacity: .8; }
+.fa-body { margin-top: 5px; font-size: 13.5px; line-height: 1.7; color: #33587E; }
+.fa-replyrow { display: flex; gap: 8px; align-items: flex-end; margin-top: 12px; }
+.fa-replyrow .fa-input { flex: 1; }
+
+/* ==================================================================
+   10. アクセシビリティ
+   ================================================================== */
+.fa-page :focus-visible {
+  outline: 2px solid var(--fa-matcha); outline-offset: 2px; border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fa-page * { transition: none !important; animation: none !important; }
+}
