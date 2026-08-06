@@ -1,0 +1,267 @@
+/* ==================================================================
+   futaba-app 共通スタイル（保護者向けページ用の追加分）
+   futaba.css の直後に読み込む
+   app/layout.tsx:
+     import './styles/futaba.css'
+     import './styles/futaba-parent.css'
+   ================================================================== */
+
+/* ==================================================================
+   1. 上部バー（背景は全幅、中身だけ --fa-w に揃える）
+   ================================================================== */
+.fa-topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--fa-matcha-deep);
+  padding-top: 14px;
+}
+.fa-topbar-inner {
+  width: 100%; max-width: var(--fa-w);
+  margin-inline: auto;
+  padding-inline: var(--fa-pad);
+}
+.fa-topbar-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: 10px;
+}
+.fa-brand { font-size: 17px; font-weight: 700; color: #fff; }
+.fa-brandsub { margin-top: 2px; font-size: 12px; color: rgba(255, 255, 255, .72); }
+.fa-logout {
+  padding: 6px 12px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 999px;
+  background: transparent; color: rgba(255, 255, 255, .85);
+  font: inherit; font-size: 11px; cursor: pointer; white-space: nowrap;
+  transition: background .15s;
+}
+.fa-logout:hover { background: rgba(255, 255, 255, .12); }
+@media (min-width: 700px) {
+  .fa-topbar { padding-top: 18px; }
+  .fa-brand { font-size: 19px; }
+}
+
+/* 下線タブ */
+.fa-navtabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.fa-navtabs::-webkit-scrollbar { display: none; }
+.fa-navtab {
+  flex-shrink: 0; padding: 10px 16px;
+  border: none; border-bottom: 2px solid transparent; background: transparent;
+  color: rgba(255, 255, 255, .62);
+  font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.fa-navtab:hover { color: rgba(255, 255, 255, .9); }
+.fa-navtab.is-on { color: #fff; border-bottom-color: #fff; }
+@media (min-width: 700px) { .fa-navtab { padding: 11px 22px; font-size: 14px; } }
+
+/* ==================================================================
+   2. 見出し・戻るリンク
+   ================================================================== */
+.fa-back {
+  display: inline-block; font-size: 13px; color: var(--fa-matcha);
+  text-decoration: none; font-weight: 700;
+}
+.fa-back:hover { text-decoration: underline; }
+.fa-pagehead { margin: 12px 0 20px; }
+.fa-lead { margin-top: 4px; font-size: 13px; color: var(--fa-ink-2); line-height: 1.7; }
+.fa-subtitle {
+  margin: 20px 0 10px; font-size: 13px; font-weight: 700; color: var(--fa-matcha-deep);
+}
+.fa-subtitle:first-child { margin-top: 0; }
+
+/* ==================================================================
+   3. カレンダー
+   ================================================================== */
+.fa-cal {
+  background: var(--fa-card); border: 1px solid var(--fa-line);
+  border-radius: var(--fa-r); padding: 14px; box-shadow: var(--fa-shadow);
+}
+.fa-cal-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.fa-cal-month { font-size: 15px; font-weight: 700; color: var(--fa-ink); }
+.fa-cal-nav {
+  width: 34px; height: 34px; border: none; border-radius: 50%;
+  background: transparent; color: var(--fa-muted);
+  font: inherit; font-size: 20px; line-height: 1; cursor: pointer; transition: background .15s;
+}
+.fa-cal-nav:hover { background: var(--fa-matcha-soft); color: var(--fa-matcha-deep); }
+.fa-cal-week, .fa-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.fa-cal-week { text-align: center; margin-bottom: 4px; }
+.fa-cal-wd { padding: 2px 0; font-size: 11px; color: var(--fa-muted); }
+.fa-cal-wd.is-sun { color: var(--fa-rose-ink); }
+.fa-cal-wd.is-sat { color: var(--fa-sky-ink); }
+.fa-cal-grid { gap: 2px; }
+.fa-day {
+  position: relative; aspect-ratio: 1; min-height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; background: transparent;
+  color: var(--fa-ink-2); font: inherit; font-size: 13px;
+  cursor: default; transition: background .15s;
+}
+.fa-day.is-sun { color: var(--fa-rose-ink); }
+.fa-day.is-sat { color: var(--fa-sky-ink); }
+.fa-day.has-menu {
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  font-weight: 700; cursor: pointer;
+}
+.fa-day.has-menu:hover { filter: brightness(.97); }
+.fa-day.is-today { box-shadow: inset 0 0 0 1.5px var(--fa-matcha); }
+.fa-day.is-selected {
+  background: var(--fa-matcha-deep); color: #fff; font-weight: 700;
+}
+.fa-dot {
+  position: absolute; bottom: 4px;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--fa-matcha);
+}
+.fa-day.is-selected .fa-dot { background: #fff; }
+.fa-legend { display: flex; gap: 14px; margin-top: 10px; }
+.fa-legend-item {
+  display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--fa-muted);
+}
+.fa-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+@media (min-width: 700px) {
+  .fa-cal { padding: 18px; }
+  .fa-day { font-size: 14px; }
+}
+
+/* カレンダー＋献立の2カラム（PCのみ） */
+.fa-cal-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 1080px) {
+  .fa-cal-layout { grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
+}
+
+/* ==================================================================
+   4. リンクカード / 行
+   ================================================================== */
+.fa-link { display: block; text-decoration: none; color: inherit; }
+
+.fa-linkcard {
+  background: var(--fa-card); border: 1px solid var(--fa-line);
+  border-radius: var(--fa-r); padding: 14px 16px; box-shadow: var(--fa-shadow);
+  transition: border-color .15s, transform .15s;
+  height: 100%;
+}
+.fa-link:hover .fa-linkcard { border-color: var(--fa-matcha); transform: translateY(-2px); }
+.fa-linktitle { font-size: 15px; font-weight: 700; color: var(--fa-ink); }
+.fa-linktext {
+  margin-top: 6px; font-size: 13px; line-height: 1.7; color: var(--fa-ink-2);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.fa-more {
+  margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--fa-matcha);
+  text-align: right;
+}
+
+.fa-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; background: var(--fa-card);
+  border: 1px solid var(--fa-line); border-radius: var(--fa-r);
+  transition: border-color .15s;
+}
+.fa-link:hover .fa-row { border-color: var(--fa-matcha); }
+.fa-rowlabel { font-size: 14px; color: var(--fa-ink); }
+.fa-rowarrow { font-size: 13px; color: var(--fa-matcha); }
+.fa-rows { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media (min-width: 700px) { .fa-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ==================================================================
+   5. アレルゲンタイル
+   ================================================================== */
+.fa-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 700px) {
+  .fa-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+}
+@media (min-width: 1080px) {
+  .fa-tiles { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 16px; }
+}
+.fa-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  aspect-ratio: 1; padding: 8px;
+  border: 1.5px solid var(--fa-line); border-radius: 14px;
+  background: var(--fa-card);
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.fa-link:hover .fa-tile {
+  border-color: var(--fa-apricot); background: var(--fa-apricot-soft); transform: translateY(-2px);
+}
+.fa-tile-emoji { font-size: 30px; line-height: 1; }
+.fa-tile-label {
+  font-size: 12px; font-weight: 500; color: var(--fa-ink); text-align: center; line-height: 1.3;
+}
+
+/* ==================================================================
+   6. 予告・イベント
+   ================================================================== */
+.fa-notice {
+  padding: 14px 16px; border: 1px solid #F2D9B4; border-radius: var(--fa-r);
+  background: var(--fa-apricot-soft);
+}
+.fa-pill {
+  display: inline-block; margin-bottom: 6px; padding: 2px 10px; border-radius: 999px;
+  background: var(--fa-apricot); color: #fff; font-size: 10px; font-weight: 700;
+}
+.fa-notice-date { margin-bottom: 3px; font-size: 11px; font-weight: 700; color: var(--fa-apricot-ink); }
+.fa-notice-title { font-size: 14px; font-weight: 700; color: var(--fa-ink); }
+.fa-notice-body { margin-top: 6px; font-size: 12.5px; line-height: 1.75; color: var(--fa-ink-2); }
+
+.fa-event {
+  overflow: hidden; background: var(--fa-card);
+  border: 1px solid var(--fa-line); border-radius: var(--fa-r);
+  box-shadow: var(--fa-shadow);
+  display: flex; flex-direction: column;
+}
+.fa-event-photo { width: 100%; height: 140px; object-fit: cover; }
+.fa-event-photo--empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 100px; background: var(--fa-matcha-soft);
+  color: var(--fa-matcha); font-size: 12px;
+}
+.fa-event-body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }
+.fa-event-title { margin: 4px 0 6px; font-size: 14px; font-weight: 700; color: var(--fa-ink); }
+.fa-event-text { font-size: 12.5px; line-height: 1.75; color: var(--fa-ink-2); }
+.fa-event-foot { margin-top: auto; padding-top: 8px; }
+@media (min-width: 700px) { .fa-event-photo { height: 160px; } }
+
+.fa-like {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 0; border: none; background: none; font: inherit; cursor: pointer;
+}
+.fa-like-icon { font-size: 16px; }
+.fa-like-count { font-size: 12px; color: var(--fa-muted); }
+.fa-like.is-on .fa-like-count { color: var(--fa-rose-ink); }
+.fa-textlink {
+  display: block; margin-top: 8px; padding: 0;
+  border: none; background: none; font: inherit; font-size: 12px; font-weight: 700;
+  color: var(--fa-matcha); cursor: pointer; text-align: left;
+}
+.fa-textlink:hover { text-decoration: underline; }
+
+/* ==================================================================
+   7. レシピ
+   ================================================================== */
+.fa-recipe {
+  padding: 16px; border: 1px solid var(--fa-line); border-radius: var(--fa-r);
+  background: var(--fa-matcha-soft);
+}
+.fa-recipe-from { font-size: 11px; color: var(--fa-matcha-deep); opacity: .8; }
+.fa-recipe-title {
+  margin: 4px 0 12px; font-size: 15px; font-weight: 700; color: var(--fa-matcha-deep);
+}
+.fa-recipe-h {
+  margin-bottom: 4px; font-size: 11px; font-weight: 700; color: var(--fa-ink-2);
+}
+.fa-recipe-ing { margin-bottom: 12px; font-size: 12.5px; line-height: 1.9; color: var(--fa-ink); }
+.fa-recipe-steps {
+  padding: 12px 14px; border-radius: 12px; background: var(--fa-card);
+}
+.fa-recipe-steps p { font-size: 12.5px; line-height: 1.9; color: var(--fa-ink); white-space: pre-line; }
+
+/* ==================================================================
+   8. 準備中プレースホルダ
+   ================================================================== */
+.fa-soon { padding: 64px 16px; text-align: center; }
+.fa-soon-icon { font-size: 40px; margin-bottom: 12px; }
+.fa-soon-title { font-size: 15px; font-weight: 700; color: var(--fa-ink); margin-bottom: 8px; }
+.fa-soon-text { font-size: 13px; line-height: 1.8; color: var(--fa-muted); }
