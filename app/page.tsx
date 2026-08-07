@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/superbase'
 import { ALLERGENS, SCHOOL_ID, formatDate } from '@/lib/menu'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
