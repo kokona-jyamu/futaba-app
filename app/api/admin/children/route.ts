@@ -1,11 +1,11 @@
 /* app/api/admin/children/route.ts
  *
- * 園児の登録とアカウント発行。
+ * 園児の登録と保護者アカウントの発行。
  * secret キーを使うためサーバー側でのみ動く。
  *
- * 認可：Cookie のセッションから auth ユーザーを取得し、
- *       staff テーブルに載っている職員かどうかを確認する。
- *       共有シークレット方式は廃止した。
+ * 認可：Cookie のセッションからユーザーを取得し、
+ *       public.users の role が nutritionist / admin かを確認する。
+ *       （管理画面のログインと同じ判定方法に揃えている）
  */
 
 import { NextResponse } from 'next/server'
@@ -13,11 +13,11 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createSupabaseServer } from '@/lib/superbase/server'
 import { noToEmail, pinToPassword, generatePin, isValidPin } from '@/lib/guardian'
 
-const SCHOOL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
+const STAFF_ROLES = ['nutritionist', 'admin']
 
 /* ----------------------------------------------------------------
-   ログイン中のユーザーが自園の職員かどうかを確認する。
-   職員でなければ Response を投げるので、呼び出し側で catch する。
+   ログイン中のユーザーが職員かどうかを確認し、その school_id を返す。
+   職員でなければ Response を throw する。
    ---------------------------------------------------------------- */
 async function requireStaff() {
   const supabase = await createSupabaseServer()
@@ -27,19 +27,18 @@ async function requireStaff() {
     throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
   }
 
-  /* staff の確認は RLS を迂回して行う（本人以外の行も引けるようにするため） */
-  const { data: staff } = await supabaseAdmin
-    .from('staff')
-    .select('id, school_id')
+  /* RLS を迂回して確認する（自分の行しか読めない設定でも動くように） */
+  const { data: profile } = await supabaseAdmin
+    .from('users')
+    .select('id, role, school_id')
     .eq('id', user.id)
-    .eq('school_id', SCHOOL_ID)
     .maybeSingle()
 
-  if (!staff) {
+  if (!profile || !STAFF_ROLES.includes(profile.role)) {
     throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
   }
 
-  return staff
+  return profile
 }
 
 /* ================================================================
@@ -48,8 +47,9 @@ async function requireStaff() {
    返る pin は「この1回だけ」表示できる。DBに平文では残らない。
    ================================================================ */
 export async function POST(req: Request) {
+  let staff
   try {
-    await requireStaff()
+    staff = await requireStaff()
   } catch (res) {
     return res as NextResponse
   }
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
   /* 1. 園児を登録 */
   const { data: child, error: childErr } = await supabaseAdmin
     .from('children')
-    .insert({ school_id: SCHOOL_ID, login_no, name, class_name })
+    .insert({ school_id: staff.school_id, login_no, name, class_name })
     .select()
     .single()
 
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   const { error: gErr } = await supabaseAdmin.from('guardians').insert({
     id: created.user.id,
     child_id: child.id,
-    school_id: SCHOOL_ID,
+    school_id: staff.school_id,
     display_name: `${name}の保護者`,
   })
 
@@ -120,8 +120,9 @@ export async function POST(req: Request) {
    body: { child_id, pin? }
    ================================================================ */
 export async function PATCH(req: Request) {
+  let staff
   try {
-    await requireStaff()
+    staff = await requireStaff()
   } catch (res) {
     return res as NextResponse
   }
@@ -137,10 +138,12 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'PINは4桁の数字にしてください' }, { status: 400 })
   }
 
+  /* 他園の園児を操作できないよう school_id で絞る */
   const { data: child } = await supabaseAdmin
-    .from('children').select('id, login_no').eq('id', child_id).single()
+    .from('children').select('id, login_no')
+    .eq('id', child_id).eq('school_id', staff.school_id).maybeSingle()
   const { data: guardian } = await supabaseAdmin
-    .from('guardians').select('id').eq('child_id', child_id).single()
+    .from('guardians').select('id').eq('child_id', child_id).maybeSingle()
 
   if (!child || !guardian) {
     return NextResponse.json({ error: '対象が見つかりません' }, { status: 404 })
@@ -160,8 +163,9 @@ export async function PATCH(req: Request) {
    body: { child_id }
    ================================================================ */
 export async function DELETE(req: Request) {
+  let staff
   try {
-    await requireStaff()
+    staff = await requireStaff()
   } catch (res) {
     return res as NextResponse
   }
@@ -172,8 +176,16 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: 'child_id が必要です' }, { status: 400 })
   }
 
+  const { data: child } = await supabaseAdmin
+    .from('children').select('id')
+    .eq('id', child_id).eq('school_id', staff.school_id).maybeSingle()
+
+  if (!child) {
+    return NextResponse.json({ error: '対象が見つかりません' }, { status: 404 })
+  }
+
   const { data: guardian } = await supabaseAdmin
-    .from('guardians').select('id').eq('child_id', child_id).single()
+    .from('guardians').select('id').eq('child_id', child_id).maybeSingle()
 
   if (guardian) await supabaseAdmin.auth.admin.deleteUser(guardian.id)
   await supabaseAdmin.from('children').delete().eq('id', child_id)
