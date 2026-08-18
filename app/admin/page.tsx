@@ -227,10 +227,6 @@ export default function AdminPage() {
     fetchMessages()
   }
 
-  {activeTab === 'children' && (
-          <ChildrenPanel onNotify={notify} />
-  )}
-
   /* ---------------- 描画 ---------------- */
 
   return (
@@ -513,6 +509,10 @@ export default function AdminPage() {
               ))}
             </div>
           </section>
+        )}
+        {/* ---------- 園児・PIN ---------- */}
+        {activeTab === 'children' && (
+          <ChildrenPanel onNotify={notify} />
         )}
       </div>
     </main>
