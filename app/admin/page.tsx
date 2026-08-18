@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ALLERGENS, NUTRIENTS, SCHOOL_ID, emptyAllergens, num, formatDate, type Allergens } from '@/lib/menu'
 import AllergenPicker from '@/components/AllergenPicker'
+import ChildrenPanel from '@/components/ChildrenPanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -18,7 +19,7 @@ const emptyForm = () => ({
 type MenuForm = ReturnType<typeof emptyForm>
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'post' | 'edit' | 'messages'>('post')
+  const [activeTab, setActiveTab] = useState<'post' | 'edit' | 'messages' | 'children'>('post')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -226,6 +227,10 @@ export default function AdminPage() {
     fetchMessages()
   }
 
+  {activeTab === 'children' && (
+          <ChildrenPanel onNotify={notify} />
+  )}
+
   /* ---------------- 描画 ---------------- */
 
   return (
@@ -258,6 +263,13 @@ export default function AdminPage() {
           >
             <span className="fa-tab-icon">💬</span>質問に返信
             {messages.length > 0 && <span className="fa-badge">{messages.length}</span>}
+          </button>
+          <button
+            role="tab" aria-selected={activeTab === 'children'}
+            className={`fa-tab${activeTab === 'children' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('children')}
+          >
+            <span className="fa-tab-icon">👶</span>園児・PIN
           </button>
         </nav>
       </header>
