@@ -38,8 +38,10 @@ export default function Home() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 
-  useEffect(() => {
-    if (!localStorage.getItem('futaba_logged_in')) router.push('/login')
+useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.push('/login')
+    })
   }, [router])
 
   useEffect(() => {
@@ -92,9 +94,10 @@ export default function Home() {
             </div>
             <button
               className="fa-logout"
-              onClick={() => {
-                localStorage.removeItem('futaba_logged_in')
+              onClick={async () => {
+                await supabase.auth.signOut()
                 router.push('/login')
+                router.refresh()
               }}
             >
               ログアウト

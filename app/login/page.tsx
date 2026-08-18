@@ -1,95 +1,110 @@
+/* app/login/page.tsx — 保護者用ログイン（出席番号 + PIN） */
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { noToEmail, pinToPassword, isValidPin } from '@/lib/guardian'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [id, setId] = useState('')
-  const [pass, setPass] = useState('')
+  const [loginNo, setLoginNo] = useState('')
+  const [pin, setPin] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = () => {
-    if (!id.trim() || !pass.trim()) {
-      setError('IDとパスワードを入力してください')
+  const handleLogin = async () => {
+    if (!loginNo.trim()) {
+      setError('出席番号を入力してください。')
       return
     }
-    // デモ用：ID: futaba / PASS: 2026 でログイン
-    if (id === 'futaba' && pass === '2026') {
-      localStorage.setItem('futaba_logged_in', 'true')
-      router.push('/')
-    } else {
-      setError('IDまたはパスワードが正しくありません')
+    if (!isValidPin(pin)) {
+      setError('PINは4桁の数字です。')
+      return
     }
-  }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '12px 14px', fontSize: '15px',
-    border: '1px solid #e0e0e0', borderRadius: '10px',
-    outline: 'none', backgroundColor: '#fafafa',
-    marginBottom: '12px',
+    setLoading(true)
+    setError('')
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: noToEmail(loginNo),
+      password: pinToPassword(loginNo, pin),
+    })
+
+    setLoading(false)
+
+    if (authError) {
+      /* どちらが違うかは伝えない（総当たりの手掛かりになるため） */
+      setError('出席番号かPINが違うようです。お手元の用紙をご確認ください。')
+      setPin('')
+      return
+    }
+
+    /* 旧方式のフラグが残っていると混乱するので掃除しておく */
+    localStorage.removeItem('futaba_logged_in')
+    router.push('/')
+    router.refresh()
   }
 
   return (
-    <main style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', backgroundColor: '#f0f7f4',
-      padding: '1rem',
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '360px',
-        backgroundColor: '#fff', borderRadius: '20px',
-        padding: '40px 28px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-      }}>
-        {/* ロゴ */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🌱</div>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#085041' }}>
-            ふたば保育園
-          </h1>
-          <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            給食・食育ポータル
-          </p>
+    <main className="fa-page" style={{ maxWidth: 420 }}>
+      <div style={{ paddingTop: '8vh' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <p style={{ fontSize: 40, marginBottom: 8 }}>🌱</p>
+          <h1 className="fa-title">ふたば保育園</h1>
+          <p className="fa-lead">給食・食育ポータル</p>
         </div>
 
-        {/* フォーム */}
-        <input
-          type="text"
-          placeholder="ID"
-          value={id}
-          onChange={e => setId(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          type="password"
-          placeholder="パスワード"
-          value={pass}
-          onChange={e => setPass(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleLogin()}
-          style={inputStyle}
-        />
+        <section className="fa-card">
+          <label className="fa-label" htmlFor="login-no">出席番号</label>
+          <input
+            id="login-no"
+            type="text"
+            inputMode="numeric"
+            autoComplete="username"
+            value={loginNo}
+            onChange={(e) => setLoginNo(e.target.value)}
+            placeholder="例：12"
+            className="fa-input"
+          />
 
-        {error && (
-          <p style={{ fontSize: '13px', color: '#c00', marginBottom: '12px', textAlign: 'center' }}>
-            {error}
+          <label className="fa-label" htmlFor="pin">PIN（4桁）</label>
+          <input
+            id="pin"
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            autoComplete="current-password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
+            placeholder="••••"
+            className="fa-input"
+            style={{ letterSpacing: '.4em' }}
+          />
+
+          {error && (
+            <p className="fa-toast is-error" style={{ marginTop: 14, marginBottom: 0 }}>
+              {error}
+            </p>
+          )}
+
+          <div className="fa-actions" style={{ display: 'block' }}>
+            <button
+              onClick={handleLogin}
+              disabled={loading}
+              className="fa-btn fa-btn--primary"
+              style={{ width: '100%' }}
+            >
+              {loading ? 'ログイン中…' : 'ログイン'}
+            </button>
+          </div>
+
+          <p style={{ marginTop: 16, fontSize: 12, lineHeight: 1.8, color: 'var(--fa-muted)' }}>
+            出席番号とPINは園からお配りした用紙に記載されています。
+            分からなくなった場合は担任にお声がけください。
           </p>
-        )}
-
-        <button
-          onClick={handleLogin}
-          style={{
-            width: '100%', padding: '14px',
-            backgroundColor: '#085041', color: '#fff',
-            border: 'none', borderRadius: '10px',
-            fontSize: '15px', fontWeight: 'bold', cursor: 'pointer',
-          }}
-        >
-          ログイン
-        </button>
-
-        <p style={{ fontSize: '11px', color: '#bbb', textAlign: 'center', marginTop: '16px' }}>
-          ID・パスワードは園からお知らせします
-        </p>
+        </section>
       </div>
     </main>
   )
