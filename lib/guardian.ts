@@ -52,3 +52,5 @@ export type Guardian = {
 /** 園児名から表示用のイニシャルを作る（アイコン用） */
 export const initialOf = (name?: string | null) =>
   name?.trim().charAt(0) || '?'
+
+export { ALLERGENS, NUTRIENTS, formatDate, num } from '@/lib/menu'

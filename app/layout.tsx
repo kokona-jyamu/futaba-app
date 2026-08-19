@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import './styles/futaba.css';
 import './styles/futaba-parent.css';
-import './styles/futaba-admin.css' 
+import './styles/futaba-admin.css';
+import './styles/futaba-mypage.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

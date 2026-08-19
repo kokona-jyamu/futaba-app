@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { ALLERGENS, SCHOOL_ID, formatDate } from '@/lib/menu'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useGuardian } from '@/lib/useGuardian'
+import { initialOf } from '@/lib/guardian'
 
 type Menu = {
   id: string
@@ -37,6 +39,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
+  const { child } = useGuardian()
 
 useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -92,16 +95,12 @@ useEffect(() => {
               <p className="fa-brand">🌱 ふたば保育園</p>
               <p className="fa-brandsub">給食・食育ポータル</p>
             </div>
-            <button
-              className="fa-logout"
-              onClick={async () => {
-                await supabase.auth.signOut()
-                router.push('/login')
-                router.refresh()
-              }}
-            >
-              ログアウト
-            </button>
+            <Link href="/mypage" className="fa-avatarbtn">
+              <span className="fa-avatar">{initialOf(child?.name)}</span>
+              <span className="fa-avatarbtn-name">
+                {child?.name ?? 'マイページ'}
+              </span>
+            </Link>
           </div>
 
           <nav className="fa-navtabs" role="tablist">
