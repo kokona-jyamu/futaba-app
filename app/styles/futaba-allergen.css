@@ -1,0 +1,44 @@
+/* ==================================================================
+   futaba-app / アレルゲン絞り込みのスタイル
+   futaba-parent.css の後に読み込む
+   ================================================================== */
+
+/* 状態別のカード（左端の帯で区別する） */
+.fa-alg { border-left-width: 4px; height: 100%; }
+.fa-alg--safe     { border-left-color: var(--fa-matcha); }
+.fa-alg--contains { border-left-color: var(--fa-apricot); }
+.fa-alg--unknown  { border-left-color: var(--fa-muted); }
+
+.fa-algstate {
+  margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 700; display: inline-block;
+}
+.fa-algstate--safe {
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+}
+.fa-algstate--contains {
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+}
+.fa-algstate--unknown {
+  background: #F1F0EC; color: #74807A;
+}
+
+/* 該当したアレルゲンのタグを強調する */
+.fa-tag--hit {
+  background: var(--fa-apricot); color: #fff;
+  box-shadow: 0 0 0 2px var(--fa-apricot-soft);
+}
+
+/* 注意書き */
+.fa-warnbox {
+  margin-bottom: 24px; padding: 14px 16px;
+  border: 1px solid #F2D9B4; border-radius: var(--fa-r);
+  background: var(--fa-apricot-soft);
+}
+.fa-warntitle {
+  font-size: 12px; font-weight: 700; color: var(--fa-apricot-ink);
+  margin-bottom: 5px;
+}
+.fa-warntext {
+  font-size: 12px; line-height: 1.85; color: var(--fa-ink-2);
+}

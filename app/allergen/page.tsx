@@ -10,7 +10,7 @@ export default function AllergenIndexPage() {
 
       <div className="fa-pagehead">
         <h1 className="fa-title">🔍 アレルゲン別献立</h1>
-        <p className="fa-lead">気になるアレルゲンをタップすると、それを含む献立を絞り込めます。</p>
+        <p className="fa-lead">気になるアレルゲンをタップすると、それを使っていない献立を絞り込めます。</p>
       </div>
 
       <div className="fa-tiles">

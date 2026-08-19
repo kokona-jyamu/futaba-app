@@ -262,7 +262,7 @@ useEffect(() => {
           {activeTab === 'アレルゲン' && (
             <div>
               <p className="fa-lead" style={{ marginBottom: 16 }}>
-                気になるアレルゲンをタップすると、それを含む献立を絞り込めます。
+                気になるアレルゲンをタップすると、それを使っていない献立を絞り込めます。
               </p>
               <div className="fa-tiles">
                 {ALLERGENS.map((a) => (
