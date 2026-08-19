@@ -1,0 +1,66 @@
+/* ==================================================================
+   futaba-app / アレルゲン選択（28品目対応）のスタイル
+   futaba.css の後に読み込む
+   ================================================================== */
+
+/* グループ見出し */
+.fa-alggroup {
+  margin: 14px 0 8px; font-size: 11px; font-weight: 700;
+  color: var(--fa-ink-2); letter-spacing: .04em;
+}
+.fa-alggroup:first-child { margin-top: 0; }
+
+/* 28品目に増えるので、丸を少し小さくして折り返す */
+.fa-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fa-chip { width: 52px; height: 52px; }
+.fa-chip-emoji { font-size: 17px; }
+.fa-chip-label {
+  font-size: 8.5px; line-height: 1.1; text-align: center;
+  max-width: 46px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (min-width: 700px) {
+  .fa-chip { width: 58px; height: 58px; }
+  .fa-chip-emoji { font-size: 19px; }
+  .fa-chip-label { font-size: 9px; max-width: 52px; }
+}
+
+/* 展開ボタン */
+.fa-expand {
+  display: block; width: 100%; margin-top: 12px; padding: 9px 12px;
+  border: 1px dashed var(--fa-line); border-radius: 10px;
+  background: transparent; color: var(--fa-ink-2);
+  font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.fa-expand:hover {
+  border-color: var(--fa-matcha); color: var(--fa-matcha-deep);
+}
+
+/* 未確認の警告 */
+.fa-algwarn {
+  margin-bottom: 12px; padding: 9px 12px; border-radius: 10px;
+  background: #FFF6E8; color: var(--fa-apricot-ink);
+  font-size: 11.5px; line-height: 1.7; font-weight: 700;
+}
+
+/* 「該当なし」ボタン */
+.fa-algnonerow { margin-top: 14px; }
+.fa-algnonebtn {
+  width: 100%; padding: 12px;
+  border: 2px solid var(--fa-line); border-radius: 12px;
+  background: var(--fa-card); color: var(--fa-ink-2);
+  font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.fa-algnonebtn:hover { border-color: var(--fa-matcha); }
+.fa-algnonebtn.is-on {
+  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
+  color: var(--fa-matcha-deep);
+}
+
+/* 保護者画面：該当なし・未登録の表示 */
+.fa-algnone {
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  font-size: 12.5px; font-weight: 700;
+}
