@@ -111,3 +111,30 @@
 
   @page { size: A4; margin: 10mm; }
 }
+
+/* ==================================================================
+   futaba-app / 管理画面の一覧まわり（追記分）
+   futaba-admin.css の末尾に貼り足すか、別ファイルとして読み込む
+   ================================================================== */
+
+/* 一覧見出しの右に絞り込みを置く */
+.fa-listhead {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+}
+.fa-filter {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border: 1px solid var(--fa-line); border-radius: 999px;
+  background: var(--fa-card); color: var(--fa-ink-2);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.fa-filter:hover { border-color: var(--fa-matcha); }
+.fa-filter input { accent-color: var(--fa-matcha-deep); cursor: pointer; }
+
+/* 状態タグ */
+.fa-tag--unknown {
+  background: #F1F0EC; color: #74807A;
+}
+.fa-tag--none {
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+}

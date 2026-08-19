@@ -1,8 +1,10 @@
+/* app/admin/page.tsx */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ALLERGENS, NUTRIENTS, SCHOOL_ID, emptyAllergens, num, formatDate, type Allergens } from '@/lib/menu'
+import { NUTRIENTS, SCHOOL_ID, num, formatDate } from '@/lib/menu'
+import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
 
@@ -13,7 +15,8 @@ const emptyForm = () => ({
   nutritionist_comment: '',
   why_eat_note: '',
   kcal: '', carb: '', protein: '', fat: '', salt: '', calcium: '',
-  allergens: emptyAllergens(),
+  allergens: emptyAllergenState(),
+  allergen_checked: false,
 })
 
 type MenuForm = ReturnType<typeof emptyForm>
@@ -33,6 +36,7 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState<any>({})
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
+  const [onlyUnchecked, setOnlyUnchecked] = useState(false)
 
   const [messages, setMessages] = useState<any[]>([])
   const [replyBody, setReplyBody] = useState<{ [key: string]: string }>({})
@@ -68,6 +72,10 @@ export default function AdminPage() {
     setIsError(error)
   }
 
+  /* アレルギー未確認の献立 */
+  const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
+  const shownMenus = onlyUnchecked ? uncheckedMenus : allMenus
+
   /* ---------------- 投稿 ---------------- */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -92,12 +100,30 @@ export default function AdminPage() {
     return data.publicUrl
   }
 
+  /* 食材を1つでも選んだ時点で「確認済み」になる */
   const toggleAllergen = (key: string) =>
-    setForm((f) => ({ ...f, allergens: { ...f.allergens, [key]: !f.allergens[key] } }))
+    setForm((f) => ({
+      ...f,
+      allergens: { ...f.allergens, [key]: !f.allergens[key] },
+      allergen_checked: true,
+    }))
+
+  /* どれも使っていないことを明示する */
+  const declareNone = () =>
+    setForm((f) => ({
+      ...f,
+      allergens: emptyAllergenState(),
+      allergen_checked: true,
+    }))
 
   const handleSubmit = async () => {
     if (!form.served_date || !form.title) {
       notify('日付と献立名を入力してください。', true)
+      return
+    }
+
+    if (!form.allergen_checked) {
+      notify('アレルギーを確認してください。使っている食材を選ぶか「該当なし」を押してください。', true)
       return
     }
 
@@ -120,6 +146,7 @@ export default function AdminPage() {
       kcal: num(form.kcal), carb: num(form.carb), protein: num(form.protein),
       fat: num(form.fat), salt: num(form.salt), calcium: num(form.calcium),
       allergens: form.allergens,
+      allergen_checked: true,
       photo_url: photoUrl,
     })
 
@@ -141,7 +168,8 @@ export default function AdminPage() {
     setEditForm({
       ...menu,
       ingredient: menu.ingredient ?? '',
-      allergens: { ...emptyAllergens(), ...(menu.allergens || {}) },
+      allergens: { ...emptyAllergenState(), ...(menu.allergens || {}) },
+      allergen_checked: menu.allergen_checked ?? false,
     })
     setEditPhotoFile(null)
     setEditPhotoPreview(null)
@@ -155,7 +183,18 @@ export default function AdminPage() {
   }
 
   const toggleEditAllergen = (key: string) =>
-    setEditForm((f: any) => ({ ...f, allergens: { ...f.allergens, [key]: !f.allergens?.[key] } }))
+    setEditForm((f: any) => ({
+      ...f,
+      allergens: { ...f.allergens, [key]: !f.allergens?.[key] },
+      allergen_checked: true,
+    }))
+
+  const declareNoneEdit = () =>
+    setEditForm((f: any) => ({
+      ...f,
+      allergens: emptyAllergenState(),
+      allergen_checked: true,
+    }))
 
   const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -165,6 +204,11 @@ export default function AdminPage() {
   }
 
   const saveEdit = async () => {
+    if (!editForm.allergen_checked) {
+      notify('アレルギーを確認してください。使っている食材を選ぶか「該当なし」を押してください。', true)
+      return
+    }
+
     setLoading(true)
 
     let photoUrl = editForm.photo_url ?? null
@@ -183,6 +227,7 @@ export default function AdminPage() {
       kcal: num(editForm.kcal), carb: num(editForm.carb), protein: num(editForm.protein),
       fat: num(editForm.fat), salt: num(editForm.salt), calcium: num(editForm.calcium),
       allergens: editForm.allergens,
+      allergen_checked: true,
       photo_url: photoUrl,
     }
 
@@ -274,6 +319,26 @@ export default function AdminPage() {
         <p className={`fa-toast${isError ? ' is-error' : ''}`} role="status">{message}</p>
       )}
 
+      {/* アレルギー未確認の献立があれば知らせる */}
+      {uncheckedMenus.length > 0 && activeTab !== 'edit' && (
+        <div className="fa-warnbox" style={{ marginBottom: 18 }}>
+          <p className="fa-warntitle">
+            アレルギー情報が未確認の献立が{uncheckedMenus.length}件あります
+          </p>
+          <p className="fa-warntext">
+            保護者の絞り込み画面では「判断できません」と表示されます。
+            「献立を編集」から順に登録してください。
+          </p>
+          <button
+            onClick={() => { setActiveTab('edit'); setOnlyUnchecked(true) }}
+            className="fa-btn fa-btn--sky"
+            style={{ marginTop: 10, flex: '0 0 auto' }}
+          >
+            未確認の献立を見る
+          </button>
+        </div>
+      )}
+
       <div className="fa-panel-area">
 
         {/* ---------- 投稿 ---------- */}
@@ -335,9 +400,14 @@ export default function AdminPage() {
 
               <div className="fa-tint fa-tint--apricot">
                 <h2 className="fa-tinttitle fa-tinttitle--apricot">
-                  アレルギー<span className="fa-hint">タップで切り替え</span>
+                  アレルギー<span className="fa-req">必須</span>
                 </h2>
-                <AllergenPicker value={form.allergens} onToggle={toggleAllergen} />
+                <AllergenPicker
+                  value={form.allergens}
+                  onToggle={toggleAllergen}
+                  onDeclareNone={declareNone}
+                  checked={form.allergen_checked}
+                />
               </div>
 
               <label className="fa-label" htmlFor="nutritionist_comment">栄養士コメント</label>
@@ -364,16 +434,32 @@ export default function AdminPage() {
         {/* ---------- 編集 ---------- */}
         {activeTab === 'edit' && (
           <section>
-            <h2 className="fa-sectiontitle">投稿済みの献立</h2>
+            <div className="fa-listhead">
+              <h2 className="fa-sectiontitle" style={{ marginBottom: 0 }}>
+                投稿済みの献立
+              </h2>
+              {uncheckedMenus.length > 0 && (
+                <label className="fa-filter">
+                  <input
+                    type="checkbox"
+                    checked={onlyUnchecked}
+                    onChange={(e) => setOnlyUnchecked(e.target.checked)}
+                  />
+                  アレルギー未確認だけ（{uncheckedMenus.length}件）
+                </label>
+              )}
+            </div>
 
-            {allMenus.length === 0 && (
+            {shownMenus.length === 0 && (
               <p className="fa-empty">
-                まだ献立がありません。「献立を投稿」から最初の1件を追加してください。
+                {onlyUnchecked
+                  ? 'アレルギー未確認の献立はありません。'
+                  : 'まだ献立がありません。「献立を投稿」から最初の1件を追加してください。'}
               </p>
             )}
 
             <div className="fa-grid">
-              {allMenus.map((menu) => (
+              {shownMenus.map((menu) => (
                 <article key={menu.id}
                   className={`fa-card${editingId === menu.id ? ' fa-span-all' : ''}`}>
                   {editingId === menu.id ? (
@@ -431,8 +517,15 @@ export default function AdminPage() {
                           </div>
 
                           <div className="fa-tint fa-tint--apricot">
-                            <h3 className="fa-tinttitle fa-tinttitle--apricot">アレルギー</h3>
-                            <AllergenPicker value={editForm.allergens || {}} onToggle={toggleEditAllergen} />
+                            <h3 className="fa-tinttitle fa-tinttitle--apricot">
+                              アレルギー<span className="fa-req">必須</span>
+                            </h3>
+                            <AllergenPicker
+                              value={editForm.allergens || {}}
+                              onToggle={toggleEditAllergen}
+                              onDeclareNone={declareNoneEdit}
+                              checked={editForm.allergen_checked}
+                            />
                           </div>
 
                           <label className="fa-label">栄養士コメント</label>
@@ -459,11 +552,19 @@ export default function AdminPage() {
                       {menu.photo_url && <img src={menu.photo_url} alt="" className="fa-thumb" />}
                       <p className="fa-date">{formatDate(menu.served_date)}</p>
                       <p className="fa-menuname">{menu.title}</p>
+
                       <div className="fa-tagrow">
-                        {ALLERGENS.filter((a) => menu.allergens?.[a.key]).map((a) => (
-                          <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
-                        ))}
+                        {!menu.allergen_checked ? (
+                          <span className="fa-tag fa-tag--unknown">？ アレルギー未確認</span>
+                        ) : usedAllergens(menu.allergens).length === 0 ? (
+                          <span className="fa-tag fa-tag--none">✓ 該当なし</span>
+                        ) : (
+                          usedAllergens(menu.allergens).map((a) => (
+                            <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+                          ))
+                        )}
                       </div>
+
                       <div className="fa-btnrow">
                         <button onClick={() => startEdit(menu)} className="fa-btn fa-btn--sky">編集する</button>
                         <button onClick={() => deleteMenu(menu.id)} className="fa-btn fa-btn--rose">削除する</button>
@@ -510,6 +611,7 @@ export default function AdminPage() {
             </div>
           </section>
         )}
+
         {/* ---------- 園児・PIN ---------- */}
         {activeTab === 'children' && (
           <ChildrenPanel onNotify={notify} />
