@@ -100,7 +100,7 @@ export default async function AllergenMenuPage({ params }: Props) {
         </p>
       </div>
 
-      {/* 未確認：安全とは言えないので先に出す */}
+      {/* 未確認：安全とは言えないので先に出す
       {unknown.length > 0 && (
         <>
           <h2 className="fa-subtitle">
@@ -114,7 +114,7 @@ export default async function AllergenMenuPage({ params }: Props) {
             {unknown.map((m) => renderCard(m, 'unknown'))}
           </div>
         </>
-      )}
+      )} */}
 
       {/* 使っていない */}
       <h2 className="fa-subtitle">
