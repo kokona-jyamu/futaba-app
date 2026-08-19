@@ -1,9 +1,17 @@
-/* app/admin/page.tsx */
+/* app/admin/page.tsx
+ *
+ * RLS 対応版。menus / messages への書き込みはすべて
+ * /api/admin/menus と /api/admin/replies を経由する。
+ * 読み取りだけ supabase クライアントを直接使う。
+ */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { NUTRIENTS, SCHOOL_ID, num, formatDate, parseIngredients, formatIngredients } from '@/lib/menu'
+import {
+  NUTRIENTS, SCHOOL_ID, num, formatDate,
+  parseIngredients, formatIngredients,
+} from '@/lib/menu'
 import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
@@ -42,17 +50,21 @@ export default function AdminPage() {
   const [replyBody, setReplyBody] = useState<{ [key: string]: string }>({})
   const [replyingId, setReplyingId] = useState<string | null>(null)
 
+  const notify = (text: string, error = false) => {
+    setMessage(text)
+    setIsError(error)
+  }
+
   /* ---------------- データ取得 ---------------- */
 
+  /* 質問一覧は RLS を迂回する必要があるため API 経由 */
   const fetchMessages = useCallback(async () => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*, menus(title, served_date)')
-      .eq('is_nutritionist', false)
-      .order('created_at', { ascending: false })
-    if (data) setMessages(data)
+    const res = await fetch('/api/admin/replies')
+    const json = await res.json()
+    if (res.ok) setMessages(json.messages)
   }, [])
 
+  /* 献立の読み取りは RLS で許可されているので直接でよい */
   const fetchMenus = useCallback(async () => {
     const { data } = await supabase
       .from('menus')
@@ -67,26 +79,10 @@ export default function AdminPage() {
     fetchMenus()
   }, [fetchMessages, fetchMenus])
 
-  const notify = (text: string, error = false) => {
-    setMessage(text)
-    setIsError(error)
-  }
-
-  /* アレルギー未確認の献立 */
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const shownMenus = onlyUnchecked ? uncheckedMenus : allMenus
 
-  /* ---------------- 投稿 ---------------- */
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value })
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
-  }
+  /* ---------------- 写真 ---------------- */
 
   const uploadPhoto = async (file: File): Promise<string | null> => {
     const ext = file.name.split('.').pop()
@@ -100,7 +96,18 @@ export default function AdminPage() {
     return data.publicUrl
   }
 
-  /* 食材を1つでも選んだ時点で「確認済み」になる */
+  /* ---------------- 投稿 ---------------- */
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
   const toggleAllergen = (key: string) =>
     setForm((f) => ({
       ...f,
@@ -108,7 +115,6 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
-  /* どれも使っていないことを明示する */
   const declareNone = () =>
     setForm((f) => ({
       ...f,
@@ -121,7 +127,6 @@ export default function AdminPage() {
       notify('日付と献立名を入力してください。', true)
       return
     }
-
     if (!form.allergen_checked) {
       notify('アレルギーを確認してください。使っている食材を選ぶか「該当なし」を押してください。', true)
       return
@@ -136,23 +141,26 @@ export default function AdminPage() {
       if (!photoUrl) { setLoading(false); return }
     }
 
-    const { error } = await supabase.from('menus').insert({
-      school_id: SCHOOL_ID,
-      served_date: form.served_date,
-      title: form.title,
-      ingredients: parseIngredients(form.ingredient),
-      nutritionist_comment: form.nutritionist_comment,
-      why_eat_note: form.why_eat_note,
-      kcal: num(form.kcal), carb: num(form.carb), protein: num(form.protein),
-      fat: num(form.fat), salt: num(form.salt), calcium: num(form.calcium),
-      allergens: form.allergens,
-      allergen_checked: true,
-      photo_url: photoUrl,
+    const res = await fetch('/api/admin/menus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        served_date: form.served_date,
+        title: form.title,
+        ingredients: parseIngredients(form.ingredient),
+        nutritionist_comment: form.nutritionist_comment,
+        why_eat_note: form.why_eat_note,
+        kcal: num(form.kcal), carb: num(form.carb), protein: num(form.protein),
+        fat: num(form.fat), salt: num(form.salt), calcium: num(form.calcium),
+        allergens: form.allergens,
+        allergen_checked: true,
+        photo_url: photoUrl,
+      }),
     })
-
+    const json = await res.json()
     setLoading(false)
 
-    if (error) { notify('保存できませんでした。' + error.message, true); return }
+    if (!res.ok) { notify('保存できませんでした。' + json.error, true); return }
 
     notify('献立を公開しました。')
     setForm(emptyForm())
@@ -218,33 +226,45 @@ export default function AdminPage() {
       photoUrl = uploaded
     }
 
-    const patch = {
-      served_date: editForm.served_date,
-      title: editForm.title,
-      ingredients: parseIngredients(editForm.ingredient),
-      nutritionist_comment: editForm.nutritionist_comment,
-      why_eat_note: editForm.why_eat_note,
-      kcal: num(editForm.kcal), carb: num(editForm.carb), protein: num(editForm.protein),
-      fat: num(editForm.fat), salt: num(editForm.salt), calcium: num(editForm.calcium),
-      allergens: editForm.allergens,
-      allergen_checked: true,
-      photo_url: photoUrl,
-    }
-
-    const { error } = await supabase.from('menus').update(patch).eq('id', editingId)
+    const res = await fetch('/api/admin/menus', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingId,
+        served_date: editForm.served_date,
+        title: editForm.title,
+        ingredients: parseIngredients(editForm.ingredient ?? ''),
+        nutritionist_comment: editForm.nutritionist_comment,
+        why_eat_note: editForm.why_eat_note,
+        kcal: num(editForm.kcal), carb: num(editForm.carb), protein: num(editForm.protein),
+        fat: num(editForm.fat), salt: num(editForm.salt), calcium: num(editForm.calcium),
+        allergens: editForm.allergens,
+        allergen_checked: true,
+        photo_url: photoUrl,
+      }),
+    })
+    const json = await res.json()
     setLoading(false)
 
-    if (error) { notify('保存できませんでした。' + error.message, true); return }
+    if (!res.ok) { notify('保存できませんでした。' + json.error, true); return }
 
-    setAllMenus((prev) => prev.map((m) => (m.id === editingId ? { ...m, ...patch } : m)))
+    setAllMenus((prev) => prev.map((m) => (m.id === editingId ? json.menu : m)))
     notify('献立を更新しました。')
     cancelEdit()
   }
 
   const deleteMenu = async (id: string) => {
     if (!confirm('この献立を削除します。元に戻せません。')) return
-    const { error } = await supabase.from('menus').delete().eq('id', id)
-    if (error) { notify('削除できませんでした。' + error.message, true); return }
+
+    const res = await fetch('/api/admin/menus', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    const json = await res.json()
+
+    if (!res.ok) { notify('削除できませんでした。' + json.error, true); return }
+
     setAllMenus((prev) => prev.filter((m) => m.id !== id))
     notify('献立を削除しました。')
   }
@@ -256,16 +276,15 @@ export default function AdminPage() {
     if (!body?.trim()) return
 
     setReplyingId(messageId)
-    const { error } = await supabase.from('messages').insert({
-      menu_id: menuId,
-      body: body.trim(),
-      sender_name: '栄養士',
-      is_nutritionist: true,
-      is_public: true,
+    const res = await fetch('/api/admin/replies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ menu_id: menuId, body: body.trim() }),
     })
+    const json = await res.json()
     setReplyingId(null)
 
-    if (error) { notify('返信を送れませんでした。' + error.message, true); return }
+    if (!res.ok) { notify('返信を送れませんでした。' + json.error, true); return }
 
     setReplyBody({ ...replyBody, [messageId]: '' })
     notify('返信を送りました。')
@@ -279,7 +298,7 @@ export default function AdminPage() {
       <header className="fa-head">
         <div>
           <p className="fa-eyebrow">栄養士専用</p>
-          <h1 className="fa-title">給食管理</h1>
+          <h1 className="fa-title">きゅうしょく管理</h1>
         </div>
         <nav className="fa-tabs" role="tablist">
           <button
@@ -319,7 +338,6 @@ export default function AdminPage() {
         <p className={`fa-toast${isError ? ' is-error' : ''}`} role="status">{message}</p>
       )}
 
-      {/* アレルギー未確認の献立があれば知らせる */}
       {uncheckedMenus.length > 0 && activeTab !== 'edit' && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
@@ -345,7 +363,7 @@ export default function AdminPage() {
         {activeTab === 'post' && (
           <div className="fa-cols">
             <section className="fa-card">
-              <h2 className="fa-cardtitle">本日の献立</h2>
+              <h2 className="fa-cardtitle">きょうの献立</h2>
 
               <label className="fa-label" htmlFor="served_date">
                 日付 <span className="fa-req">必須</span>
@@ -479,6 +497,7 @@ export default function AdminPage() {
                           <label className="fa-label">主な食材</label>
                           <textarea value={editForm.ingredient || ''} rows={2}
                             onChange={(e) => setEditForm({ ...editForm, ingredient: e.target.value })}
+                            placeholder="読点か改行で区切ってください"
                             className="fa-input fa-textarea" />
 
                           <label className="fa-label">写真</label>
