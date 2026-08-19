@@ -41,3 +41,16 @@ export const formatDate = (d?: string) =>
         weekday: 'short',
       })
     : ''
+
+/** テキスト入力を配列にする（改行・カンマ・読点で区切る） */
+export const parseIngredients = (text: string): string[] | null => {
+  const list = text
+    .split(/[\n,、]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return list.length > 0 ? list : null
+}
+
+/** 配列を入力欄に戻す（読点区切り） */
+export const formatIngredients = (list?: string[] | null): string =>
+  Array.isArray(list) ? list.join('、') : ''

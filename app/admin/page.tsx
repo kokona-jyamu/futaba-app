@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { NUTRIENTS, SCHOOL_ID, num, formatDate } from '@/lib/menu'
+import { NUTRIENTS, SCHOOL_ID, num, formatDate, parseIngredients, formatIngredients } from '@/lib/menu'
 import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
@@ -140,7 +140,7 @@ export default function AdminPage() {
       school_id: SCHOOL_ID,
       served_date: form.served_date,
       title: form.title,
-      ingredient: form.ingredient || null,
+      ingredients: parseIngredients(form.ingredient),
       nutritionist_comment: form.nutritionist_comment,
       why_eat_note: form.why_eat_note,
       kcal: num(form.kcal), carb: num(form.carb), protein: num(form.protein),
@@ -167,7 +167,7 @@ export default function AdminPage() {
     setEditingId(menu.id)
     setEditForm({
       ...menu,
-      ingredient: menu.ingredient ?? '',
+      ingredient: formatIngredients(menu.ingredients),
       allergens: { ...emptyAllergenState(), ...(menu.allergens || {}) },
       allergen_checked: menu.allergen_checked ?? false,
     })
@@ -221,7 +221,7 @@ export default function AdminPage() {
     const patch = {
       served_date: editForm.served_date,
       title: editForm.title,
-      ingredient: editForm.ingredient || null,
+      ingredients: parseIngredients(editForm.ingredient),
       nutritionist_comment: editForm.nutritionist_comment,
       why_eat_note: editForm.why_eat_note,
       kcal: num(editForm.kcal), carb: num(editForm.carb), protein: num(editForm.protein),
@@ -279,7 +279,7 @@ export default function AdminPage() {
       <header className="fa-head">
         <div>
           <p className="fa-eyebrow">栄養士専用</p>
-          <h1 className="fa-title">きゅうしょく管理</h1>
+          <h1 className="fa-title">給食管理</h1>
         </div>
         <nav className="fa-tabs" role="tablist">
           <button
@@ -345,7 +345,7 @@ export default function AdminPage() {
         {activeTab === 'post' && (
           <div className="fa-cols">
             <section className="fa-card">
-              <h2 className="fa-cardtitle">きょうの献立</h2>
+              <h2 className="fa-cardtitle">本日の献立</h2>
 
               <label className="fa-label" htmlFor="served_date">
                 日付 <span className="fa-req">必須</span>
@@ -362,7 +362,7 @@ export default function AdminPage() {
               <label className="fa-label" htmlFor="ingredient">主な食材</label>
               <textarea id="ingredient" name="ingredient" value={form.ingredient}
                 onChange={handleChange} rows={2}
-                placeholder="例：さば、みそ、しょうが、にんじん、だいこん"
+                placeholder="さば、みそ、しょうが、にんじん（読点か改行で区切ってください）"
                 className="fa-input fa-textarea" />
 
               <label className="fa-label">写真</label>
