@@ -141,12 +141,26 @@ export default function MyPage() {
     )
   }
 
-  if (!guardian || !child) {
+if (!guardian || !child) {
     return (
       <main className="fa-page">
-        <p className="fa-empty">
-          保護者アカウントの情報が見つかりません。園にお問い合わせください。
-        </p>
+        <section className="fa-card" style={{ maxWidth: 480, marginTop: '10vh' }}>
+          <h1 className="fa-cardtitle">別のアカウントでログイン中です</h1>
+          <p className="fa-note" style={{ marginTop: 10 }}>
+            このページは保護者の方向けです。栄養士・園担当者の方は管理画面をご利用ください。
+            保護者としてご覧になる場合は、いったんログアウトしてください。
+          </p>
+          <div className="fa-btnrow">
+            <Link href="/admin" className="fa-link" style={{ flex: 1 }}>
+              <button className="fa-btn fa-btn--sky" style={{ width: '100%' }}>
+                管理画面へ
+              </button>
+            </Link>
+            <button onClick={handleLogout} className="fa-btn fa-btn--ghost">
+              ログアウト
+            </button>
+          </div>
+        </section>
       </main>
     )
   }
@@ -169,11 +183,11 @@ export default function MyPage() {
 
       <nav className="fa-tabs fa-tabs--5" role="tablist">
         {([
-          ['child', '👶', 'えんじ'],
+          ['child', '👶', '園児'],
           ['allergy', '⚠️', 'アレルギー'],
-          ['favorites', '⭐', 'おきにいり'],
-          ['questions', '💬', 'しつもん'],
-          ['settings', '⚙️', 'せってい'],
+          ['favorites', '⭐', 'お気に入り'],
+          ['questions', '💬', '質問'],
+          ['settings', '⚙️', '設定'],
         ] as const).map(([key, icon, label]) => (
           <button
             key={key}
