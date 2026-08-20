@@ -1,13 +1,21 @@
-import { supabase } from '@/lib/supabase'
+/* app/menu/[id]/page.tsx
+ *
+ * サーバーコンポーネント。
+ * RLS を有効にすると、ブラウザ用クライアントではセッションが渡らず
+ * 献立を取得できなくなるため、createSupabaseServer を使う。
+ */
+
 import Link from 'next/link'
+import { createSupabaseServer } from '@/lib/superbase/server'
+import { formatDate, formatIngredients } from '@/lib/menu'
+import { REQUIRED_ALLERGENS, OPTIONAL_ALLERGENS, usedAllergens } from '@/lib/allergens'
 import MessageSection from '@/components/MessageSection'
 
-type Props = {
-  params: Promise<{ id: string }>
-}
+type Props = { params: Promise<{ id: string }> }
 
 export default async function MenuDetail({ params }: Props) {
   const { id } = await params
+  const supabase = await createSupabaseServer()
 
   const { data: menu, error } = await supabase
     .from('menus')
@@ -17,125 +25,124 @@ export default async function MenuDetail({ params }: Props) {
 
   if (error || !menu) {
     return (
-      <main style={{ padding: '1rem' }}>
-        <p>献立が見つかりませんでした</p>
-        <Link href="/">← 一覧に戻る</Link>
+      <main className="fa-page">
+        <p className="fa-empty">献立が見つかりませんでした。</p>
+        <Link href="/" className="fa-back">← 一覧に戻る</Link>
       </main>
     )
   }
 
+  const used = usedAllergens(menu.allergens)
+  const ingredients = formatIngredients(menu.ingredients)
+
   return (
-    <main style={{ maxWidth: '480px', margin: '0 auto', padding: '1rem' }}>
+    <main className="fa-page" style={{ maxWidth: 720 }}>
+      <Link href="/" className="fa-back">← 給食だよりに戻る</Link>
 
-      <Link href="/" style={{ fontSize: '13px', color: '#1D9E75' }}>
-        ← 一覧に戻る
-      </Link>
-
-      <p style={{ fontSize: '12px', color: '#888', marginTop: '12px' }}>
-        {new Date(menu.served_date).toLocaleDateString('ja-JP', {
-          year: 'numeric', month: 'long', day: 'numeric'
-        })}
-      </p>
-
-      <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1a1a1a', margin: '6px 0 16px' }}>
-        {menu.title}
-      </h1>
+      <div className="fa-pagehead">
+        <p className="fa-date">{formatDate(menu.served_date)}</p>
+        <h1 className="fa-title" style={{ marginTop: 4 }}>{menu.title}</h1>
+      </div>
 
       {menu.photo_url ? (
         <img
           src={menu.photo_url}
           alt={menu.title}
-          style={{ width: '100%', borderRadius: '12px', marginBottom: '16px', objectFit: 'cover', height: '200px' }}
+          style={{
+            width: '100%', maxHeight: 320, objectFit: 'cover',
+            borderRadius: 'var(--fa-r)', marginBottom: 20,
+          }}
         />
       ) : (
-        <div style={{
-          width: '100%', height: '160px', borderRadius: '12px',
-          backgroundColor: '#f0f7f4', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-          marginBottom: '16px', color: '#9FE1CB', fontSize: '14px'
-        }}>
+        <div className="fa-event-photo--empty" style={{ borderRadius: 'var(--fa-r)', marginBottom: 20 }}>
           🍽 写真準備中
         </div>
       )}
 
-      <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
-        <div style={{ backgroundColor: '#085041', padding: '8px 14px' }}>
-          <p style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>栄養価</p>
-        </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <tbody>
-            {[
-              { label: 'エネルギー', value: menu.kcal,    unit: 'kcal' },
-              { label: '炭水化物',   value: menu.carb,    unit: 'g' },
-              { label: 'タンパク質', value: menu.protein, unit: 'g' },
-              { label: '脂質',       value: menu.fat,     unit: 'g' },
-              { label: '食塩相当量', value: menu.salt,    unit: 'g' },
-              { label: 'カルシウム', value: menu.calcium, unit: 'mg' },
-            ].map((row, i) => (
-              <tr key={row.label} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                <td style={{ padding: '8px 14px', color: '#555', borderBottom: '1px solid #f0f0f0' }}>{row.label}</td>
-                <td style={{ padding: '8px 14px', textAlign: 'right', color: '#1a1a1a', fontWeight: '500', borderBottom: '1px solid #f0f0f0' }}>
-                  {row.value ?? '—'} {row.unit}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* アレルギー */}
+      <section className="fa-card" style={{ marginBottom: 16 }}>
+        <h2 className="fa-cardtitle">アレルギー情報</h2>
 
-      <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
-        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>
-          ⚠️ アレルギー情報（特定原材料8品目）
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {[
-            { key: 'egg',       label: '卵',     emoji: '🥚' },
-            { key: 'milk',      label: '乳',     emoji: '🥛' },
-            { key: 'wheat',     label: '小麦',   emoji: '🌾' },
-            { key: 'buckwheat', label: 'そば',   emoji: '🍜' },
-            { key: 'peanut',    label: '落花生', emoji: '🥜' },
-            { key: 'shrimp',    label: 'えび',   emoji: '🦐' },
-            { key: 'crab',      label: 'かに',   emoji: '🦀' },
-            { key: 'walnut',    label: 'くるみ', emoji: '🌰' },
-            { key: 'cashew',    label: 'カシュー'},
-          ].map(a => {
-            const allergens = menu.allergens as { [key: string]: boolean } | null
-            const active = allergens?.[a.key] === true
-            return (
-              <div key={a.key} style={{
-                width: '48px', height: '48px', borderRadius: '50%',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                backgroundColor: active ? '#FFF0E6' : '#f0f0f0',
-                border: `2px solid ${active ? '#BA7517' : '#e0e0e0'}`,
-                opacity: active ? 1 : 0.4,
-              }}>
-                <span style={{ fontSize: '18px' }}>{a.emoji}</span>
-                <span style={{ fontSize: '9px', color: active ? '#BA7517' : '#999', fontWeight: active ? 'bold' : 'normal', marginTop: '1px' }}>
-                  {a.label}
+        {!menu.allergen_checked ? (
+          <p className="fa-algnone" style={{ marginTop: 12, background: '#F1F0EC', color: '#74807A' }}>
+            ？ まだ登録されていません。園にお問い合わせください。
+          </p>
+        ) : used.length === 0 ? (
+          <p className="fa-algnone" style={{ marginTop: 12 }}>
+            ✓ 表示対象の食材は使っていません
+          </p>
+        ) : (
+          <>
+            <div className="fa-chips" style={{ marginTop: 12 }}>
+              {used.map((a) => (
+                <span key={a.key} className="fa-chip is-on">
+                  <span className="fa-chip-emoji">{a.emoji}</span>
+                  <span className="fa-chip-label">{a.label}</span>
                 </span>
-              </div>
-            )
-          })}
+              ))}
+            </div>
+            <p className="fa-note" style={{ marginTop: 10 }}>
+              上記のほかは使用していません。調味料や加工品に含まれる微量の成分については、
+              気になる場合は園にご確認ください。
+            </p>
+          </>
+        )}
+      </section>
+
+      {/* 主な食材 */}
+      {ingredients && (
+        <section className="fa-card" style={{ marginBottom: 16 }}>
+          <h2 className="fa-cardtitle">主な食材</h2>
+          <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.9, color: 'var(--fa-ink)' }}>
+            {ingredients}
+          </p>
+        </section>
+      )}
+
+      {/* 栄養価 */}
+      <section className="fa-card" style={{ marginBottom: 16 }}>
+        <h2 className="fa-cardtitle">栄養価</h2>
+        <div className="fa-nutri" style={{ marginTop: 12 }}>
+          {[
+            { label: 'エネルギー', value: menu.kcal,    unit: 'kcal' },
+            { label: '炭水化物',   value: menu.carb,    unit: 'g' },
+            { label: 'タンパク質', value: menu.protein, unit: 'g' },
+            { label: '脂質',       value: menu.fat,     unit: 'g' },
+            { label: '食塩相当量', value: menu.salt,    unit: 'g' },
+            { label: 'カルシウム', value: menu.calcium, unit: 'mg' },
+          ].map((n) => (
+            <div key={n.label} className="fa-nutricell">
+              <p className="fa-nutrilabel">{n.label}</p>
+              <p className="fa-nutrivalue">
+                {n.value ?? '—'}
+                <span className="fa-nutriunit">{n.unit}</span>
+              </p>
+            </div>
+          ))}
         </div>
-        <p style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>
-          色付きの項目が含まれています。グレーは不使用。
-        </p>
-      </div>
+      </section>
 
-      <div style={{ backgroundColor: '#f0f7f4', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
-        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#085041', marginBottom: '6px' }}>🌿 栄養士より</p>
-        <p style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{menu.nutritionist_comment}</p>
-      </div>
+      {/* 栄養士コメント */}
+      {menu.nutritionist_comment && (
+        <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
+          <h2 className="fa-tinttitle">🌿 栄養士より</h2>
+          <p style={{ fontSize: 14, lineHeight: 1.85, color: 'var(--fa-ink)' }}>
+            {menu.nutritionist_comment}
+          </p>
+        </div>
+      )}
 
-      <div style={{ backgroundColor: '#fff8f0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
-        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#BA7517', marginBottom: '6px' }}>🍴 今日の食べっぷり</p>
-        <p style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{menu.why_eat_note}</p>
-      </div>
+      {/* 食べっぷり */}
+      {menu.why_eat_note && (
+        <div className="fa-tint fa-tint--apricot" style={{ marginBottom: 16 }}>
+          <h2 className="fa-tinttitle fa-tinttitle--apricot">🍴 今日の食べっぷり</h2>
+          <p style={{ fontSize: 14, lineHeight: 1.85, color: 'var(--fa-ink)' }}>
+            {menu.why_eat_note}
+          </p>
+        </div>
+      )}
 
-      {/* メッセージセクション */}
       <MessageSection menuId={menu.id} />
-
     </main>
   )
 }

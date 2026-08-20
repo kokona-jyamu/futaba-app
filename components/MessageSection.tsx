@@ -1,7 +1,13 @@
+/* components/MessageSection.tsx
+ *
+ * 献立への質問と、お気に入り登録。
+ * RLS 対応のため、質問には必ず guardian_id を入れる。
+ */
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useGuardian } from '@/lib/useGuardian'
 
 type Message = {
   id: string
@@ -9,148 +15,167 @@ type Message = {
   sender_name: string
   is_nutritionist: boolean
   created_at: string
+  guardian_id: string | null
 }
 
-type Props = {
-  menuId: string
-}
-
-export default function MessageSection({ menuId }: Props) {
+export default function MessageSection({ menuId }: { menuId: string }) {
+  const { guardian, child } = useGuardian()
   const [messages, setMessages] = useState<Message[]>([])
-  const [body, setBody] = useState('')
-  const [senderName, setSenderName] = useState('')
+  const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
+  const [isFavorite, setIsFavorite] = useState(false)
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('menu_id', menuId)
-        .order('created_at', { ascending: true })
-      if (data) setMessages(data)
-    }
-    fetchMessages()
+  /* ---------------- 質問の取得 ---------------- */
+
+  const fetchMessages = useCallback(async () => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('menu_id', menuId)
+      .order('created_at', { ascending: true })
+    if (data) setMessages(data)
   }, [menuId])
 
-  const handleSend = async () => {
-    if (!body.trim()) return
-    setSending(true)
+  useEffect(() => { fetchMessages() }, [fetchMessages])
 
-    const { error } = await supabase.from('messages').insert({
+  /* ---------------- お気に入り ---------------- */
+
+  useEffect(() => {
+    if (!guardian) return
+    const check = async () => {
+      const { data } = await supabase
+        .from('favorites')
+        .select('menu_id')
+        .eq('guardian_id', guardian.id)
+        .eq('menu_id', menuId)
+        .maybeSingle()
+      setIsFavorite(!!data)
+    }
+    check()
+  }, [guardian, menuId])
+
+  const toggleFavorite = async () => {
+    if (!guardian) return
+    const next = !isFavorite
+    setIsFavorite(next)
+
+    const { error: favError } = next
+      ? await supabase.from('favorites')
+          .insert({ guardian_id: guardian.id, menu_id: menuId })
+      : await supabase.from('favorites')
+          .delete()
+          .eq('guardian_id', guardian.id)
+          .eq('menu_id', menuId)
+
+    if (favError) setIsFavorite(!next)
+  }
+
+  /* ---------------- 送信 ---------------- */
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || !guardian) return
+
+    setSending(true)
+    setError('')
+
+    const { error: sendError } = await supabase.from('messages').insert({
       menu_id: menuId,
-      body: body.trim(),
-      sender_name: senderName.trim() || '保護者',
+      body: newMessage.trim(),
+      /* 誰から届いたか分かるようにする。栄養士側の一覧に出る名前 */
+      sender_name: child?.name ? `${child.name}の保護者` : '保護者',
+      guardian_id: guardian.id,
       is_nutritionist: false,
       is_public: true,
     })
 
     setSending(false)
-    if (!error) {
-      setBody('')
-      setSent(true)
-      setTimeout(() => setSent(false), 3000)
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('menu_id', menuId)
-        .order('created_at', { ascending: true })
-      if (data) setMessages(data)
+
+    if (sendError) {
+      setError('送信できませんでした。時間をおいてお試しください。')
+      return
     }
+
+    setNewMessage('')
+    fetchMessages()
   }
 
   return (
-    <div style={{ border: '1px solid #e0e0e0', borderRadius: '12px', padding: '14px', marginBottom: '32px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#333', marginBottom: '12px' }}>
-        💬 栄養士への質問・コメント
-      </p>
+    <section style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
 
-      {/* メッセージ一覧 */}
-      {messages.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: msg.is_nutritionist ? 'flex-start' : 'flex-end',
-              }}
-            >
-              <span style={{ fontSize: '10px', color: '#999', marginBottom: '2px' }}>
-                {msg.is_nutritionist ? '🌿 栄養士より' : `👤 ${msg.sender_name}`}
-              </span>
-              <div style={{
-                padding: '10px 12px',
-                borderRadius: '12px',
-                borderBottomLeftRadius: msg.is_nutritionist ? '4px' : '12px',
-                borderBottomRightRadius: msg.is_nutritionist ? '12px' : '4px',
-                backgroundColor: msg.is_nutritionist ? '#E1F5EE' : '#E6F1FB',
-                color: msg.is_nutritionist ? '#085041' : '#0C447C',
-                fontSize: '13px',
-                lineHeight: '1.6',
-                maxWidth: '85%',
-              }}>
-                {msg.body}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {messages.length === 0 && (
-        <p style={{ fontSize: '12px', color: '#bbb', marginBottom: '14px', textAlign: 'center' }}>
-          まだコメントはありません。気軽に質問してください！
-        </p>
-      )}
-
-      {/* 入力フォーム */}
-      <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '12px' }}>
-        <input
-          type="text"
-          value={senderName}
-          onChange={e => setSenderName(e.target.value)}
-          placeholder="お名前（任意）"
-          style={{
-            width: '100%', padding: '8px 12px', fontSize: '13px',
-            border: '1px solid #e0e0e0', borderRadius: '8px',
-            marginBottom: '8px', outline: 'none',
-          }}
-        />
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-          <textarea
-            value={body}
-            onChange={e => setBody(e.target.value)}
-            placeholder="質問やコメントを入力..."
-            rows={2}
-            style={{
-              flex: 1, padding: '8px 12px', fontSize: '13px',
-              border: '1px solid #e0e0e0', borderRadius: '8px',
-              resize: 'none', outline: 'none',
-            }}
-          />
+      {/* お気に入り */}
+      {guardian && (
+        <div style={{ marginBottom: 20 }}>
           <button
-            onClick={handleSend}
-            disabled={sending || !body.trim()}
-            style={{
-              padding: '10px 14px',
-              backgroundColor: sending || !body.trim() ? '#ccc' : '#085041',
-              color: '#fff', border: 'none', borderRadius: '8px',
-              fontSize: '13px', fontWeight: 'bold',
-              cursor: sending || !body.trim() ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap',
-            }}
+            onClick={toggleFavorite}
+            className={`fa-fav${isFavorite ? ' is-on' : ''}`}
+            aria-pressed={isFavorite}
           >
-            {sending ? '送信中' : '送信'}
+            <span className="fa-fav-icon">{isFavorite ? '⭐' : '☆'}</span>
+            {isFavorite ? 'お気に入りに登録ずみ' : 'お気に入りに登録する'}
           </button>
         </div>
-        {sent && (
-          <p style={{ fontSize: '12px', color: '#1D9E75', marginTop: '8px' }}>
-            ✓ 送信しました！栄養士からの返信をお待ちください。
+      )}
+
+      <h2 className="fa-sectiontitle">💬 栄養士さんに聞いてみる</h2>
+
+      {messages.length > 0 && (
+        <div className="fa-thread">
+          {messages.map((msg) => {
+            const mine = !!guardian && msg.guardian_id === guardian.id
+            return (
+              <div
+                key={msg.id}
+                className={`fa-msg${msg.is_nutritionist ? ' fa-msg--staff' : mine ? ' fa-msg--mine' : ''}`}
+              >
+                <p className="fa-sender">
+                  {msg.is_nutritionist
+                    ? `🌿 ${msg.sender_name}`
+                    : mine
+                      ? 'わたしの質問'
+                      : `👤 ${msg.sender_name}`}
+                </p>
+                <p className="fa-body">{msg.body}</p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {guardian ? (
+        <div style={{ marginTop: 16 }}>
+          <textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="質問や感想を書いてください"
+            rows={3}
+            className="fa-input fa-textarea"
+          />
+
+          {error && (
+            <p className="fa-toast is-error" style={{ marginTop: 10, marginBottom: 0 }}>
+              {error}
+            </p>
+          )}
+
+          <button
+            onClick={handleSend}
+            disabled={sending || !newMessage.trim()}
+            className="fa-btn fa-btn--primary"
+            style={{ width: '100%', marginTop: 10 }}
+          >
+            {sending ? '送信中…' : '送信する'}
+          </button>
+
+          <p className="fa-note" style={{ marginTop: 10 }}>
+            送った質問と栄養士さんからの返信は、マイページの「しつもん」からも確認できます。
           </p>
-        )}
-      </div>
-    </div>
+        </div>
+      ) : (
+        <p className="fa-empty" style={{ marginTop: 16 }}>
+          質問を送るにはログインが必要です。
+        </p>
+      )}
+    </section>
   )
 }

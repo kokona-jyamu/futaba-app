@@ -1,0 +1,47 @@
+/* ==================================================================
+   futaba-app / 献立詳細・質問スレッドのスタイル
+   futaba-parent.css の後に読み込む
+   ================================================================== */
+
+/* 栄養価のセル */
+.fa-nutricell {
+  padding: 10px 8px; border-radius: 10px;
+  background: var(--fa-matcha-soft); text-align: center;
+}
+.fa-nutrilabel {
+  font-size: 10.5px; font-weight: 700; color: var(--fa-matcha-deep); opacity: .8;
+}
+.fa-nutrivalue {
+  margin-top: 3px; font-size: 17px; font-weight: 700; color: var(--fa-matcha-deep);
+}
+.fa-nutriunit {
+  margin-left: 2px; font-size: 10px; font-weight: 500; opacity: .75;
+}
+
+/* 質問スレッド */
+.fa-thread {
+  display: flex; flex-direction: column; gap: 10px; margin-top: 14px;
+}
+.fa-msg {
+  align-self: flex-start; max-width: 85%;
+  padding: 11px 14px; border-radius: 14px 14px 14px 4px;
+  background: #F4F3EF;
+}
+.fa-msg--mine {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--fa-matcha-soft);
+}
+.fa-msg--staff {
+  align-self: flex-start;
+  background: var(--fa-sky-soft);
+}
+.fa-msg .fa-sender {
+  font-size: 11px; font-weight: 700; color: var(--fa-muted); margin-bottom: 4px;
+}
+.fa-msg--mine .fa-sender { color: var(--fa-matcha-deep); }
+.fa-msg--staff .fa-sender { color: var(--fa-sky-ink); }
+.fa-msg .fa-body {
+  font-size: 13.5px; line-height: 1.75; color: var(--fa-ink);
+}
+.fa-msg--staff .fa-body { color: #33587E; }

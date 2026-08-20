@@ -2,26 +2,23 @@
  *
  * 「そのアレルゲンを使っていない献立」を探すためのページ。
  *
- * 重要：単純に allergens[key] !== true で絞ると、
- *       栄養士が入力し忘れた献立まで「使っていない」側に入ってしまう。
- *       未入力は必ず「未確認」として区別する。
+ * 重要：allergen_checked が false の献立は「登録されていない」ため、
+ *       使っているかどうか判断できない。安全側に寄せて一覧から外し、
+ *       件数と日付だけを別枠で知らせる。
  */
 
-import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { ALLERGENS, formatDate } from '@/lib/menu'
+import { createSupabaseServer } from '@/lib/superbase/server'
+import { formatDate } from '@/lib/menu'
+import { STANDARD_ALLERGENS, usedAllergens } from '@/lib/allergens'
 
 type Props = { params: Promise<{ key: string }> }
 
-/** アレルギー欄が1つでも登録されているか（未入力の判定） */
-const isChecked = (allergens: unknown) =>
-  !!allergens &&
-  typeof allergens === 'object' &&
-  Object.keys(allergens as object).length > 0
-
 export default async function AllergenMenuPage({ params }: Props) {
   const { key } = await params
-  const allergen = ALLERGENS.find((a) => a.key === key)
+  const supabase = await createSupabaseServer()
+
+  const allergen = STANDARD_ALLERGENS.find((a) => a.key === key)
 
   if (!allergen) {
     return (
@@ -39,13 +36,13 @@ export default async function AllergenMenuPage({ params }: Props) {
 
   const all = menus ?? []
 
-  /* 3つに分ける */
-  const safe = all.filter((m) => isChecked(m.allergens) && m.allergens[key] !== true)
-  const contains = all.filter((m) => isChecked(m.allergens) && m.allergens[key] === true)
-  const unknown = all.filter((m) => !isChecked(m.allergens))
+  /* 確認済みのものだけを2つに分け、未確認は別枠で知らせる */
+  const safe = all.filter((m) => m.allergen_checked && m.allergens?.[key] !== true)
+  const contains = all.filter((m) => m.allergen_checked && m.allergens?.[key] === true)
+  const unknown = all.filter((m) => !m.allergen_checked)
 
-  const renderCard = (menu: any, state: 'safe' | 'contains' | 'unknown') => {
-    const used = ALLERGENS.filter((a) => menu.allergens?.[a.key] === true)
+  const renderCard = (menu: any, state: 'safe' | 'contains') => {
+    const used = usedAllergens(menu.allergens)
 
     return (
       <Link key={menu.id} href={`/menu/${menu.id}`} className="fa-link">
@@ -54,9 +51,9 @@ export default async function AllergenMenuPage({ params }: Props) {
           <p className="fa-menuname">{menu.title}</p>
 
           <p className={`fa-algstate fa-algstate--${state}`}>
-            {state === 'safe' && `✓ ${allergen.label}は使っていません`}
-            {state === 'contains' && `⚠️ ${allergen.label}を使っています`}
-            {/* {state === 'unknown' && '？ アレルギー情報が未登録です'} */}
+            {state === 'safe'
+              ? `✓ ${allergen.label}は使っていません`
+              : `⚠️ ${allergen.label}を使っています`}
           </p>
 
           {used.length > 0 && (
@@ -100,23 +97,7 @@ export default async function AllergenMenuPage({ params }: Props) {
         </p>
       </div>
 
-      未確認：安全とは言えないので先に出す
-      {unknown.length > 0 && (
-        <>
-          <h2 className="fa-subtitle">
-            ？ アレルギー情報が未登録の献立（{unknown.length}件）
-          </h2>
-          <p className="fa-note" style={{ marginBottom: 12 }}>
-            登録がないため、{allergen.label}を使っているかどうか判断できません。
-            園にお問い合わせください。
-          </p>
-          <div className="fa-grid">
-            {unknown.map((m) => renderCard(m, 'unknown'))}
-          </div>
-        </>
-      )}
-
-      {/* 使っていない */}
+      {/* 使っていない献立 */}
       <h2 className="fa-subtitle">
         ✓ {allergen.label}を使っていない献立（{safe.length}件）
       </h2>
@@ -128,7 +109,21 @@ export default async function AllergenMenuPage({ params }: Props) {
         <div className="fa-grid">{safe.map((m) => renderCard(m, 'safe'))}</div>
       )}
 
-      {/* 使っている */}
+      {/* 未確認：カードは出さず、日付だけ知らせる */}
+      {unknown.length > 0 && (
+        <div className="fa-warnbox" style={{ marginTop: 24 }}>
+          <p className="fa-warntitle">
+            アレルギー情報が未登録の献立が{unknown.length}件あります
+          </p>
+          <p className="fa-warntext">
+            {unknown.map((m) => formatDate(m.served_date)).join('、')}
+            の献立は、{allergen.label}を使っているかどうか登録されていません。
+            上の一覧には含まれていないため、園にご確認ください。
+          </p>
+        </div>
+      )}
+
+      {/* 使っている献立 */}
       {contains.length > 0 && (
         <>
           <h2 className="fa-subtitle">

@@ -7,6 +7,7 @@ import './styles/futaba-admin.css';
 import './styles/futaba-mypage.css';
 import './styles/futaba-allergen.css';
 import './styles/futaba-allergen2.css';
+import './styles/futaba-menu.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
