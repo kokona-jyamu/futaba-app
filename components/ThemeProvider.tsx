@@ -16,6 +16,11 @@ import { applyTheme, loadThemeLocal, saveThemeLocal, type ThemeKey } from '@/lib
 
 export default function ThemeProvider() {
   useEffect(() => {
+    /* 管理画面ではテーマを適用しない（保護者の設定が混ざるため） */
+    if (window.location.pathname.startsWith('/admin')) {
+      applyTheme('matcha')
+      return
+    }
     /* 1. 端末に控えてある色をすぐ当てる */
     applyTheme(loadThemeLocal())
 
