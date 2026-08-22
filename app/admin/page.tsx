@@ -15,6 +15,7 @@ import {
 import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
+import MenuPicker from '@/components/MenuPicker'
 
 const emptyForm = () => ({
   served_date: '',
@@ -38,6 +39,7 @@ export default function AdminPage() {
   const [form, setForm] = useState<MenuForm>(emptyForm())
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [copiedFrom, setCopiedFrom] = useState<string | null>(null)
 
   const [allMenus, setAllMenus] = useState<any[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -122,6 +124,36 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
+  /* 過去の献立から栄養価とアレルゲンを引き継ぐ。
+     写真とコメント類はその日ごとに入れ直す。 */
+  const copyFromMenu = (menu: any) => {
+    const today = new Date()
+    const todayStr =
+      `${today.getFullYear()}-` +
+      `${String(today.getMonth() + 1).padStart(2, '0')}-` +
+      `${String(today.getDate()).padStart(2, '0')}`
+
+    setForm({
+      served_date: todayStr,
+      title: menu.title ?? '',
+      ingredient: formatIngredients(menu.ingredients),
+      nutritionist_comment: '',
+      why_eat_note: '',
+      kcal: menu.kcal?.toString() ?? '',
+      carb: menu.carb?.toString() ?? '',
+      protein: menu.protein?.toString() ?? '',
+      fat: menu.fat?.toString() ?? '',
+      salt: menu.salt?.toString() ?? '',
+      calcium: menu.calcium?.toString() ?? '',
+      allergens: { ...emptyAllergenState(), ...(menu.allergens || {}) },
+      allergen_checked: menu.allergen_checked ?? false,
+    })
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setCopiedFrom(menu.title)
+    setMessage('')
+  }
+
   const handleSubmit = async () => {
     if (!form.served_date || !form.title) {
       notify('日付と献立名を入力してください。', true)
@@ -166,6 +198,7 @@ export default function AdminPage() {
     setForm(emptyForm())
     setPhotoFile(null)
     setPhotoPreview(null)
+    setCopiedFrom(null)
     fetchMenus()
   }
 
@@ -361,92 +394,103 @@ export default function AdminPage() {
 
         {/* ---------- 投稿 ---------- */}
         {activeTab === 'post' && (
-          <div className="fa-cols">
-            <section className="fa-card">
-              <h2 className="fa-cardtitle">きょうの献立</h2>
+          <>
+            <MenuPicker menus={allMenus} onPick={copyFromMenu} />
 
-              <label className="fa-label" htmlFor="served_date">
-                日付 <span className="fa-req">必須</span>
-              </label>
-              <input id="served_date" type="date" name="served_date"
-                value={form.served_date} onChange={handleChange} className="fa-input" />
+            {copiedFrom && (
+              <p className="fa-copied">
+                「{copiedFrom}」から栄養価とアレルギーを引き継ぎました。
+                日付を確認し、写真とコメントを入力してください。
+              </p>
+            )}
 
-              <label className="fa-label" htmlFor="title">
-                献立名 <span className="fa-req">必須</span>
-              </label>
-              <input id="title" type="text" name="title" value={form.title}
-                onChange={handleChange} placeholder="例：さばの味噌煮定食" className="fa-input" />
+            <div className="fa-cols">
+              <section className="fa-card">
+                <h2 className="fa-cardtitle">きょうの献立</h2>
 
-              <label className="fa-label" htmlFor="ingredient">主な食材</label>
-              <textarea id="ingredient" name="ingredient" value={form.ingredient}
-                onChange={handleChange} rows={2}
-                placeholder="さば、みそ、しょうが、にんじん（読点か改行で区切ってください）"
-                className="fa-input fa-textarea" />
+                <label className="fa-label" htmlFor="served_date">
+                  日付 <span className="fa-req">必須</span>
+                </label>
+                <input id="served_date" type="date" name="served_date"
+                  value={form.served_date} onChange={handleChange} className="fa-input" />
 
-              <label className="fa-label">写真</label>
-              <div className="fa-drop" onClick={() => document.getElementById('photo-input')?.click()}>
-                {photoPreview ? (
-                  <img src={photoPreview} alt="選んだ写真" className="fa-preview" />
-                ) : (
-                  <div className="fa-drop-empty">
-                    <span className="fa-drop-icon">📷</span>
-                    <span className="fa-drop-text">タップして写真を選ぶ</span>
-                    <span className="fa-drop-sub">JPG・PNG</span>
-                  </div>
-                )}
-              </div>
-              <input id="photo-input" type="file" accept="image/*" onChange={handlePhotoChange} hidden />
-            </section>
+                <label className="fa-label" htmlFor="title">
+                  献立名 <span className="fa-req">必須</span>
+                </label>
+                <input id="title" type="text" name="title" value={form.title}
+                  onChange={handleChange} placeholder="例：さばの味噌煮定食" className="fa-input" />
 
-            <section className="fa-card">
-              <div className="fa-tint fa-tint--green">
-                <h2 className="fa-tinttitle">栄養価</h2>
-                <div className="fa-nutri">
-                  {NUTRIENTS.map((f) => (
-                    <div key={f.name}>
-                      <label className="fa-mini" htmlFor={`post-${f.name}`}>
-                        {f.label}<span className="fa-unit">{f.unit}</span>
-                      </label>
-                      <input id={`post-${f.name}`} type="number" inputMode="decimal"
-                        name={f.name} value={form[f.name as keyof MenuForm] as string}
-                        onChange={handleChange} placeholder="0"
-                        className="fa-input fa-input--sm" />
+                <label className="fa-label" htmlFor="ingredient">主な食材</label>
+                <textarea id="ingredient" name="ingredient" value={form.ingredient}
+                  onChange={handleChange} rows={2}
+                  placeholder="さば、みそ、しょうが、にんじん（読点か改行で区切ってください）"
+                  className="fa-input fa-textarea" />
+
+                <label className="fa-label">写真</label>
+                <div className="fa-drop" onClick={() => document.getElementById('photo-input')?.click()}>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="選んだ写真" className="fa-preview" />
+                  ) : (
+                    <div className="fa-drop-empty">
+                      <span className="fa-drop-icon">📷</span>
+                      <span className="fa-drop-text">タップして写真を選ぶ</span>
+                      <span className="fa-drop-sub">JPG・PNG</span>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
+                <input id="photo-input" type="file" accept="image/*" onChange={handlePhotoChange} hidden />
+              </section>
 
-              <div className="fa-tint fa-tint--apricot">
-                <h2 className="fa-tinttitle fa-tinttitle--apricot">
-                  アレルギー<span className="fa-req">必須</span>
-                </h2>
-                <AllergenPicker
-                  value={form.allergens}
-                  onToggle={toggleAllergen}
-                  onDeclareNone={declareNone}
-                  checked={form.allergen_checked}
-                />
-              </div>
+              <section className="fa-card">
+                <div className="fa-tint fa-tint--green">
+                  <h2 className="fa-tinttitle">栄養価</h2>
+                  <div className="fa-nutri">
+                    {NUTRIENTS.map((f) => (
+                      <div key={f.name}>
+                        <label className="fa-mini" htmlFor={`post-${f.name}`}>
+                          {f.label}<span className="fa-unit">{f.unit}</span>
+                        </label>
+                        <input id={`post-${f.name}`} type="number" inputMode="decimal"
+                          name={f.name} value={form[f.name as keyof MenuForm] as string}
+                          onChange={handleChange} placeholder="0"
+                          className="fa-input fa-input--sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-              <label className="fa-label" htmlFor="nutritionist_comment">栄養士コメント</label>
-              <textarea id="nutritionist_comment" name="nutritionist_comment"
-                value={form.nutritionist_comment} onChange={handleChange} rows={3}
-                placeholder="今日の給食のポイントを書いてください"
-                className="fa-input fa-textarea" />
+                <div className="fa-tint fa-tint--apricot">
+                  <h2 className="fa-tinttitle fa-tinttitle--apricot">
+                    アレルギー<span className="fa-req">必須</span>
+                  </h2>
+                  <AllergenPicker
+                    value={form.allergens}
+                    onToggle={toggleAllergen}
+                    onDeclareNone={declareNone}
+                    checked={form.allergen_checked}
+                  />
+                </div>
 
-              <label className="fa-label" htmlFor="why_eat_note">今日の食べっぷり</label>
-              <textarea id="why_eat_note" name="why_eat_note"
-                value={form.why_eat_note} onChange={handleChange} rows={3}
-                placeholder="子どもたちの様子を書いてください"
-                className="fa-input fa-textarea" />
+                <label className="fa-label" htmlFor="nutritionist_comment">栄養士コメント</label>
+                <textarea id="nutritionist_comment" name="nutritionist_comment"
+                  value={form.nutritionist_comment} onChange={handleChange} rows={3}
+                  placeholder="今日の給食のポイントを書いてください"
+                  className="fa-input fa-textarea" />
 
-              <div className="fa-actions">
-                <button onClick={handleSubmit} disabled={loading} className="fa-btn fa-btn--primary">
-                  {loading ? '保存中…' : '献立を公開する'}
-                </button>
-              </div>
-            </section>
-          </div>
+                <label className="fa-label" htmlFor="why_eat_note">今日の食べっぷり</label>
+                <textarea id="why_eat_note" name="why_eat_note"
+                  value={form.why_eat_note} onChange={handleChange} rows={3}
+                  placeholder="子どもたちの様子を書いてください"
+                  className="fa-input fa-textarea" />
+
+                <div className="fa-actions">
+                  <button onClick={handleSubmit} disabled={loading} className="fa-btn fa-btn--primary">
+                    {loading ? '保存中…' : '献立を公開する'}
+                  </button>
+                </div>
+              </section>
+            </div>
+          </>
         )}
 
         {/* ---------- 編集 ---------- */}
