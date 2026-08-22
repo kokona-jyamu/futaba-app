@@ -222,3 +222,77 @@
 }
 .fa-bubble--reply .fa-sender { color: var(--fa-matcha-deep); }
 .fa-bubble--reply .fa-body { color: var(--fa-ink); }
+
+/* ==================================================================
+   futaba-app / 月間一括登録・今日の下書き
+   futaba-admin.css の末尾に貼り足す
+   ================================================================== */
+
+/* ------------------------------------------------------------------
+   読み取り結果の一覧
+   ------------------------------------------------------------------ */
+.fa-bulklist {
+  display: flex; flex-direction: column;
+  max-height: 420px; overflow-y: auto;
+  margin-top: 12px;
+  border: 0.5px solid var(--fa-line); border-radius: 12px;
+}
+.fa-bulkrow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 56px minmax(0, 1.1fr);
+  align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--fa-line);
+  font-size: 12.5px;
+}
+.fa-bulkrow:last-child { border-bottom: none; }
+.fa-bulkrow.is-error { background: var(--fa-rose-soft); }
+
+.fa-bulkdate { font-weight: 700; color: var(--fa-matcha); font-size: 11.5px; }
+.fa-bulkrow.is-error .fa-bulkdate { color: var(--fa-rose-ink); }
+.fa-bulktitle {
+  font-weight: 700; color: var(--fa-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fa-bulkkcal { text-align: right; color: var(--fa-muted); font-size: 11.5px; }
+.fa-bulkalg { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.fa-tag--err {
+  background: var(--fa-rose-soft); color: var(--fa-rose-ink);
+}
+.fa-tag--plain {
+  background: #F1F0EC; color: #6B7772;
+}
+
+@media (max-width: 700px) {
+  .fa-bulkrow { grid-template-columns: 78px minmax(0, 1fr); }
+  .fa-bulkkcal { display: none; }
+  .fa-bulkalg { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------------------
+   今日の下書き
+   ------------------------------------------------------------------ */
+.fa-todaycard {
+  margin-bottom: 20px; padding: 18px 20px;
+  border: 2px solid var(--fa-matcha); border-radius: var(--fa-r);
+  background: var(--fa-card); box-shadow: var(--fa-shadow);
+}
+@media (min-width: 700px) { .fa-todaycard { padding: 22px 24px; } }
+
+.fa-todayhead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.fa-todaylabel {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px; font-weight: 700; color: var(--fa-matcha);
+}
+.fa-draftbadge {
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+  font-size: 10.5px; font-weight: 700;
+}
+.fa-todaytitle {
+  margin-top: 5px; font-size: 19px; font-weight: 700; color: var(--fa-ink);
+}
