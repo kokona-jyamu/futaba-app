@@ -65,14 +65,11 @@ export default function AdminPage() {
     if (res.ok) setMessages(json.messages)
   }, [])
 
-  /* 献立の読み取りは RLS で許可されているので直接でよい */
+  /* 下書きを含めるため API 経由で取得する */
   const fetchMenus = useCallback(async () => {
-    const { data } = await supabase
-      .from('menus')
-      .select('*')
-      .eq('school_id', SCHOOL_ID)
-      .order('served_date', { ascending: false })
-    if (data) setAllMenus(data)
+    const res = await fetch('/api/admin/menus/list')
+    const json = await res.json()
+    if (res.ok) setAllMenus(json.menus)
   }, [])
 
   useEffect(() => {
