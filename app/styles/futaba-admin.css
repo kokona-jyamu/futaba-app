@@ -203,3 +203,22 @@
   background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
   font-size: 12.5px; line-height: 1.7; font-weight: 700;
 }
+
+/* ==================================================================
+   futaba-app / 質問の未回答・回答済み表示
+   futaba-admin.css の末尾に貼り足す
+   ================================================================== */
+
+/* 吹き出しの時刻 */
+.fa-msgtime {
+  margin-left: 8px; font-weight: 500; opacity: .7; font-size: 10.5px;
+}
+
+/* 栄養士の返信（管理画面側） */
+.fa-bubble--reply {
+  margin-top: 8px; padding: 12px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--fa-matcha-soft);
+}
+.fa-bubble--reply .fa-sender { color: var(--fa-matcha-deep); }
+.fa-bubble--reply .fa-body { color: var(--fa-ink); }
