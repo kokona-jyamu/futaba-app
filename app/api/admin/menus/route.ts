@@ -99,6 +99,26 @@ export async function PATCH(req: Request) {
   const id = String(body?.id ?? '')
   if (!id) return NextResponse.json({ error: 'id が必要です' }, { status: 400 })
 
+  /* 公開だけ、あるいはコメントと写真だけを更新する場合 */
+  if (body.partial === true) {
+    const patch: Record<string, unknown> = {}
+    if (body.nutritionist_comment !== undefined) patch.nutritionist_comment = body.nutritionist_comment
+    if (body.why_eat_note !== undefined) patch.why_eat_note = body.why_eat_note
+    if (body.photo_url !== undefined) patch.photo_url = body.photo_url
+    if (body.is_published !== undefined) patch.is_published = body.is_published
+
+    const { data, error } = await supabaseAdmin
+      .from('menus')
+      .update(patch)
+      .eq('id', id)
+      .eq('school_id', staff.school_id)
+      .select()
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ menu: data })
+  }
+  
   if (body.allergen_checked !== true) {
     return NextResponse.json(
       { error: 'アレルギーの確認が済んでいません' },
