@@ -16,6 +16,7 @@ import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
 import MenuPicker from '@/components/MenuPicker'
+import MessagesPanel from '@/components/MessagesPanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -49,8 +50,6 @@ export default function AdminPage() {
   const [onlyUnchecked, setOnlyUnchecked] = useState(false)
 
   const [messages, setMessages] = useState<any[]>([])
-  const [replyBody, setReplyBody] = useState<{ [key: string]: string }>({})
-  const [replyingId, setReplyingId] = useState<string | null>(null)
 
   const notify = (text: string, error = false) => {
     setMessage(text)
@@ -83,6 +82,9 @@ export default function AdminPage() {
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const shownMenus = onlyUnchecked ? uncheckedMenus : allMenus
+
+  /* まだ返信していない質問の数 */
+  const openCount = messages.filter((m: any) => (m.replies?.length ?? 0) === 0).length
 
   /* ---------------- 写真 ---------------- */
 
@@ -304,24 +306,27 @@ export default function AdminPage() {
 
   /* ---------------- 返信 ---------------- */
 
-  const handleReply = async (menuId: string, messageId: string) => {
-    const body = replyBody[messageId]
-    if (!body?.trim()) return
-
-    setReplyingId(messageId)
+  /* 成功したら true を返す。入力欄のクリアは MessagesPanel 側で行う。 */
+  const handleReply = async (
+    menuId: string,
+    questionId: string,
+    body: string
+  ): Promise<boolean> => {
     const res = await fetch('/api/admin/replies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ menu_id: menuId, body: body.trim() }),
+      body: JSON.stringify({ menu_id: menuId, question_id: questionId, body }),
     })
     const json = await res.json()
-    setReplyingId(null)
 
-    if (!res.ok) { notify('返信を送れませんでした。' + json.error, true); return }
+    if (!res.ok) {
+      notify('返信を送れませんでした。' + json.error, true)
+      return false
+    }
 
-    setReplyBody({ ...replyBody, [messageId]: '' })
     notify('返信を送りました。')
     fetchMessages()
+    return true
   }
 
   /* ---------------- 描画 ---------------- */
@@ -355,7 +360,7 @@ export default function AdminPage() {
             onClick={() => setActiveTab('messages')}
           >
             <span className="fa-tab-icon">💬</span>質問に返信
-            {messages.length > 0 && <span className="fa-badge">{messages.length}</span>}
+            {openCount > 0 && <span className="fa-badge">{openCount}</span>}
           </button>
           <button
             role="tab" aria-selected={activeTab === 'children'}
@@ -642,37 +647,7 @@ export default function AdminPage() {
 
         {/* ---------- 返信 ---------- */}
         {activeTab === 'messages' && (
-          <section>
-            <h2 className="fa-sectiontitle">保護者からの質問</h2>
-
-            {messages.length === 0 && (
-              <p className="fa-empty">まだ質問はありません。届くとここに並びます。</p>
-            )}
-
-            <div className="fa-grid fa-grid--2">
-              {messages.map((msg) => (
-                <article key={msg.id} className="fa-card">
-                  <p className="fa-date">
-                    {formatDate(msg.menus?.served_date)}　{msg.menus?.title}
-                  </p>
-                  <div className="fa-bubble">
-                    <p className="fa-sender">👤 {msg.sender_name}</p>
-                    <p className="fa-body">{msg.body}</p>
-                  </div>
-                  <div className="fa-replyrow">
-                    <textarea value={replyBody[msg.id] || ''} rows={2}
-                      onChange={(e) => setReplyBody({ ...replyBody, [msg.id]: e.target.value })}
-                      placeholder="返信を入力…" className="fa-input fa-textarea" />
-                    <button onClick={() => handleReply(msg.menu_id, msg.id)}
-                      disabled={!replyBody[msg.id]?.trim() || replyingId === msg.id}
-                      className="fa-btn fa-btn--primary fa-btn--send">
-                      {replyingId === msg.id ? '送信中…' : '返信する'}
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+          <MessagesPanel messages={messages} onReply={handleReply} />
         )}
 
         {/* ---------- 園児・PIN ---------- */}
