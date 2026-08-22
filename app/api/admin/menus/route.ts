@@ -48,6 +48,7 @@ function pickMenuFields(body: any) {
     allergens: body.allergens ?? {},
     allergen_checked: body.allergen_checked === true,
     photo_url: body.photo_url ?? null,
+    is_published: body.is_published !== false,
   }
 }
 
