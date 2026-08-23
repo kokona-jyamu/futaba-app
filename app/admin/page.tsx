@@ -18,6 +18,7 @@ import ChildrenPanel from '@/components/ChildrenPanel'
 import MenuPicker from '@/components/MenuPicker'
 import MessagesPanel from '@/components/MessagesPanel'
 import MenuBulkPanel from '@/components/MenuBulkPanel'
+import MenuPrintPanel from '@/components/MenuPrintPanel'
 import TodayDraft from '@/components/TodayDraft'
 
 const emptyForm = () => ({
@@ -41,7 +42,7 @@ const todayStr = () => {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'post' | 'bulk' | 'edit' | 'messages' | 'children'>('post')
+    useState<'post' | 'bulk' | 'edit' | 'print' | 'messages' | 'children'>('post')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -380,12 +381,12 @@ export default function AdminPage() {
 
   return (
     <main className="fa-page">
-      <header className="fa-head">
+      <header className="fa-head fa-noprint">
         <div>
           <p className="fa-eyebrow">栄養士専用</p>
-          <h1 className="fa-title">きゅうしょく管理</h1>
+          <h1 className="fa-title">給食管理</h1>
         </div>
-        <nav className="fa-tabs fa-tabs--5" role="tablist">
+        <nav className="fa-tabs fa-tabs--6" role="tablist">
           <button
             role="tab" aria-selected={activeTab === 'post'}
             className={`fa-tab${activeTab === 'post' ? ' is-on' : ''}`}
@@ -409,6 +410,13 @@ export default function AdminPage() {
             {draftMenus.length > 0 && <span className="fa-badge">{draftMenus.length}</span>}
           </button>
           <button
+            role="tab" aria-selected={activeTab === 'print'}
+            className={`fa-tab${activeTab === 'print' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('print')}
+          >
+            <span className="fa-tab-icon">🖨️</span>献立表
+          </button>
+          <button
             role="tab" aria-selected={activeTab === 'messages'}
             className={`fa-tab${activeTab === 'messages' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('messages')}
@@ -427,11 +435,13 @@ export default function AdminPage() {
       </header>
 
       {message && (
-        <p className={`fa-toast${isError ? ' is-error' : ''}`} role="status">{message}</p>
+        <p className={`fa-toast fa-noprint${isError ? ' is-error' : ''}`} role="status">
+          {message}
+        </p>
       )}
 
       {/* 今日の下書き：どのタブにいても最上部に出す */}
-      {todayDrafts.map((m) => (
+      {activeTab !== 'print' && todayDrafts.map((m) => (
         <TodayDraft
           key={m.id}
           menu={m}
@@ -440,7 +450,7 @@ export default function AdminPage() {
         />
       ))}
 
-      {uncheckedMenus.length > 0 && activeTab !== 'edit' && (
+      {uncheckedMenus.length > 0 && activeTab !== 'edit' && activeTab !== 'print' && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
             アレルギー情報が未確認の献立が{uncheckedMenus.length}件あります
@@ -475,7 +485,7 @@ export default function AdminPage() {
 
             <div className="fa-cols">
               <section className="fa-card">
-                <h2 className="fa-cardtitle">きょうの献立</h2>
+                <h2 className="fa-cardtitle">今日の献立</h2>
 
                 <label className="fa-label" htmlFor="served_date">
                   日付 <span className="fa-req">必須</span>
@@ -737,6 +747,11 @@ export default function AdminPage() {
               ))}
             </div>
           </section>
+        )}
+
+        {/* ---------- 献立表（印刷・PDF） ---------- */}
+        {activeTab === 'print' && (
+          <MenuPrintPanel menus={allMenus} />
         )}
 
         {/* ---------- 質問 ---------- */}

@@ -315,12 +315,125 @@
 }
 
 /* 管理画面のタブが5つに増えたぶんの調整 */
-.fa-head .fa-tabs--5 {
+.fa-head .fa-tabs--6 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 @media (min-width: 700px) {
-  .fa-head .fa-tabs--5 {
+  .fa-head .fa-tabs--6 {
     grid-template-columns: repeat(5, minmax(96px, max-content));
     justify-content: end;
   }
+}
+
+/* ==================================================================
+   futaba-app / 月間献立表の印刷
+   futaba-admin.css の末尾に貼り足す
+   ================================================================== */
+
+.fa-checkrow {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;
+}
+
+/* ------------------------------------------------------------------
+   画面上のプレビュー
+   ------------------------------------------------------------------ */
+.fa-sheet {
+  background: #fff; border: 1px solid var(--fa-line);
+  border-radius: var(--fa-r); padding: 22px 24px;
+  box-shadow: var(--fa-shadow);
+  color: #222;
+}
+
+.fa-sheethead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; padding-bottom: 12px; margin-bottom: 14px;
+  border-bottom: 2px solid var(--fa-matcha-deep);
+}
+.fa-sheetbrand {
+  font-size: 11px; font-weight: 700; color: var(--fa-matcha-deep);
+  letter-spacing: .06em;
+}
+.fa-sheettitle {
+  margin-top: 4px; font-size: 19px; font-weight: 700; color: #222;
+}
+.fa-sheetnote {
+  flex: 0 0 auto; font-size: 9.5px; line-height: 1.6; color: #666;
+  text-align: right;
+}
+
+.fa-sheettable {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+}
+.fa-sheettable th {
+  padding: 5px 4px; text-align: left; font-weight: 700; font-size: 10px;
+  color: #444; background: #F2F4F2;
+  border-bottom: 1px solid #999;
+}
+.fa-sheettable td {
+  padding: 6px 4px; border-bottom: 1px solid #E2E2E2; vertical-align: top;
+}
+.fa-sheettable tr.is-sun td { background: #FDF4F4; }
+.fa-sheettable tr.is-sat td { background: #F4F7FB; }
+
+.fa-col-day { width: 38px; white-space: nowrap; }
+.fa-col-n   { width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+.fa-col-alg { width: 128px; font-size: 10px; line-height: 1.5; }
+.fa-sheettable th.fa-col-n { text-align: right; }
+
+.fa-sheetday { font-size: 13px; font-weight: 700; }
+.fa-sheetwd  { margin-left: 2px; font-size: 9.5px; color: #777; }
+.fa-sheetmenu { font-weight: 700; }
+.fa-sheetdraft {
+  margin-left: 6px; padding: 1px 5px; border-radius: 3px;
+  background: #EEE; color: #777; font-size: 9px; font-weight: 700;
+}
+.fa-sheeting {
+  display: block; margin-top: 2px; font-size: 9.5px; color: #666; line-height: 1.5;
+}
+.fa-sheetnone { color: #2C7A5A; font-weight: 700; }
+.fa-sheetunknown { color: #999; }
+
+.fa-sheetlegend {
+  margin-top: 10px; font-size: 9.5px; color: #666;
+}
+
+/* ------------------------------------------------------------------
+   印刷
+   ------------------------------------------------------------------ */
+@media print {
+  /* 設定パネル・タブ・見出しは出さない */
+  .fa-noprint,
+  .fa-head,
+  .fa-topbar,
+  .fa-toast,
+  .fa-warnbox,
+  .fa-todaycard { display: none !important; }
+
+  html { overflow-y: visible; }
+  body { background: #fff; }
+
+  .fa-page { max-width: none; padding: 0; min-height: 0; }
+
+  .fa-sheet {
+    border: none; border-radius: 0; padding: 0; box-shadow: none;
+  }
+
+  /* 見出しを各ページの先頭で繰り返す */
+  .fa-sheettable thead { display: table-header-group; }
+  .fa-sheettable tr { break-inside: avoid; }
+
+  .fa-sheettable { font-size: 9.5pt; }
+  .fa-sheettable th { font-size: 8.5pt; background: #EEE !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fa-sheettable td { padding: 4px 3px; }
+  .fa-sheettable tr.is-sun td,
+  .fa-sheettable tr.is-sat td {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+
+  .fa-sheettitle { font-size: 15pt; }
+  .fa-sheetnote { font-size: 7pt; }
+  .fa-sheetday { font-size: 10pt; }
+  .fa-col-alg { font-size: 8pt; }
+
+  @page { size: A4 portrait; margin: 12mm 10mm; }
 }
