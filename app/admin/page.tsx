@@ -2,7 +2,7 @@
  *
  * RLS 対応版。menus / messages への書き込みはすべて
  * /api/admin/menus と /api/admin/replies を経由する。
- * 読み取りだけ supabase クライアントを直接使う。
+ * 献立の読み取りも、下書きを含めるため API 経由にしている。
  */
 'use client'
 
@@ -17,6 +17,8 @@ import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
 import MenuPicker from '@/components/MenuPicker'
 import MessagesPanel from '@/components/MessagesPanel'
+import MenuBulkPanel from '@/components/MenuBulkPanel'
+import TodayDraft from '@/components/TodayDraft'
 
 const emptyForm = () => ({
   served_date: '',
@@ -31,8 +33,15 @@ const emptyForm = () => ({
 
 type MenuForm = ReturnType<typeof emptyForm>
 
+/** 今日の日付を 'YYYY-MM-DD' で返す（日本時間） */
+const todayStr = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'post' | 'edit' | 'messages' | 'children'>('post')
+  const [activeTab, setActiveTab] =
+    useState<'post' | 'bulk' | 'edit' | 'messages' | 'children'>('post')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -47,7 +56,7 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState<any>({})
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
-  const [onlyUnchecked, setOnlyUnchecked] = useState(false)
+  const [listFilter, setListFilter] = useState<'all' | 'draft' | 'unchecked'>('all')
 
   const [messages, setMessages] = useState<any[]>([])
 
@@ -58,7 +67,6 @@ export default function AdminPage() {
 
   /* ---------------- データ取得 ---------------- */
 
-  /* 質問一覧は RLS を迂回する必要があるため API 経由 */
   const fetchMessages = useCallback(async () => {
     const res = await fetch('/api/admin/replies')
     const json = await res.json()
@@ -78,10 +86,18 @@ export default function AdminPage() {
   }, [fetchMessages, fetchMenus])
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
-  const shownMenus = onlyUnchecked ? uncheckedMenus : allMenus
-
-  /* まだ返信していない質問の数 */
+  const draftMenus = allMenus.filter((m) => !m.is_published)
   const openCount = messages.filter((m: any) => (m.replies?.length ?? 0) === 0).length
+
+  /* 今日ぶんの下書き（複数あれば全部出す） */
+  const todayDrafts = allMenus.filter(
+    (m) => !m.is_published && m.served_date === todayStr()
+  )
+
+  const shownMenus =
+    listFilter === 'draft' ? draftMenus
+    : listFilter === 'unchecked' ? uncheckedMenus
+    : allMenus
 
   /* ---------------- 写真 ---------------- */
 
@@ -95,6 +111,47 @@ export default function AdminPage() {
     }
     const { data } = supabase.storage.from('menu-photos').getPublicUrl(fileName)
     return data.publicUrl
+  }
+
+  /* ---------------- 下書きの公開 ---------------- */
+
+  const publishDraft = async (
+    id: string,
+    patch: { nutritionist_comment: string; why_eat_note: string; photo_url: string | null }
+  ): Promise<boolean> => {
+    const res = await fetch('/api/admin/menus', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, partial: true, ...patch, is_published: true }),
+    })
+    const json = await res.json()
+
+    if (!res.ok) {
+      notify('公開できませんでした。' + json.error, true)
+      return false
+    }
+
+    notify('保護者に公開しました。')
+    fetchMenus()
+    return true
+  }
+
+  /* 一覧からの公開・非公開の切り替え */
+  const togglePublish = async (menu: any) => {
+    const next = !menu.is_published
+    if (!next && !confirm('保護者に見えなくなります。よろしいですか。')) return
+
+    const res = await fetch('/api/admin/menus', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: menu.id, partial: true, is_published: next }),
+    })
+    const json = await res.json()
+
+    if (!res.ok) { notify('変更できませんでした。' + json.error, true); return }
+
+    notify(next ? '公開しました。' : '下書きに戻しました。')
+    fetchMenus()
   }
 
   /* ---------------- 投稿 ---------------- */
@@ -123,17 +180,9 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
-  /* 過去の献立から栄養価とアレルゲンを引き継ぐ。
-     写真とコメント類はその日ごとに入れ直す。 */
   const copyFromMenu = (menu: any) => {
-    const today = new Date()
-    const todayStr =
-      `${today.getFullYear()}-` +
-      `${String(today.getMonth() + 1).padStart(2, '0')}-` +
-      `${String(today.getDate()).padStart(2, '0')}`
-
     setForm({
-      served_date: todayStr,
+      served_date: todayStr(),
       title: menu.title ?? '',
       ingredient: formatIngredients(menu.ingredients),
       nutritionist_comment: '',
@@ -185,6 +234,7 @@ export default function AdminPage() {
         fat: num(form.fat), salt: num(form.salt), calcium: num(form.calcium),
         allergens: form.allergens,
         allergen_checked: true,
+        is_published: true,
         photo_url: photoUrl,
       }),
     })
@@ -272,6 +322,7 @@ export default function AdminPage() {
         fat: num(editForm.fat), salt: num(editForm.salt), calcium: num(editForm.calcium),
         allergens: editForm.allergens,
         allergen_checked: true,
+        is_published: editForm.is_published !== false,
         photo_url: photoUrl,
       }),
     })
@@ -303,7 +354,6 @@ export default function AdminPage() {
 
   /* ---------------- 返信 ---------------- */
 
-  /* 成功したら true を返す。入力欄のクリアは MessagesPanel 側で行う。 */
   const handleReply = async (
     menuId: string,
     questionId: string,
@@ -335,28 +385,35 @@ export default function AdminPage() {
           <p className="fa-eyebrow">栄養士専用</p>
           <h1 className="fa-title">きゅうしょく管理</h1>
         </div>
-        <nav className="fa-tabs" role="tablist">
+        <nav className="fa-tabs fa-tabs--5" role="tablist">
           <button
             role="tab" aria-selected={activeTab === 'post'}
             className={`fa-tab${activeTab === 'post' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('post')}
           >
-            <span className="fa-tab-icon">📝</span>献立を投稿
+            <span className="fa-tab-icon">📝</span>1日ずつ
+          </button>
+          <button
+            role="tab" aria-selected={activeTab === 'bulk'}
+            className={`fa-tab${activeTab === 'bulk' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('bulk')}
+          >
+            <span className="fa-tab-icon">📅</span>月間登録
           </button>
           <button
             role="tab" aria-selected={activeTab === 'edit'}
             className={`fa-tab${activeTab === 'edit' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('edit')}
           >
-            <span className="fa-tab-icon">✏️</span>献立を編集
-            {allMenus.length > 0 && <span className="fa-badge">{allMenus.length}</span>}
+            <span className="fa-tab-icon">✏️</span>編集
+            {draftMenus.length > 0 && <span className="fa-badge">{draftMenus.length}</span>}
           </button>
           <button
             role="tab" aria-selected={activeTab === 'messages'}
             className={`fa-tab${activeTab === 'messages' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('messages')}
           >
-            <span className="fa-tab-icon">💬</span>質問に返信
+            <span className="fa-tab-icon">💬</span>質問
             {openCount > 0 && <span className="fa-badge">{openCount}</span>}
           </button>
           <button
@@ -364,7 +421,7 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'children' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('children')}
           >
-            <span className="fa-tab-icon">👶</span>園児・PIN
+            <span className="fa-tab-icon">👶</span>園児
           </button>
         </nav>
       </header>
@@ -373,6 +430,16 @@ export default function AdminPage() {
         <p className={`fa-toast${isError ? ' is-error' : ''}`} role="status">{message}</p>
       )}
 
+      {/* 今日の下書き：どのタブにいても最上部に出す */}
+      {todayDrafts.map((m) => (
+        <TodayDraft
+          key={m.id}
+          menu={m}
+          onPublish={publishDraft}
+          onUploadPhoto={uploadPhoto}
+        />
+      ))}
+
       {uncheckedMenus.length > 0 && activeTab !== 'edit' && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
@@ -380,10 +447,10 @@ export default function AdminPage() {
           </p>
           <p className="fa-warntext">
             保護者の絞り込み画面では「判断できません」と表示されます。
-            「献立を編集」から順に登録してください。
+            「編集」から順に登録してください。
           </p>
           <button
-            onClick={() => { setActiveTab('edit'); setOnlyUnchecked(true) }}
+            onClick={() => { setActiveTab('edit'); setListFilter('unchecked') }}
             className="fa-btn fa-btn--sky"
             style={{ marginTop: 10, flex: '0 0 auto' }}
           >
@@ -394,7 +461,7 @@ export default function AdminPage() {
 
       <div className="fa-panel-area">
 
-        {/* ---------- 投稿 ---------- */}
+        {/* ---------- 1日ずつ投稿 ---------- */}
         {activeTab === 'post' && (
           <>
             <MenuPicker menus={allMenus} onPick={copyFromMenu} />
@@ -495,6 +562,11 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* ---------- 月間まとめて登録 ---------- */}
+        {activeTab === 'bulk' && (
+          <MenuBulkPanel onNotify={notify} onDone={fetchMenus} />
+        )}
+
         {/* ---------- 編集 ---------- */}
         {activeTab === 'edit' && (
           <section>
@@ -502,23 +574,37 @@ export default function AdminPage() {
               <h2 className="fa-sectiontitle" style={{ marginBottom: 0 }}>
                 投稿済みの献立
               </h2>
-              {uncheckedMenus.length > 0 && (
-                <label className="fa-filter">
-                  <input
-                    type="checkbox"
-                    checked={onlyUnchecked}
-                    onChange={(e) => setOnlyUnchecked(e.target.checked)}
-                  />
-                  アレルギー未確認だけ（{uncheckedMenus.length}件）
-                </label>
-              )}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  className={`fa-filterbtn${listFilter === 'all' ? ' is-on' : ''}`}
+                  onClick={() => setListFilter('all')}
+                >
+                  すべて（{allMenus.length}）
+                </button>
+                {draftMenus.length > 0 && (
+                  <button
+                    className={`fa-filterbtn${listFilter === 'draft' ? ' is-on' : ''}`}
+                    onClick={() => setListFilter('draft')}
+                  >
+                    下書き（{draftMenus.length}）
+                  </button>
+                )}
+                {uncheckedMenus.length > 0 && (
+                  <button
+                    className={`fa-filterbtn${listFilter === 'unchecked' ? ' is-on' : ''}`}
+                    onClick={() => setListFilter('unchecked')}
+                  >
+                    アレルギー未確認（{uncheckedMenus.length}）
+                  </button>
+                )}
+              </div>
             </div>
 
             {shownMenus.length === 0 && (
               <p className="fa-empty">
-                {onlyUnchecked
-                  ? 'アレルギー未確認の献立はありません。'
-                  : 'まだ献立がありません。「献立を投稿」から最初の1件を追加してください。'}
+                {listFilter === 'all'
+                  ? 'まだ献立がありません。「1日ずつ」か「月間登録」から追加してください。'
+                  : '該当する献立はありません。'}
               </p>
             )}
 
@@ -615,7 +701,11 @@ export default function AdminPage() {
                   ) : (
                     <>
                       {menu.photo_url && <img src={menu.photo_url} alt="" className="fa-thumb" />}
-                      <p className="fa-date">{formatDate(menu.served_date)}</p>
+
+                      <p className="fa-date">
+                        {formatDate(menu.served_date)}
+                        {!menu.is_published && <span className="fa-draftbadge" style={{ marginLeft: 8 }}>下書き</span>}
+                      </p>
                       <p className="fa-menuname">{menu.title}</p>
 
                       <div className="fa-tagrow">
@@ -631,8 +721,15 @@ export default function AdminPage() {
                       </div>
 
                       <div className="fa-btnrow">
-                        <button onClick={() => startEdit(menu)} className="fa-btn fa-btn--sky">編集する</button>
-                        <button onClick={() => deleteMenu(menu.id)} className="fa-btn fa-btn--rose">削除する</button>
+                        <button
+                          onClick={() => togglePublish(menu)}
+                          className={`fa-btn ${menu.is_published ? 'fa-btn--ghost' : 'fa-btn--primary'}`}
+                          style={{ padding: 10, fontSize: 13, width: 'auto' }}
+                        >
+                          {menu.is_published ? '下書きに戻す' : '公開する'}
+                        </button>
+                        <button onClick={() => startEdit(menu)} className="fa-btn fa-btn--sky">編集</button>
+                        <button onClick={() => deleteMenu(menu.id)} className="fa-btn fa-btn--rose">削除</button>
                       </div>
                     </>
                   )}
@@ -642,7 +739,7 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* ---------- 返信 ---------- */}
+        {/* ---------- 質問 ---------- */}
         {activeTab === 'messages' && (
           <MessagesPanel messages={messages} onReply={handleReply} />
         )}

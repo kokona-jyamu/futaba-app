@@ -296,3 +296,31 @@
 .fa-todaytitle {
   margin-top: 5px; font-size: 19px; font-weight: 700; color: var(--fa-ink);
 }
+
+/* ==================================================================
+   futaba-app / 一覧の絞り込みボタン
+   futaba-admin.css の末尾に貼り足す
+   ================================================================== */
+
+.fa-filterbtn {
+  padding: 7px 14px; border: 1px solid var(--fa-line); border-radius: 999px;
+  background: var(--fa-card); color: var(--fa-muted);
+  font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap;
+  cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+}
+.fa-filterbtn:hover { border-color: var(--fa-matcha); color: var(--fa-matcha-deep); }
+.fa-filterbtn.is-on {
+  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
+  color: var(--fa-matcha-deep);
+}
+
+/* 管理画面のタブが5つに増えたぶんの調整 */
+.fa-head .fa-tabs--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (min-width: 700px) {
+  .fa-head .fa-tabs--5 {
+    grid-template-columns: repeat(5, minmax(96px, max-content));
+    justify-content: end;
+  }
+}
