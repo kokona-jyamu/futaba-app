@@ -78,3 +78,28 @@
   white-space: nowrap;
 }
 .fa-tel:hover { text-decoration: underline; }
+
+/* ==================================================================
+   スマホでの横はみ出し対策
+   ================================================================== */
+
+.fa-input,
+.fa-textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* 吹き出しが長い文字列で伸びるのを防ぐ */
+.fa-msg {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* グリッドやフレックスの子要素が縮まないのを防ぐ */
+.fa-thread,
+.fa-limitbox,
+.fa-limittitle { min-width: 0; }
+
+/* 電話番号は横に押し出さず、必要なら下の行に落とす */
+.fa-tel { margin-left: 0; margin-top: 4px; }
