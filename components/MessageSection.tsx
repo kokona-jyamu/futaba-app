@@ -1,13 +1,15 @@
 /* components/MessageSection.tsx
  *
  * 献立への質問と、お気に入り登録。
- * RLS 対応のため、質問には必ず guardian_id を入れる。
+ * 質問は週2回まで。判定はサーバー側で行うが、
+ * 画面にも残り回数を出して、書いてから弾かれることのないようにする。
  */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
+import { WEEKLY_LIMIT, SCHOOL_TEL, nextMondayLabel } from '@/lib/questionLimit'
 
 type Message = {
   id: string
@@ -25,6 +27,7 @@ export default function MessageSection({ menuId }: { menuId: string }) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
+  const [remaining, setRemaining] = useState<number | null>(null)
 
   /* ---------------- 質問の取得 ---------------- */
 
@@ -38,6 +41,17 @@ export default function MessageSection({ menuId }: { menuId: string }) {
   }, [menuId])
 
   useEffect(() => { fetchMessages() }, [fetchMessages])
+
+  /* ---------------- 残り回数 ---------------- */
+
+  const fetchRemaining = useCallback(async () => {
+    if (!guardian) return
+    const res = await fetch('/api/questions')
+    const json = await res.json()
+    if (res.ok) setRemaining(json.remaining)
+  }, [guardian])
+
+  useEffect(() => { fetchRemaining() }, [fetchRemaining])
 
   /* ---------------- お気に入り ---------------- */
 
@@ -79,26 +93,30 @@ export default function MessageSection({ menuId }: { menuId: string }) {
     setSending(true)
     setError('')
 
-    const { error: sendError } = await supabase.from('messages').insert({
-      menu_id: menuId,
-      body: newMessage.trim(),
-      /* 誰から届いたか分かるようにする。栄養士側の一覧に出る名前 */
-      sender_name: child?.name ? `${child.name}の保護者` : '保護者',
-      guardian_id: guardian.id,
-      is_nutritionist: false,
-      is_public: true,
+    const res = await fetch('/api/questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ menu_id: menuId, body: newMessage.trim() }),
     })
-
+    const json = await res.json()
     setSending(false)
 
-    if (sendError) {
-      setError('送信できませんでした。時間をおいてお試しください。')
+    if (!res.ok) {
+      setError(
+        res.status === 429
+          ? `今週はあと0回です。${nextMondayLabel()}（月曜）からまたお使いいただけます。`
+          : '送信できませんでした。時間をおいてお試しください。'
+      )
+      if (typeof json.remaining === 'number') setRemaining(json.remaining)
       return
     }
 
     setNewMessage('')
+    setRemaining(json.remaining)
     fetchMessages()
   }
+
+  const canSend = remaining === null || remaining > 0
 
   return (
     <section style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
@@ -144,32 +162,64 @@ export default function MessageSection({ menuId }: { menuId: string }) {
 
       {guardian ? (
         <div style={{ marginTop: 16 }}>
-          <textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="質問や感想を書いてください"
-            rows={3}
-            className="fa-input fa-textarea"
-          />
+          {/* 回数の案内 */}
+          <div className="fa-limitbox">
+            <p className="fa-limittitle">
+              質問は各ご家庭 週{WEEKLY_LIMIT}回まで
+              {remaining !== null && (
+                <span className={`fa-limitcount${remaining === 0 ? ' is-out' : ''}`}>
+                  今週はあと{remaining}回
+                </span>
+              )}
+            </p>
+            <p className="fa-limittext">
+              栄養士がお子さま一人ひとりのアレルギーや栄養バランスと真摯に向き合い、
+              丁寧にお答えするため、回数を設けています。
+            </p>
+            <p className="fa-limittext" style={{ marginTop: 6 }}>
+              アレルギーなど緊急性の高いご相談は、園まで直接ご連絡ください。
+              <a href={`tel:${SCHOOL_TEL.replace(/-/g, '')}`} className="fa-tel">
+                📞 {SCHOOL_TEL}
+              </a>
+            </p>
+          </div>
 
-          {error && (
-            <p className="fa-toast is-error" style={{ marginTop: 10, marginBottom: 0 }}>
-              {error}
+          {canSend ? (
+            <>
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="質問や感想を書いてください"
+                rows={3}
+                maxLength={1000}
+                className="fa-input fa-textarea"
+                style={{ marginTop: 12 }}
+              />
+
+              {error && (
+                <p className="fa-toast is-error" style={{ marginTop: 10, marginBottom: 0 }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                onClick={handleSend}
+                disabled={sending || !newMessage.trim()}
+                className="fa-btn fa-btn--primary"
+                style={{ width: '100%', marginTop: 10 }}
+              >
+                {sending ? '送信中…' : '送信する'}
+              </button>
+
+              <p className="fa-note" style={{ marginTop: 10 }}>
+                送った質問と栄養士さんからの返信は、マイページの「しつもん」からも確認できます。
+              </p>
+            </>
+          ) : (
+            <p className="fa-empty" style={{ marginTop: 12 }}>
+              今週はあと0回です。{nextMondayLabel()}（月曜）からまたお使いいただけます。
             </p>
           )}
-
-          <button
-            onClick={handleSend}
-            disabled={sending || !newMessage.trim()}
-            className="fa-btn fa-btn--primary"
-            style={{ width: '100%', marginTop: 10 }}
-          >
-            {sending ? '送信中…' : '送信する'}
-          </button>
-
-          <p className="fa-note" style={{ marginTop: 10 }}>
-            送った質問と栄養士さんからの返信は、マイページの「しつもん」からも確認できます。
-          </p>
         </div>
       ) : (
         <p className="fa-empty" style={{ marginTop: 16 }}>
