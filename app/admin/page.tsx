@@ -20,6 +20,7 @@ import MessagesPanel from '@/components/MessagesPanel'
 import MenuBulkPanel from '@/components/MenuBulkPanel'
 import MenuPrintPanel from '@/components/MenuPrintPanel'
 import TodayDraft from '@/components/TodayDraft'
+import EventsPanel from '@/components/EventsPanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -42,7 +43,7 @@ const todayStr = () => {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'post' | 'bulk' | 'edit' | 'print' | 'messages' | 'children'>('post')
+    useState<'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children'>('post')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -417,6 +418,13 @@ export default function AdminPage() {
             <span className="fa-tab-icon">🖨️</span>献立表
           </button>
           <button
+            role="tab" aria-selected={activeTab === 'events'}
+            className={`fa-tab${activeTab === 'events' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('events')}
+          >
+            <span className="fa-tab-icon">🌾</span>食育
+          </button>
+          <button
             role="tab" aria-selected={activeTab === 'messages'}
             className={`fa-tab${activeTab === 'messages' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('messages')}
@@ -752,6 +760,10 @@ export default function AdminPage() {
         {/* ---------- 献立表（印刷・PDF） ---------- */}
         {activeTab === 'print' && (
           <MenuPrintPanel menus={allMenus} />
+        )}
+
+        {activeTab === 'events' && (
+          <EventsPanel onNotify={notify} />
         )}
 
         {/* ---------- 質問 ---------- */}

@@ -1,9 +1,14 @@
-/* app/food-education/page.tsx */
+/* app/food-education/page.tsx
+ *
+ * 予告と記録の区別は event_date で判定する。
+ * status 列は使わない（切り替え忘れで予告が残る事故を防ぐため）。
+ */
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/menu'
+import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
 
 type Event = {
@@ -12,7 +17,6 @@ type Event = {
   title: string
   description: string | null
   photo_url: string | null
-  status: 'upcoming' | 'past'
   recipe_title: string | null
   recipe_ingredients: string[] | null
   recipe_steps: string | null
@@ -34,7 +38,6 @@ export default function FoodEducationPage() {
     return id
   }, [])
 
-  /* ?tab=recipes で開いたときにレシピタブを初期表示する */
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('tab') === 'recipes') {
       setTab('recipes')
@@ -52,27 +55,25 @@ export default function FoodEducationPage() {
     fetchEvents()
   }, [])
 
-  useEffect(() => {
+  const fetchLikes = useCallback(async () => {
     if (!visitorId) return
-    const fetchLikes = async () => {
-      const { data } = await supabase.from('event_likes').select('*')
-      if (!data) return
-      const counts: { [key: string]: number } = {}
-      const mine = new Set<string>()
-      data.forEach((like) => {
-        counts[like.event_id] = (counts[like.event_id] || 0) + 1
-        if (like.liked_by === visitorId) mine.add(like.event_id)
-      })
-      setLikeCounts(counts)
-      setMyLikes(mine)
-    }
-    fetchLikes()
+    const { data } = await supabase.from('event_likes').select('*')
+    if (!data) return
+    const counts: { [key: string]: number } = {}
+    const mine = new Set<string>()
+    data.forEach((like) => {
+      counts[like.event_id] = (counts[like.event_id] || 0) + 1
+      if (like.liked_by === visitorId) mine.add(like.event_id)
+    })
+    setLikeCounts(counts)
+    setMyLikes(mine)
   }, [visitorId])
+
+  useEffect(() => { fetchLikes() }, [fetchLikes])
 
   const toggleLike = async (eventId: string) => {
     const liked = myLikes.has(eventId)
 
-    /* 先に画面へ反映し、失敗したら戻す */
     setMyLikes((prev) => {
       const next = new Set(prev)
       liked ? next.delete(eventId) : next.add(eventId)
@@ -102,8 +103,10 @@ export default function FoodEducationPage() {
     }
   }
 
-  const upcoming = events.filter((e) => e.status === 'upcoming')
-  const past = events.filter((e) => e.status === 'past')
+  /* 日付で振り分ける */
+  const upcoming = events.filter((e) => phaseOf(e.event_date) === 'upcoming')
+  const today = events.filter((e) => phaseOf(e.event_date) === 'today')
+  const past = events.filter((e) => phaseOf(e.event_date) === 'past')
   const withRecipe = events.filter((e) => e.recipe_title)
 
   return (
@@ -138,6 +141,24 @@ export default function FoodEducationPage() {
         {/* ---------- 記録・予告 ---------- */}
         {tab === 'records' && (
           <>
+            {/* 本日開催 */}
+            {today.length > 0 && (
+              <>
+                <h2 className="fa-subtitle">🎉 本日の食育イベント</h2>
+                <div className="fa-grid fa-grid--2">
+                  {today.map((e) => (
+                    <div key={e.id} className="fa-notice fa-notice--today">
+                      <span className="fa-pill fa-pill--today">本日開催</span>
+                      <p className="fa-notice-date">{formatDate(e.event_date)}</p>
+                      <p className="fa-notice-title">{e.title}</p>
+                      {e.description && <p className="fa-notice-body">{e.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* これからの予告 */}
             {upcoming.length > 0 && (
               <>
                 <h2 className="fa-subtitle">📅 次回の食育イベント</h2>
@@ -154,6 +175,7 @@ export default function FoodEducationPage() {
               </>
             )}
 
+            {/* これまでの記録 */}
             {past.length > 0 && (
               <>
                 <h2 className="fa-subtitle">📷 これまでの食育のあしあと</h2>

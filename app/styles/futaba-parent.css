@@ -265,3 +265,34 @@
 .fa-soon-icon { font-size: 40px; margin-bottom: 12px; }
 .fa-soon-title { font-size: 15px; font-weight: 700; color: var(--fa-ink); margin-bottom: 8px; }
 .fa-soon-text { font-size: 13px; line-height: 1.8; color: var(--fa-muted); }
+
+/* ==================================================================
+   futaba-app / 食育イベントの状態表示
+   futaba-parent.css の末尾に貼り足す
+   ================================================================== */
+
+/* 本日開催のカード */
+.fa-notice--today {
+  border-color: var(--fa-matcha);
+  background: var(--fa-matcha-soft);
+}
+.fa-notice--today .fa-notice-date { color: var(--fa-matcha-deep); }
+
+.fa-pill--today {
+  background: var(--fa-matcha-deep);
+}
+
+/* 管理画面の一覧に出す状態バッジ */
+.fa-phase {
+  margin-left: 8px; padding: 2px 9px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 700;
+}
+.fa-phase--upcoming {
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+}
+.fa-phase--today {
+  background: var(--fa-matcha-deep); color: #fff;
+}
+.fa-phase--past {
+  background: #F1F0EC; color: #74807A;
+}

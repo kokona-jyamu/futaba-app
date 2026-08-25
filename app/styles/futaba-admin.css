@@ -316,11 +316,11 @@
 
 /* 管理画面のタブが5つに増えたぶんの調整 */
 .fa-head .fa-tabs--6 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 @media (min-width: 700px) {
   .fa-head .fa-tabs--6 {
-    grid-template-columns: repeat(5, minmax(96px, max-content));
+    grid-template-columns: repeat(7, minmax(68px, max-content));
     justify-content: end;
   }
 }
