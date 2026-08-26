@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useGuardian } from '@/lib/useGuardian'
 import { initialOf } from '@/lib/guardian'
+import { phaseOf, isAhead } from '@/lib/eventStatus'
 
 type Menu = {
   id: string
@@ -83,9 +84,11 @@ useEffect(() => {
     setSelectedDate(null)
   }
 
-  const upcoming = events.filter((e) => e.status === 'upcoming')
-  const pastEvents = events.filter((e) => e.status === 'past')
-
+  const upcoming = events
+    .filter(isAhead)
+    .sort((a, b) => a.event_date.localeCompare(b.event_date))
+  const pastEvents = events.filter((e) => phaseOf(e.event_date) === 'past')
+  
   return (
     <>
       <header className="fa-topbar">
@@ -214,8 +217,13 @@ useEffect(() => {
           {activeTab === '食育' && (
             <div>
               {upcoming.length > 0 && (
-                <div className="fa-notice" style={{ marginBottom: 20 }}>
-                  <span className="fa-pill">次回予告</span>
+                <div
+                  className={`fa-notice${phaseOf(upcoming[0].event_date) === 'today' ? ' fa-notice--today' : ''}`}
+                  style={{ marginBottom: 20 }}
+                >
+                  <span className={`fa-pill${phaseOf(upcoming[0].event_date) === 'today' ? ' fa-pill--today' : ''}`}>
+                    {phaseOf(upcoming[0].event_date) === 'today' ? '本日開催' : '次回予告'}
+                  </span>
                   <p className="fa-notice-date">{formatDate(upcoming[0].event_date)}</p>
                   <p className="fa-notice-title">{upcoming[0].title}</p>
                 </div>
