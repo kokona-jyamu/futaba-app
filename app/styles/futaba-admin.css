@@ -439,4 +439,4 @@
 }
 
 /* 通知と一覧見出しの間にゆとりを持たせる */
-.fa-toast { margin-bottom: 24px; }
+.fa-toast { margin-bottom: 28px !important; }
