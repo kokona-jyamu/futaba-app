@@ -440,3 +440,150 @@
 
 /* 通知と一覧見出しの間にゆとりを持たせる */
 .fa-toast { margin-bottom: 28px !important; }
+
+/* ==================================================================
+   futaba-app / 出欠・食数
+   futaba-admin.css の末尾に貼り足す
+   ================================================================== */
+
+/* ------------------------------------------------------------------
+   日付バー
+   ------------------------------------------------------------------ */
+.fa-datebar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.fa-datebar-main { flex: 0 0 auto; }
+.fa-datebar-day {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 700; color: var(--fa-ink);
+}
+.fa-todaymark {
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  font-size: 10.5px; font-weight: 700;
+}
+
+/* ------------------------------------------------------------------
+   合計
+   ------------------------------------------------------------------ */
+.fa-totalcard {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 20px 24px;
+  border: 2px solid var(--fa-matcha); border-radius: var(--fa-r);
+  background: var(--fa-card); box-shadow: var(--fa-shadow);
+}
+.fa-totallabel {
+  font-size: 12px; font-weight: 700; color: var(--fa-matcha);
+}
+.fa-totalnum {
+  margin-top: 2px;
+  font-size: 44px; font-weight: 700; color: var(--fa-matcha-deep);
+  line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.fa-totalunit {
+  margin-left: 4px; font-size: 17px; font-weight: 700;
+}
+.fa-totalsub {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--fa-ink-2);
+}
+.fa-totalsub p { font-weight: 700; }
+
+/* ------------------------------------------------------------------
+   区分ごとの食数
+   ------------------------------------------------------------------ */
+.fa-mealcounts {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px; margin-top: 14px;
+}
+.fa-mealcount {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 8px; border-radius: 12px;
+  background: var(--fa-matcha-soft);
+}
+.fa-mealcount.is-unset { background: #F1F0EC; }
+.fa-mealname {
+  font-size: 11.5px; font-weight: 700; color: var(--fa-matcha-deep);
+  text-align: center;
+}
+.fa-mealcount.is-unset .fa-mealname { color: #74807A; }
+.fa-mealnum {
+  font-size: 26px; font-weight: 700; color: var(--fa-matcha-deep);
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.fa-mealcount.is-unset .fa-mealnum { color: #74807A; }
+
+/* アレルギー除去の人数 */
+.fa-allergycount {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+  font-size: 12px; font-weight: 700;
+}
+.fa-allergycount strong { font-size: 13px; }
+
+/* ------------------------------------------------------------------
+   欠席・遅刻の一覧
+   ------------------------------------------------------------------ */
+.fa-countbadge {
+  margin-left: 6px; padding: 2px 9px; border-radius: 999px;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  font-size: 11px; font-weight: 700;
+}
+.fa-attlist {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
+}
+.fa-attrow {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; padding: 10px 12px;
+  border-radius: 10px; background: #FAFAF8;
+}
+.fa-attname {
+  font-size: 13.5px; font-weight: 700; color: var(--fa-ink);
+}
+.fa-attclass {
+  margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--fa-muted);
+}
+.fa-attmeta {
+  margin-top: 3px; font-size: 11.5px; color: var(--fa-ink-2);
+}
+.fa-attnote {
+  margin-top: 4px; font-size: 11.5px; color: var(--fa-muted); line-height: 1.6;
+}
+.fa-fever { color: var(--fa-rose-ink); font-weight: 700; }
+
+.fa-lunchmark {
+  flex: 0 0 auto; padding: 3px 10px; border-radius: 999px;
+  background: #F1F0EC; color: #74807A;
+  font-size: 10.5px; font-weight: 700; white-space: nowrap;
+}
+.fa-lunchmark.is-on {
+  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+}
+
+/* ------------------------------------------------------------------
+   食事区分の設定
+   ------------------------------------------------------------------ */
+.fa-typerow {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+}
+.fa-typechip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border: 1px solid var(--fa-line); border-radius: 999px;
+  background: var(--fa-card); color: var(--fa-muted);
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.fa-typechip:hover { border-color: var(--fa-matcha); }
+.fa-typechip.is-on {
+  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
+  color: var(--fa-matcha-deep);
+}
+.fa-babymark {
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--fa-card); color: var(--fa-apricot-ink);
+  font-size: 9.5px; font-weight: 700;
+}
+.fa-typechip.is-on .fa-babymark { background: #fff; }

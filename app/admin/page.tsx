@@ -21,6 +21,8 @@ import MenuBulkPanel from '@/components/MenuBulkPanel'
 import MenuPrintPanel from '@/components/MenuPrintPanel'
 import TodayDraft from '@/components/TodayDraft'
 import EventsPanel from '@/components/EventsPanel'
+import AttendancePanel from '@/components/AttendancePanel'
+import MealTypePanel from '@/components/MealTypePanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -43,7 +45,7 @@ const todayStr = () => {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children'>('post')
+    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children'>('meals')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -389,6 +391,13 @@ export default function AdminPage() {
         </div>
         <nav className="fa-tabs fa-tabs--6" role="tablist">
           <button
+            role="tab" aria-selected={activeTab === 'meals'}
+            className={`fa-tab${activeTab === 'meals' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('meals')}
+          >
+            <span className="fa-tab-icon">🍚</span>食数
+          </button>
+          <button
             role="tab" aria-selected={activeTab === 'post'}
             className={`fa-tab${activeTab === 'post' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('post')}
@@ -478,6 +487,9 @@ export default function AdminPage() {
       )}
 
       <div className="fa-panel-area">
+        {activeTab === 'meals' && (
+          <AttendancePanel onNotify={notify} />
+        )}
 
         {/* ---------- 1日ずつ投稿 ---------- */}
         {activeTab === 'post' && (
@@ -773,7 +785,12 @@ export default function AdminPage() {
 
         {/* ---------- 園児・PIN ---------- */}
         {activeTab === 'children' && (
-          <ChildrenPanel onNotify={notify} />
+          <>
+            <MealTypePanel onNotify={notify} />
+            <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
+              <ChildrenPanel onNotify={notify} />
+            </div>
+          </>
         )}
       </div>
     </main>
