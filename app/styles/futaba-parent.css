@@ -296,3 +296,55 @@
 .fa-phase--past {
   background: #F1F0EC; color: #74807A;
 }
+
+
+/* ==================================================================
+   futaba-app / トップページの出欠バナー
+   futaba-parent.css の末尾に貼り足す
+   ================================================================== */
+
+.fa-attbanner {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 20px; padding: 14px 18px;
+  border: 1.5px solid var(--fa-line); border-radius: var(--fa-r);
+  background: var(--fa-card); box-shadow: var(--fa-shadow);
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.fa-link:hover .fa-attbanner {
+  border-color: var(--fa-matcha); background: var(--fa-matcha-soft);
+  transform: translateY(-1px);
+}
+.fa-attbanner.is-reported {
+  border-color: var(--fa-apricot); background: var(--fa-apricot-soft);
+}
+.fa-attbanner-icon { flex: 0 0 auto; font-size: 22px; }
+.fa-attbanner-title {
+  display: block; font-size: 14px; font-weight: 700; color: var(--fa-ink);
+}
+.fa-attbanner.is-reported .fa-attbanner-title { color: var(--fa-apricot-ink); }
+.fa-attbanner-sub {
+  display: block; margin-top: 2px; font-size: 11.5px; color: var(--fa-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fa-attbanner-arrow {
+  margin-left: auto; flex: 0 0 auto;
+  font-size: 15px; font-weight: 700; color: var(--fa-matcha);
+}
+.fa-attbanner.is-reported .fa-attbanner-arrow { color: var(--fa-apricot-ink); }
+
+/* カレンダーの「休」「遅」印 */
+.fa-day.is-off {
+  background: var(--fa-apricot-soft);
+  color: var(--fa-apricot-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.fa-day.is-off.is-selected {
+  background: var(--fa-apricot); color: #fff;
+}
+.fa-offmark {
+  position: absolute; bottom: 1px;
+  font-size: 8.5px; font-weight: 700; line-height: 1;
+  color: var(--fa-apricot-ink);
+}
+.fa-day.is-off.is-selected .fa-offmark { color: #fff; }

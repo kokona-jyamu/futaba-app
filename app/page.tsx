@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useGuardian } from '@/lib/useGuardian'
 import { initialOf } from '@/lib/guardian'
 import { phaseOf, isAhead } from '@/lib/eventStatus'
+import { todayStr, formatShort, STATUS_LABEL, type AttendanceStatus } from '@/lib/attendance'
 
 type Menu = {
   id: string
@@ -40,9 +41,10 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
-  const { child } = useGuardian()
+  const [upcomingAtt, setUpcomingAtt] = useState<any[]>([])
+  const { child, guardian } = useGuardian()
 
-useEffect(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) router.push('/login')
     })
@@ -66,12 +68,31 @@ useEffect(() => {
     fetchData()
   }, [])
 
+  /* これから先の出欠連絡（トップに出すため） */
+  useEffect(() => {
+    if (!guardian) return
+    const fetchAttendance = async () => {
+      const now = new Date()
+      const end = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+      const res = await fetch(
+        `/api/attendance?from=${todayStr()}&to=${toDateStr(end.getFullYear(), end.getMonth(), end.getDate())}`
+      )
+      const json = await res.json()
+      if (res.ok) setUpcomingAtt(json.attendances)
+    }
+    fetchAttendance()
+  }, [guardian])
+
   const menuDates = new Set(menus.map((m) => m.served_date))
   const selectedMenus = menus.filter((m) => m.served_date === selectedDate)
   const firstDay = new Date(currentYear, currentMonth, 1).getDay()
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
   const today = toDateStr(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
   const monthLabel = `${currentYear}年${currentMonth + 1}月`
+
+  /* 出欠を連絡している日（カレンダーに印を出す） */
+  const attByDate = new Map(upcomingAtt.map((a) => [a.target_date, a]))
+  const todayAtt = attByDate.get(today)
 
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1) }
@@ -88,7 +109,7 @@ useEffect(() => {
     .filter(isAhead)
     .sort((a, b) => a.event_date.localeCompare(b.event_date))
   const pastEvents = events.filter((e) => phaseOf(e.event_date) === 'past')
-  
+
   return (
     <>
       <header className="fa-topbar">
@@ -123,6 +144,27 @@ useEffect(() => {
       </header>
 
       <main className="fa-page">
+
+        {/* 出欠連絡への導線：どのタブにいても最上部に出す */}
+        <Link href="/attendance" className="fa-link">
+          <div className={`fa-attbanner${todayAtt ? ' is-reported' : ''}`}>
+            <span className="fa-attbanner-icon">🗓</span>
+            <span style={{ minWidth: 0 }}>
+              <span className="fa-attbanner-title">
+                {todayAtt
+                  ? `今日は「${STATUS_LABEL[todayAtt.status as AttendanceStatus]}」で連絡ずみ`
+                  : 'おやすみ・遅刻の連絡'}
+              </span>
+              <span className="fa-attbanner-sub">
+                {upcomingAtt.length > 0
+                  ? `この先${upcomingAtt.length}日分の連絡があります`
+                  : 'お休みするときは、こちらからお知らせください'}
+              </span>
+            </span>
+            <span className="fa-attbanner-arrow">→</span>
+          </div>
+        </Link>
+
         <div className="fa-panel-area">
 
           {/* ===== 給食 ===== */}
@@ -149,6 +191,7 @@ useEffect(() => {
                     const hasMenu = menuDates.has(dateStr)
                     const isSelected = dateStr === selectedDate
                     const weekday = (firstDay + i) % 7
+                    const att = attByDate.get(dateStr)
                     const cls = [
                       'fa-day',
                       hasMenu ? 'has-menu' : '',
@@ -156,6 +199,7 @@ useEffect(() => {
                       dateStr === today && !isSelected ? 'is-today' : '',
                       !hasMenu && weekday === 0 ? 'is-sun' : '',
                       !hasMenu && weekday === 6 ? 'is-sat' : '',
+                      att ? 'is-off' : '',
                     ].filter(Boolean).join(' ')
 
                     return (
@@ -164,9 +208,15 @@ useEffect(() => {
                         className={cls}
                         disabled={!hasMenu}
                         onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                        title={att ? STATUS_LABEL[att.status as AttendanceStatus] : undefined}
                       >
                         {day}
-                        {hasMenu && <span className="fa-dot" />}
+                        {hasMenu && !att && <span className="fa-dot" />}
+                        {att && (
+                          <span className="fa-offmark">
+                            {att.status === 'absent' ? '休' : '遅'}
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -179,6 +229,11 @@ useEffect(() => {
                   <span className="fa-legend-item">
                     <span className="fa-legend-dot" style={{ background: 'var(--fa-matcha-deep)' }} />選択中
                   </span>
+                  {upcomingAtt.length > 0 && (
+                    <span className="fa-legend-item">
+                      <span className="fa-legend-dot" style={{ background: 'var(--fa-apricot)' }} />連絡ずみ
+                    </span>
+                  )}
                 </div>
               </section>
 
