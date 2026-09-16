@@ -348,3 +348,90 @@
   color: var(--fa-apricot-ink);
 }
 .fa-day.is-off.is-selected .fa-offmark { color: #fff; }
+
+/* ==================================================================
+   出席・遅刻、理由などの選択ボタン
+   ================================================================== */
+.fa-statusrow {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;
+}
+.fa-statusbtn {
+  position: relative;
+  flex: 1 1 auto; min-width: 140px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 14px 14px;
+  border: 2px solid var(--fa-line); border-radius: 12px;
+  background: var(--fa-card); color: var(--fa-ink-2);
+  font: inherit; font-size: 14px; font-weight: 700;
+  text-align: left; cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+
+/* 左側の丸印 */
+.fa-statusbtn::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid #C8D3CC; background: #fff;
+  transition: border-color .15s, background .15s;
+}
+.fa-statusbtn.is-on::before {
+  border-color: var(--fa-matcha-deep);
+  background: var(--fa-matcha-deep);
+  box-shadow: inset 0 0 0 3.5px #fff;
+}
+
+.fa-statusbtn:hover { border-color: var(--fa-matcha); }
+.fa-statusbtn.is-on {
+  background: var(--fa-matcha-soft);
+  border-color: var(--fa-matcha-deep);
+  color: var(--fa-matcha-deep);
+}
+
+.fa-statusbtn--sm {
+  flex: 0 1 auto; min-width: 0;
+  padding: 10px 14px 10px 12px; font-size: 13px; gap: 8px;
+}
+.fa-statusbtn--sm::before { width: 16px; height: 16px; }
+.fa-statusbtn--sm.is-on::before { box-shadow: inset 0 0 0 3px #fff; }
+
+/* ==================================================================
+   期間選択の日付チップ
+   ================================================================== */
+.fa-daypicks {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+}
+.fa-daypick {
+  position: relative;
+  width: 52px; padding: 9px 0 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  border: 2px solid #E4E2DB; border-radius: 12px;
+  background: #F4F3EF; color: #A9B2AD;
+  font: inherit; cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s, opacity .15s;
+  opacity: .65;
+}
+.fa-daypick:hover { border-color: var(--fa-matcha); opacity: 1; }
+
+/* 選ばれている日 */
+.fa-daypick.is-on {
+  background: var(--fa-matcha-deep);
+  border-color: var(--fa-matcha-deep);
+  color: #fff;
+  opacity: 1;
+}
+.fa-daypick-d {
+  font-size: 17px; font-weight: 700; line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.fa-daypick-w { font-size: 9.5px; font-weight: 700; }
+
+/* 選ばれている日にチェックを出す */
+.fa-daypick.is-on::after {
+  content: '✓';
+  position: absolute; top: -6px; right: -4px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--fa-apricot); color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 18px;
+  text-align: center;
+}
