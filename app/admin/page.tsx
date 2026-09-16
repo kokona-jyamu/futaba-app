@@ -23,6 +23,7 @@ import TodayDraft from '@/components/TodayDraft'
 import EventsPanel from '@/components/EventsPanel'
 import AttendancePanel from '@/components/AttendancePanel'
 import MealTypePanel from '@/components/MealTypePanel'
+import ClassPanel from '@/components/ClassPanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -786,7 +787,10 @@ export default function AdminPage() {
         {/* ---------- 園児・PIN ---------- */}
         {activeTab === 'children' && (
           <>
-            <MealTypePanel onNotify={notify} />
+            <ClassPanel onNotify={notify} />
+            <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
+              <MealTypePanel onNotify={notify} />
+            </div>
             <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
               <ChildrenPanel onNotify={notify} />
             </div>
