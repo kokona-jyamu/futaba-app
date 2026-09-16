@@ -332,6 +332,29 @@
 }
 .fa-attbanner.is-reported .fa-attbanner-arrow { color: var(--fa-apricot-ink); }
 
+/* 出欠の一覧（保護者側でも使う） */
+.fa-attlist {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
+}
+.fa-attrow {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; padding: 10px 12px;
+  border-radius: 10px; background: #FAFAF8;
+}
+.fa-attname { font-size: 13.5px; font-weight: 700; color: var(--fa-ink); }
+.fa-attclass {
+  margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--fa-muted);
+}
+.fa-attmeta { margin-top: 3px; font-size: 11.5px; color: var(--fa-ink-2); }
+.fa-fever { color: var(--fa-rose-ink); font-weight: 700; }
+
+.fa-tag--err {
+  background: var(--fa-rose-soft); color: var(--fa-rose-ink);
+}
+.fa-tag--plain {
+  background: #F1F0EC; color: #6B7772;
+}
+
 /* カレンダーの「休」「遅」印 */
 .fa-day.is-off {
   background: var(--fa-apricot-soft);
