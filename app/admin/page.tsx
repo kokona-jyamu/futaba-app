@@ -24,6 +24,7 @@ import EventsPanel from '@/components/EventsPanel'
 import AttendancePanel from '@/components/AttendancePanel'
 import MealTypePanel from '@/components/MealTypePanel'
 import ClassPanel from '@/components/ClassPanel'
+import SettingsPanel from '@/components/SettingsPanel'
 
 const emptyForm = () => ({
   served_date: '',
@@ -46,7 +47,7 @@ const todayStr = () => {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children'>('meals')
+    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children' | 'settings'>('meals')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -432,7 +433,7 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'events' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('events')}
           >
-            <span className="fa-tab-icon">🌾</span>食育
+          <span className="fa-tab-icon">🌾</span>食育
           </button>
           <button
             role="tab" aria-selected={activeTab === 'messages'}
@@ -448,6 +449,15 @@ export default function AdminPage() {
             onClick={() => setActiveTab('children')}
           >
             <span className="fa-tab-icon">👶</span>園児
+          </button>
+          
+
+          <button
+            role="tab" aria-selected={activeTab === 'settings'}
+            className={`fa-tab${activeTab === 'settings' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <span className="fa-tab-icon">⚙️</span>設定
           </button>
         </nav>
       </header>
@@ -795,6 +805,11 @@ export default function AdminPage() {
               <ChildrenPanel onNotify={notify} />
             </div>
           </>
+        )}
+
+        {/* ---------- 設定 ---------- */}
+        {activeTab === 'settings' && (
+          <SettingsPanel onNotify={notify} />
         )}
       </div>
     </main>

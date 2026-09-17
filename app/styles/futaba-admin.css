@@ -311,11 +311,11 @@
 
 /* 管理画面のタブが5つに増えたぶんの調整 */
 .fa-head .fa-tabs--6 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 @media (min-width: 700px) {
   .fa-head .fa-tabs--6 {
-    grid-template-columns: repeat(7, minmax(68px, max-content));
+    grid-template-columns: repeat(9, minmax(56px, max-content));
     justify-content: end;
   }
 }
@@ -615,4 +615,60 @@
 /* クラスの人数バッジ（食事区分のものを流用） */
 .fa-typechip .fa-babymark {
   background: var(--fa-card); color: var(--fa-matcha-deep);
+}
+
+/* ==================================================================
+   futaba-app / 食数ブロック（区分×除去）
+   ================================================================== */
+
+.fa-mealblocks {
+  display: flex; flex-direction: column; gap: 10px; margin-top: 14px;
+}
+.fa-mealblock {
+  border: 0.5px solid var(--fa-line); border-radius: 12px; overflow: hidden;
+}
+.fa-mealblock-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 14px;
+  background: var(--fa-matcha-soft);
+}
+.fa-mealblock.is-unset .fa-mealblock-head { background: #F1F0EC; }
+
+.fa-mealblock-name {
+  font-size: 14px; font-weight: 700; color: var(--fa-matcha-deep);
+  min-width: 68px;
+}
+.fa-mealblock.is-unset .fa-mealblock-name { color: #74807A; }
+
+.fa-mealblock-num {
+  font-size: 22px; font-weight: 700; color: var(--fa-matcha-deep);
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.fa-mealblock.is-unset .fa-mealblock-num { color: #74807A; }
+.fa-mealblock-unit { margin-left: 2px; font-size: 12px; }
+
+.fa-mealblock-sub {
+  margin-left: auto; font-size: 11.5px; color: var(--fa-matcha-deep); opacity: .85;
+}
+
+.fa-mealblock-body {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 10px 14px;
+}
+.fa-freetag {
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
+  font-size: 12px; font-weight: 700;
+}
+
+/* 名前・区分・アレルゲンを1行に並べる */
+.fa-childline {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  min-width: 0;
+}
+.fa-childline-name {
+  font-size: 13.5px; font-weight: 700; color: var(--fa-ink);
+}
+.fa-childline-class {
+  font-size: 11px; color: var(--fa-muted);
 }
