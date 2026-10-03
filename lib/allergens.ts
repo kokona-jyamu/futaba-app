@@ -125,6 +125,53 @@ export function sanitizeAllergens(
   return { ok: true, allergens }
 }
 
+/* ----------------------------------------------------------------
+   職員の確認（保護者が変更した内容を、園が確認するための仕組み）
+
+   children.allergens           … 現在の内容（保護者・職員のどちらも変更できる）
+   children.allergens_confirmed … 職員が最後に確認した内容
+   この2つに差があれば「未確認の変更あり」とみなす。
+   ---------------------------------------------------------------- */
+
+/** 選ばれている（true の）キーだけを並べる */
+const onKeys = (allergens?: Record<string, boolean> | null): string[] =>
+  Object.entries(allergens ?? {}).filter(([, on]) => on === true).map(([key]) => key)
+
+/** 確認済みの内容からの差分。added は増えたもの、removed は外されたもの */
+export function allergenDiff(
+  current?: Record<string, boolean> | null,
+  confirmed?: Record<string, boolean> | null
+): { added: string[]; removed: string[] } {
+  const now = new Set(onKeys(current))
+  const before = new Set(onKeys(confirmed))
+  return {
+    added: [...now].filter((k) => !before.has(k)),
+    removed: [...before].filter((k) => !now.has(k)),
+  }
+}
+
+/** 職員がまだ確認していない変更があるか */
+export const isAllergyPending = (
+  current?: Record<string, boolean> | null,
+  confirmed?: Record<string, boolean> | null
+): boolean => {
+  const { added, removed } = allergenDiff(current, confirmed)
+  return added.length > 0 || removed.length > 0
+}
+
+/**
+ * 食数に使うアレルギー。確認待ちの間は、変更前と変更後の
+ * どちらかで選ばれていれば除去の対象とする（安全側に寄せる）。
+ */
+export const effectiveAllergens = (
+  current?: Record<string, boolean> | null,
+  confirmed?: Record<string, boolean> | null
+): Record<string, boolean> =>
+  [...onKeys(current), ...onKeys(confirmed)].reduce(
+    (acc, key) => ({ ...acc, [key]: true }),
+    {} as Record<string, boolean>
+  )
+
 /** 1つでも選ばれているか */
 export const hasAnyAllergen = (allergens?: Record<string, boolean> | null) =>
   !!allergens && Object.values(allergens).some((v) => v === true)

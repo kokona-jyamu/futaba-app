@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createSupabaseServer } from '@/lib/superbase/server'
 import { todayStr, hasFever } from '@/lib/attendance'
-import { STANDARD_ALLERGENS } from '@/lib/allergens'
+import { STANDARD_ALLERGENS, effectiveAllergens, isAllergyPending } from '@/lib/allergens'
 
 const STAFF_ROLES = ['nutritionist', 'admin']
 
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
   /* 在籍している園児 */
   const { data: children } = await supabaseAdmin
     .from('children')
-    .select('id, login_no, name, class_name, allergens')
+    .select('id, login_no, name, class_name, allergens, allergens_confirmed')
     .eq('school_id', staff.school_id)
     .eq('is_active', true)
     .order('login_no')
@@ -140,9 +140,11 @@ export async function GET(req: Request) {
   kids.forEach((c) => {
     const a = att.get(c.id)
     const mealTypeId = activeMealType(byChild.get(c.id) ?? [], date)
-    const mine = individualAllergens(c.allergens)
+    /* 保護者の変更を職員が確認するまでは、変更前と変更後の両方を除去の対象にする */
+    const allergens = effectiveAllergens(c.allergens, c.allergens_confirmed)
+    const mine = individualAllergens(allergens)
     const allMine = STANDARD_ALLERGENS
-      .filter((al) => c.allergens?.[al.key] === true)
+      .filter((al) => allergens[al.key] === true)
       .map((al) => ({ key: al.key, label: al.label, emoji: al.emoji }))
 
     const base = {
@@ -150,6 +152,7 @@ export async function GET(req: Request) {
       meal_type_id: mealTypeId,
       meal_type_name: mealTypeId ? nameOfType.get(mealTypeId) ?? null : null,
       allergens: allMine,
+      allergy_pending: isAllergyPending(c.allergens, c.allergens_confirmed),
     }
 
     if (!a) noReport.push(base)

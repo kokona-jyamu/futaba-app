@@ -24,6 +24,11 @@ function ChildLine({ c }: { c: any }) {
       {c.allergens?.map((a: any) => (
         <span key={a.key} className="fa-tag">{a.label}</span>
       ))}
+      {c.allergy_pending && (
+        <span className="fa-tag fa-tag--unknown" title="変更前と変更後の両方を除去の対象にしています">
+          保護者が変更・未確認
+        </span>
+      )}
       {c.class_name && <span className="fa-childline-class">{c.class_name}</span>}
     </div>
   )

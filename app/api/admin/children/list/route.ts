@@ -39,15 +39,19 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  /* アレルギーは編集画面で使う。ビューの列に依存しないよう children から取って添える */
+  /* アレルギーは編集・確認の画面で使う。ビューの列に依存しないよう children から取って添える */
   const { data: allergenRows } = await supabaseAdmin
     .from('children')
-    .select('id, allergens')
+    .select('id, allergens, allergens_confirmed, allergens_updated_at, allergens_updated_by_role')
     .eq('school_id', profile.school_id)
 
-  const allergenOf = new Map((allergenRows ?? []).map((c) => [c.id, c.allergens ?? {}]))
+  const allergyOf = new Map((allergenRows ?? []).map((c) => [c.id, c]))
+  const empty = {
+    allergens: {}, allergens_confirmed: {},
+    allergens_updated_at: null, allergens_updated_by_role: null,
+  }
 
   return NextResponse.json({
-    children: (data ?? []).map((c) => ({ ...c, allergens: allergenOf.get(c.id) ?? {} })),
+    children: (data ?? []).map((c) => ({ ...c, ...(allergyOf.get(c.id) ?? empty), id: c.id })),
   })
 }

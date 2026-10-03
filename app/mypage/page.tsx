@@ -9,6 +9,7 @@ import { useGuardian } from '@/lib/useGuardian'
 import { formatDate, initialOf } from '@/lib/guardian'
 import { THEMES, applyTheme, saveThemeLocal, type ThemeKey } from '@/lib/theme'
 import AllergenPicker from '@/components/AllergenPicker'
+import { isAllergyPending } from '@/lib/allergens'
 
 type Tab = 'child' | 'allergy' | 'favorites' | 'questions' | 'settings'
 
@@ -210,6 +211,13 @@ if (!guardian || !child) {
               登録すると、該当する食材を含む献立に印がつきます。
               この情報はご家庭と園だけが見られます。
             </p>
+
+            {isAllergyPending(child.allergens, child.allergens_confirmed) && (
+              <p className="fa-toast" role="status" style={{ marginTop: 12, marginBottom: 0 }}>
+                変更した内容を、いま園で確認しています。
+                確認が済むまでは、変更前と変更後の両方に気をつけて給食を用意します。
+              </p>
+            )}
 
             <div className="fa-tint fa-tint--apricot">
               <h3 className="fa-tinttitle fa-tinttitle--apricot">

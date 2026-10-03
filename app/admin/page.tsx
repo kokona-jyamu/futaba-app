@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [listFilter, setListFilter] = useState<'all' | 'draft' | 'unchecked'>('all')
 
   const [messages, setMessages] = useState<any[]>([])
+  const [allergyPending, setAllergyPending] = useState<{ id: string; name: string }[]>([])
 
   const notify = (text: string, error = false) => {
     setMessage(text)
@@ -81,10 +82,18 @@ export default function AdminPage() {
     if (res.ok) setAllMenus(json.menus)
   }, [])
 
+  /* 保護者が変更し、まだ職員が確認していないアレルギー情報 */
+  const fetchAllergyPending = useCallback(async () => {
+    const res = await fetch('/api/admin/children/allergens')
+    const json = await res.json()
+    if (res.ok) setAllergyPending(json.pending)
+  }, [])
+
   useEffect(() => {
     fetchMessages()
     fetchMenus()
-  }, [fetchMessages, fetchMenus])
+    fetchAllergyPending()
+  }, [fetchMessages, fetchMenus, fetchAllergyPending])
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const draftMenus = allMenus.filter((m) => !m.is_published)
@@ -444,6 +453,7 @@ export default function AdminPage() {
             onClick={() => setActiveTab('children')}
           >
             <span className="fa-tab-icon">👶</span>園児
+            {allergyPending.length > 0 && <span className="fa-badge">{allergyPending.length}</span>}
           </button>
           
 
@@ -472,6 +482,26 @@ export default function AdminPage() {
           onUploadPhoto={uploadPhoto}
         />
       ))}
+
+      {allergyPending.length > 0 && activeTab !== 'children' && activeTab !== 'print' && (
+        <div className="fa-warnbox fa-noprint" style={{ marginBottom: 18 }}>
+          <p className="fa-warntitle">
+            保護者が変更したアレルギー情報が{allergyPending.length}件あります（未確認）
+          </p>
+          <p className="fa-warntext">
+            {allergyPending.slice(0, 3).map((c) => `${c.name}さん`).join('、')}
+            {allergyPending.length > 3 && ` ほか${allergyPending.length - 3}名`}
+            。確認が済むまで、食数では変更前と変更後の両方を除去の対象にしています。
+          </p>
+          <button
+            onClick={() => setActiveTab('children')}
+            className="fa-btn fa-btn--sky"
+            style={{ marginTop: 10, flex: '0 0 auto' }}
+          >
+            園児タブで確認する
+          </button>
+        </div>
+      )}
 
       {uncheckedMenus.length > 0 && activeTab !== 'edit' && activeTab !== 'print' && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
@@ -797,7 +827,7 @@ export default function AdminPage() {
               <MealTypePanel onNotify={notify} />
             </div>
             <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--fa-line)' }}>
-              <ChildrenPanel onNotify={notify} />
+              <ChildrenPanel onNotify={notify} onAllergyChange={fetchAllergyPending} />
             </div>
           </>
         )}

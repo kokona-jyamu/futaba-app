@@ -38,6 +38,8 @@ export type Child = {
   name: string
   class_name: string | null
   allergens: Record<string, boolean>
+  /** 園（職員）が最後に確認した内容。allergens と差があれば確認待ち */
+  allergens_confirmed?: Record<string, boolean>
   is_active: boolean
 }
 

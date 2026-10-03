@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { initialOf } from '@/lib/guardian'
-import { usedAllergens } from '@/lib/allergens'
+import { usedAllergens, allergenDiff, isAllergyPending, findAllergen } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 
 type Child = {
@@ -14,7 +14,17 @@ type Child = {
   has_account: boolean
   last_seen_at: string | null
   allergens: Record<string, boolean>
+  /** 職員が最後に確認した内容 */
+  allergens_confirmed: Record<string, boolean>
+  allergens_updated_at: string | null
+  allergens_updated_by_role: 'guardian' | 'staff' | null
 }
+
+const formatJstDate = (iso: string) =>
+  new Date(iso).toLocaleString('ja-JP', {
+    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  })
 
 /** 発行直後のPIN。印刷用に一時保持するだけでDBには残らない */
 type Issued = {
@@ -26,8 +36,11 @@ type Issued = {
 
 export default function ChildrenPanel({
   onNotify,
+  onAllergyChange,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
+  /** アレルギーの編集・確認のあと（管理画面上部の通知を更新するため） */
+  onAllergyChange?: () => void
 }) {
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(false)
@@ -44,6 +57,7 @@ export default function ChildrenPanel({
   /* アレルギーの編集 */
   const [allergyChildId, setAllergyChildId] = useState<string | null>(null)
   const [allergyDraft, setAllergyDraft] = useState<Record<string, boolean>>({})
+  const [onlyPending, setOnlyPending] = useState(false)
 
   const fetchChildren = useCallback(async () => {
     const res = await fetch('/api/admin/children/list')
@@ -190,22 +204,49 @@ export default function ChildrenPanel({
 
     if (!res.ok) { onNotify(json.error, true); return }
 
-    setChildren((prev) =>
-      prev.map((c) => (c.id === child.id ? { ...c, allergens: json.child.allergens } : c))
-    )
+    setChildren((prev) => prev.map((c) => (c.id === child.id ? { ...c, ...json.child } : c)))
     setAllergyChildId(null)
     onNotify(`${child.name}さんのアレルギー情報を保存しました。`)
+    onAllergyChange?.()
+  }
+
+  /* 保護者が変更した内容を、画面に出ている内容のまま確認済みにする */
+  const confirmAllergy = async (child: Child) => {
+    setLoading(true)
+    const res = await fetch('/api/admin/children/allergens', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ child_id: child.id, confirm: true, expected: child.allergens }),
+    })
+    const json = await res.json()
+    setLoading(false)
+
+    if (!res.ok) {
+      onNotify(json.error, true)
+      if (res.status === 409) fetchChildren()
+      return
+    }
+
+    setChildren((prev) => prev.map((c) => (c.id === child.id ? { ...c, ...json.child } : c)))
+    onNotify(`${child.name}さんのアレルギー情報を確認済みにしました。`)
+    onAllergyChange?.()
   }
 
   /* ---------------- 絞り込み ---------------- */
 
+  const pendingCount = useMemo(
+    () => children.filter((c) => isAllergyPending(c.allergens, c.allergens_confirmed)).length,
+    [children]
+  )
+
   const filtered = useMemo(() => {
     const k = keyword.trim()
-    if (!k) return children
-    return children.filter(
-      (c) => c.name.includes(k) || c.login_no.includes(k) || (c.class_name ?? '').includes(k)
-    )
-  }, [children, keyword])
+    return children
+      .filter((c) => !onlyPending || isAllergyPending(c.allergens, c.allergens_confirmed))
+      .filter(
+        (c) => !k || c.name.includes(k) || c.login_no.includes(k) || (c.class_name ?? '').includes(k)
+      )
+  }, [children, keyword, onlyPending])
 
   /* ================================================================
      PIN配布用の紙（印刷時はこれだけが出る）
@@ -286,6 +327,25 @@ export default function ChildrenPanel({
       {/* ---------- 一覧 ---------- */}
       {mode === 'list' && (
         <>
+          {pendingCount > 0 && (
+            <div className="fa-warnbox" style={{ marginBottom: 14 }}>
+              <p className="fa-warntitle">
+                保護者が変更したアレルギー情報が{pendingCount}件あります（未確認）
+              </p>
+              <p className="fa-warntext">
+                確認が済むまで、食数では変更前と変更後の両方を除去の対象にしています。
+                内容を確かめて「確認済みにする」を押してください。
+              </p>
+              <button
+                onClick={() => setOnlyPending(!onlyPending)}
+                className="fa-btn fa-btn--sky"
+                style={{ marginTop: 10, flex: '0 0 auto' }}
+              >
+                {onlyPending ? 'すべての園児を表示' : '未確認の園児だけを見る'}
+              </button>
+            </div>
+          )}
+
           <input
             type="search"
             value={keyword}
@@ -344,15 +404,46 @@ export default function ChildrenPanel({
                     </div>
                   </div>
                 ) : (
-                  <div className="fa-tagrow">
-                    {usedAllergens(c.allergens).length === 0 ? (
-                      <span className="fa-tag fa-tag--plain">アレルギーの登録なし</span>
-                    ) : (
-                      usedAllergens(c.allergens).map((a) => (
-                        <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
-                      ))
+                  <>
+                    <div className="fa-tagrow">
+                      {usedAllergens(c.allergens).length === 0 ? (
+                        <span className="fa-tag fa-tag--plain">アレルギーの登録なし</span>
+                      ) : (
+                        usedAllergens(c.allergens).map((a) => (
+                          <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+                        ))
+                      )}
+                    </div>
+
+                    {c.allergens_updated_at && (
+                      <p className="fa-childstatus">
+                        アレルギー最終更新：{formatJstDate(c.allergens_updated_at)}
+                        （{c.allergens_updated_by_role === 'staff' ? '職員' : '保護者'}）
+                      </p>
                     )}
-                  </div>
+
+                    {isAllergyPending(c.allergens, c.allergens_confirmed) && (() => {
+                      const { added, removed } = allergenDiff(c.allergens, c.allergens_confirmed)
+                      const label = (k: string) => findAllergen(k).label
+                      return (
+                        <div className="fa-warnbox" style={{ marginTop: 10 }}>
+                          <p className="fa-warntitle">保護者の変更・未確認</p>
+                          <p className="fa-warntext">
+                            {added.length > 0 && <>追加：{added.map(label).join('・')}<br /></>}
+                            {removed.length > 0 && <>削除：{removed.map(label).join('・')}</>}
+                          </p>
+                          <button
+                            onClick={() => confirmAllergy(c)}
+                            disabled={loading}
+                            className="fa-btn fa-btn--primary"
+                            style={{ marginTop: 10, flex: '0 0 auto' }}
+                          >
+                            確認済みにする
+                          </button>
+                        </div>
+                      )
+                    })()}
+                  </>
                 )}
 
                 <div className="fa-btnrow">

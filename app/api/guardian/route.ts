@@ -63,9 +63,15 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
 
+    /* 確認済みの内容（allergens_confirmed）は変えない。差があれば管理画面に知らせる */
     const { error } = await supabaseAdmin
       .from('children')
-      .update({ allergens: parsed.allergens })
+      .update({
+        allergens: parsed.allergens,
+        allergens_updated_at: new Date().toISOString(),
+        allergens_updated_by: guardian.id,
+        allergens_updated_by_role: 'guardian',
+      })
       .eq('id', guardian.child_id)
       .eq('school_id', guardian.school_id)
 
