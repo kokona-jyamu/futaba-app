@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { initialOf } from '@/lib/guardian'
+import { usedAllergens } from '@/lib/allergens'
+import AllergenPicker from '@/components/AllergenPicker'
 
 type Child = {
   id: string
@@ -11,6 +13,7 @@ type Child = {
   class_name: string | null
   has_account: boolean
   last_seen_at: string | null
+  allergens: Record<string, boolean>
 }
 
 /** 発行直後のPIN。印刷用に一時保持するだけでDBには残らない */
@@ -37,6 +40,10 @@ export default function ChildrenPanel({
 
   /* 一括登録 */
   const [bulkText, setBulkText] = useState('')
+
+  /* アレルギーの編集 */
+  const [allergyChildId, setAllergyChildId] = useState<string | null>(null)
+  const [allergyDraft, setAllergyDraft] = useState<Record<string, boolean>>({})
 
   const fetchChildren = useCallback(async () => {
     const res = await fetch('/api/admin/children/list')
@@ -164,6 +171,32 @@ export default function ChildrenPanel({
     fetchChildren()
   }
 
+  /* ---------------- アレルギーの編集 ---------------- */
+
+  const startAllergyEdit = (child: Child) => {
+    setAllergyChildId(child.id)
+    setAllergyDraft({ ...(child.allergens ?? {}) })
+  }
+
+  const saveAllergy = async (child: Child) => {
+    setLoading(true)
+    const res = await fetch('/api/admin/children/allergens', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ child_id: child.id, allergens: allergyDraft }),
+    })
+    const json = await res.json()
+    setLoading(false)
+
+    if (!res.ok) { onNotify(json.error, true); return }
+
+    setChildren((prev) =>
+      prev.map((c) => (c.id === child.id ? { ...c, allergens: json.child.allergens } : c))
+    )
+    setAllergyChildId(null)
+    onNotify(`${child.name}さんのアレルギー情報を保存しました。`)
+  }
+
   /* ---------------- 絞り込み ---------------- */
 
   const filtered = useMemo(() => {
@@ -289,7 +322,45 @@ export default function ChildrenPanel({
                     : 'まだログインされていません'}
                 </p>
 
+                {allergyChildId === c.id ? (
+                  <div className="fa-tint fa-tint--apricot">
+                    <h3 className="fa-tinttitle fa-tinttitle--apricot">
+                      アレルギー<span className="fa-hint">タップで切り替え</span>
+                    </h3>
+                    <AllergenPicker
+                      value={allergyDraft}
+                      onToggle={(key) => setAllergyDraft((a) => ({ ...a, [key]: !a[key] }))}
+                    />
+                    <p className="fa-note" style={{ marginTop: 10 }}>
+                      保護者のマイページにも同じ内容が表示されます。
+                    </p>
+                    <div className="fa-btnrow">
+                      <button onClick={() => saveAllergy(c)} disabled={loading} className="fa-btn fa-btn--primary">
+                        {loading ? '保存中…' : '保存する'}
+                      </button>
+                      <button onClick={() => setAllergyChildId(null)} className="fa-btn fa-btn--ghost">
+                        やめる
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="fa-tagrow">
+                    {usedAllergens(c.allergens).length === 0 ? (
+                      <span className="fa-tag fa-tag--plain">アレルギーの登録なし</span>
+                    ) : (
+                      usedAllergens(c.allergens).map((a) => (
+                        <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+                      ))
+                    )}
+                  </div>
+                )}
+
                 <div className="fa-btnrow">
+                  {allergyChildId !== c.id && (
+                    <button onClick={() => startAllergyEdit(c)} className="fa-btn fa-btn--sky">
+                      アレルギーを編集
+                    </button>
+                  )}
                   <button onClick={() => handleReissue(c)} disabled={loading} className="fa-btn fa-btn--sky">
                     PIN再発行
                   </button>

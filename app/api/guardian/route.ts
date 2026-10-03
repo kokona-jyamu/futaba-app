@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createSupabaseServer } from '@/lib/superbase/server'
-import { STANDARD_ALLERGENS } from '@/lib/allergens'
+import { sanitizeAllergens } from '@/lib/allergens'
 import { THEMES } from '@/lib/theme'
 
 async function requireGuardian() {
@@ -33,7 +33,6 @@ async function requireGuardian() {
   return guardian
 }
 
-const ALLERGEN_KEYS = new Set(STANDARD_ALLERGENS.map((a) => a.key))
 const THEME_KEYS = new Set<string>(THEMES.map((t) => t.key))
 
 /* ================================================================
@@ -59,22 +58,14 @@ export async function PATCH(req: Request) {
 
   /* ---------------- アレルギー ---------------- */
   if (body.allergens !== undefined) {
-    const input = body.allergens
-    if (!input || typeof input !== 'object' || Array.isArray(input)) {
-      return NextResponse.json({ error: 'アレルギーの形式が不正です' }, { status: 400 })
-    }
-
-    const allergens: Record<string, boolean> = {}
-    for (const [key, on] of Object.entries(input)) {
-      if (!ALLERGEN_KEYS.has(key) || typeof on !== 'boolean') {
-        return NextResponse.json({ error: `不明な項目です：${key}` }, { status: 400 })
-      }
-      allergens[key] = on
+    const parsed = sanitizeAllergens(body.allergens)
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
 
     const { error } = await supabaseAdmin
       .from('children')
-      .update({ allergens })
+      .update({ allergens: parsed.allergens })
       .eq('id', guardian.child_id)
       .eq('school_id', guardian.school_id)
 

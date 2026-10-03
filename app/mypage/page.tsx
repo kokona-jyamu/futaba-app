@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
-import { ALLERGENS, formatDate, initialOf } from '@/lib/guardian'
+import { formatDate, initialOf } from '@/lib/guardian'
 import { THEMES, applyTheme, saveThemeLocal, type ThemeKey } from '@/lib/theme'
 import AllergenPicker from '@/components/AllergenPicker'
 

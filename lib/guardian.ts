@@ -53,4 +53,4 @@ export type Guardian = {
 export const initialOf = (name?: string | null) =>
   name?.trim().charAt(0) || '?'
 
-export { ALLERGENS, NUTRIENTS, formatDate, num } from '@/lib/menu'
+export { NUTRIENTS, formatDate, num } from '@/lib/menu'

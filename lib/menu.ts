@@ -2,17 +2,7 @@
 
 export const SCHOOL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
-export const ALLERGENS = [
-  { key: 'egg', label: '卵', emoji: '🥚' },
-  { key: 'milk', label: '乳', emoji: '🥛' },
-  { key: 'wheat', label: '小麦', emoji: '🌾' },
-  { key: 'buckwheat', label: 'そば', emoji: '🍜' },
-  { key: 'peanut', label: '落花生', emoji: '🥜' },
-  { key: 'shrimp', label: 'えび', emoji: '🦐' },
-  { key: 'crab', label: 'かに', emoji: '🦀' },
-  { key: 'walnut', label: 'くるみ', emoji: '🌰' },
-  { key: 'cashew', label: 'カシュー', emoji: '🌱' },
-] as const
+/* アレルゲンの定義は lib/allergens.ts に一本化している（標準28品目） */
 
 export const NUTRIENTS = [
   { name: 'kcal', label: 'エネルギー', unit: 'kcal' },
@@ -22,11 +12,6 @@ export const NUTRIENTS = [
   { name: 'salt', label: '食塩相当量', unit: 'g' },
   { name: 'calcium', label: 'カルシウム', unit: 'mg' },
 ] as const
-
-export type Allergens = Record<string, boolean>
-
-export const emptyAllergens = (): Allergens =>
-  ALLERGENS.reduce((acc, a) => ({ ...acc, [a.key]: false }), {} as Allergens)
 
 /** 空文字を null に落として数値化する（Supabase の numeric 列用） */
 export const num = (v: unknown) =>

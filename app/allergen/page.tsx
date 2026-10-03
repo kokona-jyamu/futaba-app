@@ -1,7 +1,7 @@
 /* app/allergen/page.tsx */
 
 import Link from 'next/link'
-import { ALLERGENS } from '@/lib/menu'
+import AllergenTiles from '@/components/AllergenTiles'
 
 export default function AllergenIndexPage() {
   return (
@@ -13,16 +13,7 @@ export default function AllergenIndexPage() {
         <p className="fa-lead">気になるアレルゲンをタップすると、それを使っていない献立を絞り込めます。</p>
       </div>
 
-      <div className="fa-tiles">
-        {ALLERGENS.map((a) => (
-          <Link key={a.key} href={`/allergen/${a.key}`} className="fa-link">
-            <div className="fa-tile">
-              <span className="fa-tile-emoji">{a.emoji}</span>
-              <span className="fa-tile-label">{a.label}</span>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <AllergenTiles />
     </main>
   )
 }

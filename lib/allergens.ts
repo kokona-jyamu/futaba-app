@@ -104,6 +104,27 @@ export const emptyAllergenState = (): Record<string, boolean> =>
     {} as Record<string, boolean>
   )
 
+/**
+ * 画面から届いたアレルギー情報を検証する（API 用）。
+ * 標準28品目のキーと true / false 以外が含まれていたら受け付けない。
+ */
+export function sanitizeAllergens(
+  input: unknown
+): { ok: true; allergens: Record<string, boolean> } | { ok: false; error: string } {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { ok: false, error: 'アレルギーの形式が不正です' }
+  }
+
+  const allergens: Record<string, boolean> = {}
+  for (const [key, on] of Object.entries(input)) {
+    if (!STANDARD_ALLERGENS.some((a) => a.key === key) || typeof on !== 'boolean') {
+      return { ok: false, error: `不明な項目です：${key}` }
+    }
+    allergens[key] = on
+  }
+  return { ok: true, allergens }
+}
+
 /** 1つでも選ばれているか */
 export const hasAnyAllergen = (allergens?: Record<string, boolean> | null) =>
   !!allergens && Object.values(allergens).some((v) => v === true)

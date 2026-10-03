@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ALLERGENS, SCHOOL_ID, formatDate } from '@/lib/menu'
+import { SCHOOL_ID, formatDate } from '@/lib/menu'
+import AllergenTiles from '@/components/AllergenTiles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useGuardian } from '@/lib/useGuardian'
@@ -327,16 +328,7 @@ export default function Home() {
               <p className="fa-lead" style={{ marginBottom: 16 }}>
                 気になるアレルゲンをタップすると、それを使っていない献立を絞り込めます。
               </p>
-              <div className="fa-tiles">
-                {ALLERGENS.map((a) => (
-                  <Link key={a.key} href={`/allergen/${a.key}`} className="fa-link">
-                    <div className="fa-tile">
-                      <span className="fa-tile-emoji">{a.emoji}</span>
-                      <span className="fa-tile-label">{a.label}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <AllergenTiles />
             </div>
           )}
 
