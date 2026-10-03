@@ -51,36 +51,12 @@ export default function MyPage() {
 
   /* ---------------- 送った質問 ---------------- */
 
+  /* 自分の質問と、それへの返信（replied_to で紐づくもの）だけを API から取る */
   const fetchQuestions = useCallback(async () => {
     if (!guardian) return
-
-    /* 自分が送った質問 */
-    const { data: mine } = await supabase
-      .from('messages')
-      .select('id, body, created_at, menu_id, menus(title, served_date)')
-      .eq('guardian_id', guardian.id)
-      .eq('is_nutritionist', false)
-      .order('created_at', { ascending: false })
-
-    if (!mine || mine.length === 0) { setQuestions([]); return }
-
-    /* 同じ献立への栄養士の返信を拾う */
-    const menuIds = [...new Set(mine.map((m) => m.menu_id))]
-    const { data: replies } = await supabase
-      .from('messages')
-      .select('id, body, created_at, menu_id')
-      .in('menu_id', menuIds)
-      .eq('is_nutritionist', true)
-      .order('created_at', { ascending: true })
-
-    setQuestions(
-      mine.map((q) => ({
-        ...q,
-        replies: (replies ?? []).filter(
-          (r) => r.menu_id === q.menu_id && r.created_at > q.created_at
-        ),
-      }))
-    )
+    const res = await fetch('/api/questions')
+    const json = await res.json()
+    setQuestions(res.ok ? json.questions : [])
   }, [guardian])
 
   useEffect(() => {

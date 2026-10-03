@@ -3,6 +3,7 @@
  * 保護者からの質問。回数制限をサーバー側で判定する。
  * ブラウザ側だけの制限は開発者ツールで回避できるため、
  * ここを通さないと送信できない形にする。
+ * 読み取りもここを通す（RLS では messages の select を許可しない）。
  */
 
 import { NextResponse } from 'next/server'
@@ -45,9 +46,11 @@ async function countThisWeek(guardianId: string) {
 }
 
 /* ================================================================
-   GET: 今週の残り回数を返す
+   GET: 今週の残り回数と、自分が送った質問・それへの返信を返す
+   ?menu_id=... を付けると、その献立への質問だけに絞る
+   ほかの家庭の質問は返さない（園児名が分かってしまうため）
    ================================================================ */
-export async function GET() {
+export async function GET(req: Request) {
   let guardian
   try {
     guardian = await requireGuardian()
@@ -57,10 +60,38 @@ export async function GET() {
 
   const { used } = await countThisWeek(guardian.id)
 
+  const menuId = new URL(req.url).searchParams.get('menu_id')
+
+  let query = supabaseAdmin
+    .from('messages')
+    .select('id, menu_id, body, created_at, menus(title, served_date)')
+    .eq('guardian_id', guardian.id)
+    .eq('is_nutritionist', false)
+    .order('created_at', { ascending: false })
+  if (menuId) query = query.eq('menu_id', menuId)
+
+  const { data: mine, error } = await query
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  /* 自分の質問への返信だけを replied_to で拾う */
+  const ids = (mine ?? []).map((q) => q.id)
+  const { data: replies } = ids.length > 0
+    ? await supabaseAdmin
+        .from('messages')
+        .select('id, body, created_at, replied_to, sender_name')
+        .eq('is_nutritionist', true)
+        .in('replied_to', ids)
+        .order('created_at', { ascending: true })
+    : { data: [] }
+
   return NextResponse.json({
     used,
     limit: WEEKLY_LIMIT,
     remaining: Math.max(WEEKLY_LIMIT - used, 0),
+    questions: (mine ?? []).map((q) => ({
+      ...q,
+      replies: (replies ?? []).filter((r) => r.replied_to === q.id),
+    })),
   })
 }
 

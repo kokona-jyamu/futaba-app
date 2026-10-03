@@ -3,6 +3,9 @@
  * 献立への質問と、お気に入り登録。
  * 質問は週2回まで。判定はサーバー側で行うが、
  * 画面にも残り回数を出して、書いてから弾かれることのないようにする。
+ *
+ * 表示するのは自分が送った質問と、それへの返信だけ。
+ * ほかの家庭の質問は送信者名から園児が分かるため見せない。
  */
 'use client'
 
@@ -11,47 +14,42 @@ import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
 import { WEEKLY_LIMIT, SCHOOL_TEL, nextMondayLabel } from '@/lib/questionLimit'
 
-type Message = {
+type Reply = {
   id: string
   body: string
   sender_name: string
-  is_nutritionist: boolean
   created_at: string
-  guardian_id: string | null
+}
+
+type Question = {
+  id: string
+  body: string
+  created_at: string
+  replies: Reply[]
 }
 
 export default function MessageSection({ menuId }: { menuId: string }) {
-  const { guardian, child } = useGuardian()
-  const [messages, setMessages] = useState<Message[]>([])
+  const { guardian } = useGuardian()
+  const [questions, setQuestions] = useState<Question[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
   const [remaining, setRemaining] = useState<number | null>(null)
 
-  /* ---------------- 質問の取得 ---------------- */
+  /* ---------------- 自分の質問と残り回数の取得 ---------------- */
 
-  const fetchMessages = useCallback(async () => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('menu_id', menuId)
-      .order('created_at', { ascending: true })
-    if (data) setMessages(data)
-  }, [menuId])
-
-  useEffect(() => { fetchMessages() }, [fetchMessages])
-
-  /* ---------------- 残り回数 ---------------- */
-
-  const fetchRemaining = useCallback(async () => {
+  const fetchQuestions = useCallback(async () => {
     if (!guardian) return
-    const res = await fetch('/api/questions')
+    const res = await fetch(`/api/questions?menu_id=${encodeURIComponent(menuId)}`)
     const json = await res.json()
-    if (res.ok) setRemaining(json.remaining)
-  }, [guardian])
+    if (!res.ok) return
+    setRemaining(json.remaining)
+    /* API は新しい順なので、会話として読めるよう古い順に並べ直す */
+    setQuestions([...json.questions].reverse())
+  }, [guardian, menuId])
 
-  useEffect(() => { fetchRemaining() }, [fetchRemaining])
+  useEffect(() => { fetchQuestions() }, [fetchQuestions])
 
   /* ---------------- お気に入り ---------------- */
 
@@ -113,7 +111,7 @@ export default function MessageSection({ menuId }: { menuId: string }) {
 
     setNewMessage('')
     setRemaining(json.remaining)
-    fetchMessages()
+    fetchQuestions()
   }
 
   const canSend = remaining === null || remaining > 0
@@ -137,26 +135,20 @@ export default function MessageSection({ menuId }: { menuId: string }) {
 
       <h2 className="fa-sectiontitle">💬 栄養士さんに聞いてみる</h2>
 
-      {messages.length > 0 && (
+      {questions.length > 0 && (
         <div className="fa-thread">
-          {messages.map((msg) => {
-            const mine = !!guardian && msg.guardian_id === guardian.id
-            return (
-              <div
-                key={msg.id}
-                className={`fa-msg${msg.is_nutritionist ? ' fa-msg--staff' : mine ? ' fa-msg--mine' : ''}`}
-              >
-                <p className="fa-sender">
-                  {msg.is_nutritionist
-                    ? `🌿 ${msg.sender_name}`
-                    : mine
-                      ? 'わたしの質問'
-                      : `👤 ${msg.sender_name}`}
-                </p>
-                <p className="fa-body">{msg.body}</p>
+          {questions.flatMap((q) => [
+            <div key={q.id} className="fa-msg fa-msg--mine">
+              <p className="fa-sender">わたしの質問</p>
+              <p className="fa-body">{q.body}</p>
+            </div>,
+            ...q.replies.map((r) => (
+              <div key={r.id} className="fa-msg fa-msg--staff">
+                <p className="fa-sender">🌿 {r.sender_name}</p>
+                <p className="fa-body">{r.body}</p>
               </div>
-            )
-          })}
+            )),
+          ])}
         </div>
       )}
 
@@ -212,7 +204,8 @@ export default function MessageSection({ menuId }: { menuId: string }) {
               </button>
 
               <p className="fa-note" style={{ marginTop: 10 }}>
-                送った質問と栄養士さんからの返信は、マイページの「しつもん」からも確認できます。
+                質問と返信は、ほかのご家庭には表示されません。
+                マイページの「質問」からも確認できます。
               </p>
             </>
           ) : (
