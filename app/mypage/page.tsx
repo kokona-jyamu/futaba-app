@@ -93,13 +93,15 @@ export default function MyPage() {
   const saveAllergens = async () => {
     if (!child) return
     setSaving(true)
-    const { error } = await supabase
-      .from('children')
-      .update({ allergens })
-      .eq('id', child.id)
+    const res = await fetch('/api/guardian', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ allergens }),
+    })
+    const json = await res.json()
     setSaving(false)
 
-    if (error) { notify('保存できませんでした。' + error.message, true); return }
+    if (!res.ok) { notify('保存できませんでした。' + json.error, true); return }
     notify('アレルギー情報を保存しました。')
     reload()
   }
@@ -108,10 +110,11 @@ export default function MyPage() {
     applyTheme(key)
     saveThemeLocal(key)
     if (!guardian) return
-    await supabase
-      .from('guardians')
-      .update({ settings: { ...(guardian.settings ?? {}), theme: key } })
-      .eq('id', guardian.id)
+    await fetch('/api/guardian', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: key }),
+    })
     reload()
   }
 

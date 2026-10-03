@@ -53,11 +53,11 @@ export function useGuardian(): GuardianState {
     setLoading(false)
 
     /* 最終ログイン日時を記録（失敗しても画面には影響させない） */
-    supabase
-      .from('guardians')
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq('id', session.user.id)
-      .then(() => {})
+    fetch('/api/guardian', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seen: true }),
+    }).catch(() => {})
   }, [])
 
   useEffect(() => { load() }, [load])

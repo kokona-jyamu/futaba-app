@@ -1,5 +1,4 @@
-/* lib/theme.ts — テーマカラーの定義と適用 */
-'use client'
+/* lib/theme.ts — テーマカラーの定義と適用（定義は API からも参照する） */
 
 export type ThemeKey = 'matcha' | 'sakura' | 'sky' | 'apricot' | 'lavender'
 
