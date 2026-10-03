@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { formatShort, todayStr, hasFever, reasonLabel } from '@/lib/attendance'
+import { addDays } from '@/lib/date'
 
 type Props = {
   onNotify: (msg: string, isError?: boolean) => void
@@ -44,13 +45,7 @@ export default function AttendancePanel({ onNotify }: Props) {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const shiftDate = (days: number) => {
-    const d = new Date(`${date}T00:00:00`)
-    d.setDate(d.getDate() + days)
-    setDate(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    )
-  }
+  const shiftDate = (days: number) => setDate(addDays(date, days))
 
   if (loading && !data) return <p className="fa-empty">読み込んでいます…</p>
   if (!data) return null

@@ -27,6 +27,7 @@ type Props = {
 const formatDateTime = (iso: string) =>
   new Date(iso).toLocaleString('ja-JP', {
     month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   })
 
 export default function MessagesPanel({ messages, onReply }: Props) {

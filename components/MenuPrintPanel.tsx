@@ -8,32 +8,31 @@
 import { useState, useMemo } from 'react'
 import { formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
+import { todayStr, monthStart, parseYmd, weekdayIndex } from '@/lib/date'
 
 type Props = { menus: any[] }
 
 const MONTHS_BACK = 3
 
 export default function MenuPrintPanel({ menus }: Props) {
-  const now = new Date()
-  const [ym, setYm] = useState(
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  )
+  const [ym, setYm] = useState(() => todayStr().slice(0, 7))
   const [showDraft, setShowDraft] = useState(true)
   const [showNutrition, setShowNutrition] = useState(true)
   const [showIngredients, setShowIngredients] = useState(false)
 
-  /* 選べる月：今月の前後3か月ぶん */
+  /* 選べる月：今月の前後3か月ぶん（日本時間） */
   const months = useMemo(() => {
+    const today = todayStr()
     const list: { value: string; label: string }[] = []
     for (let i = -MONTHS_BACK; i <= MONTHS_BACK; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+      const { year, month } = parseYmd(monthStart(today, i))
       list.push({
-        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-        label: `${d.getFullYear()}年${d.getMonth() + 1}月`,
+        value: `${year}-${String(month).padStart(2, '0')}`,
+        label: `${year}年${month}月`,
       })
     }
     return list
-  }, [now])
+  }, [])
 
   const target = useMemo(() => {
     return menus
@@ -45,12 +44,12 @@ export default function MenuPrintPanel({ menus }: Props) {
   const label = months.find((m) => m.value === ym)?.label ?? ym
 
   const dayOf = (d: string) => {
-    const date = new Date(`${d}T00:00:00`)
+    const wd = weekdayIndex(d)
     return {
-      day: date.getDate(),
-      wd: ['日', '月', '火', '水', '木', '金', '土'][date.getDay()],
-      isSun: date.getDay() === 0,
-      isSat: date.getDay() === 6,
+      day: parseYmd(d).day,
+      wd: ['日', '月', '火', '水', '木', '金', '土'][wd],
+      isSun: wd === 0,
+      isSat: wd === 6,
     }
   }
 

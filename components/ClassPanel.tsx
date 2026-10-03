@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { todayStr, formatShort } from '@/lib/attendance'
+import { nowJST } from '@/lib/date'
 
 type Mode = 'list' | 'promote'
 
@@ -26,9 +27,10 @@ export default function ClassPanel({
   const [showGraduated, setShowGraduated] = useState(false)
 
   /* 進級画面の状態 */
+  /* 既定は次の4月1日（4月以降なら翌年） */
   const [promoteDate, setPromoteDate] = useState(() => {
-    const d = new Date()
-    return `${d.getFullYear() + (d.getMonth() >= 3 ? 1 : 0)}-04-01`
+    const { year, month } = nowJST()
+    return `${year + (month >= 4 ? 1 : 0)}-04-01`
   })
   const [plan, setPlan] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)

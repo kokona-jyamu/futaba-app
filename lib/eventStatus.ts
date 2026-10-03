@@ -5,17 +5,9 @@
  * 日付だけで機械的に決める。
  */
 
-export type EventPhase = 'upcoming' | 'today' | 'past'
+import { todayStr } from '@/lib/date'
 
-/** 今日の日付を 'YYYY-MM-DD' で返す（日本時間） */
-export const todayStr = (): string => {
-  const d = new Date()
-  return (
-    `${d.getFullYear()}-` +
-    `${String(d.getMonth() + 1).padStart(2, '0')}-` +
-    `${String(d.getDate()).padStart(2, '0')}`
-  )
-}
+export type EventPhase = 'upcoming' | 'today' | 'past'
 
 /** イベントが予告・本日・記録のどれかを返す */
 export const phaseOf = (eventDate?: string | null): EventPhase => {

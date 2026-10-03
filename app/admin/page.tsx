@@ -13,6 +13,7 @@ import {
   parseIngredients, formatIngredients,
 } from '@/lib/menu'
 import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
+import { todayStr } from '@/lib/date'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
 import MenuPicker from '@/components/MenuPicker'
@@ -38,12 +39,6 @@ const emptyForm = () => ({
 })
 
 type MenuForm = ReturnType<typeof emptyForm>
-
-/** 今日の日付を 'YYYY-MM-DD' で返す（日本時間） */
-const todayStr = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =

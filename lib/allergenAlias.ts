@@ -5,6 +5,7 @@
  */
 
 import { STANDARD_ALLERGENS } from '@/lib/allergens'
+import { nowJST } from '@/lib/date'
 
 /** キーごとの別名。ここにない語は「未知」として扱う */
 const ALIASES: Record<string, string[]> = {
@@ -106,7 +107,7 @@ export function parseDate(text: string, fallbackYear?: number): string | null {
   const s = (text ?? '').trim()
   if (!s) return null
 
-  const year = fallbackYear ?? new Date().getFullYear()
+  const year = fallbackYear ?? nowJST().year
 
   /* 2026-09-01 / 2026/9/1 */
   let m = s.match(/^(\d{4})[-/年.](\d{1,2})[-/月.](\d{1,2})/)

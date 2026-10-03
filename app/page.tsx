@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation'
 import { useGuardian } from '@/lib/useGuardian'
 import { initialOf } from '@/lib/guardian'
 import { phaseOf, isAhead } from '@/lib/eventStatus'
-import { todayStr, formatShort, STATUS_LABEL, type AttendanceStatus } from '@/lib/attendance'
+import { STATUS_LABEL, type AttendanceStatus } from '@/lib/attendance'
+import { todayStr, nowJST, monthEnd } from '@/lib/date'
 
 type Menu = {
   id: string
@@ -39,8 +40,9 @@ export default function Home() {
   const [menus, setMenus] = useState<Menu[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
+  /* currentMonth は 0〜11（カレンダー描画用） */
+  const [currentYear, setCurrentYear] = useState(() => nowJST().year)
+  const [currentMonth, setCurrentMonth] = useState(() => nowJST().month - 1)
   const [upcomingAtt, setUpcomingAtt] = useState<any[]>([])
   const { child, guardian } = useGuardian()
 
@@ -72,11 +74,9 @@ export default function Home() {
   useEffect(() => {
     if (!guardian) return
     const fetchAttendance = async () => {
-      const now = new Date()
-      const end = new Date(now.getFullYear(), now.getMonth() + 2, 0)
-      const res = await fetch(
-        `/api/attendance?from=${todayStr()}&to=${toDateStr(end.getFullYear(), end.getMonth(), end.getDate())}`
-      )
+      /* 今日から来月末まで */
+      const today = todayStr()
+      const res = await fetch(`/api/attendance?from=${today}&to=${monthEnd(today, 1)}`)
       const json = await res.json()
       if (res.ok) setUpcomingAtt(json.attendances)
     }
@@ -87,7 +87,7 @@ export default function Home() {
   const selectedMenus = menus.filter((m) => m.served_date === selectedDate)
   const firstDay = new Date(currentYear, currentMonth, 1).getDay()
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-  const today = toDateStr(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+  const today = todayStr()
   const monthLabel = `${currentYear}年${currentMonth + 1}月`
 
   /* 出欠を連絡している日（カレンダーに印を出す） */

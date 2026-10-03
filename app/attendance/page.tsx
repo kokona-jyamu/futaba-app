@@ -11,10 +11,11 @@ import Link from 'next/link'
 import { useGuardian } from '@/lib/useGuardian'
 import {
   REASON_TYPES, reasonLabel, STATUS_LABEL,
-  todayStr, toDateStr, dateRange, formatShort, weekdayOf, isWeekend,
+  todayStr, dateRange, formatShort, weekdayOf, isWeekend,
   isPastDeadline, hasFever,
   type AttendanceStatus,
 } from '@/lib/attendance'
+import { monthStart, monthEnd } from '@/lib/date'
 
 type Mode = 'single' | 'range'
 
@@ -55,12 +56,10 @@ export default function AttendancePage() {
 
   const fetchData = useCallback(async () => {
     if (!guardian) return
-    const now = new Date()
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0)
-
+    /* 先月の1日から来月末まで */
+    const today = todayStr()
     const res = await fetch(
-      `/api/attendance?from=${toDateStr(start)}&to=${toDateStr(end)}`
+      `/api/attendance?from=${monthStart(today, -1)}&to=${monthEnd(today, 1)}`
     )
     const json = await res.json()
     if (res.ok) {

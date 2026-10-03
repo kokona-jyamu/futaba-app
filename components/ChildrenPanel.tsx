@@ -285,7 +285,7 @@ export default function ChildrenPanel({
 
                 <p className="fa-childstatus">
                   {c.last_seen_at
-                    ? `最終ログイン：${new Date(c.last_seen_at).toLocaleDateString('ja-JP')}`
+                    ? `最終ログイン：${new Date(c.last_seen_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`
                     : 'まだログインされていません'}
                 </p>
 

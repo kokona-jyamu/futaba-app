@@ -1,5 +1,9 @@
 /* lib/attendance.ts — 出欠連絡の共通定義 */
 
+import {
+  todayStr, addDays, weekdayIndex, parseYmd, nowJST, isDateStr,
+} from '@/lib/date'
+
 export type AttendanceStatus = 'present' | 'late' | 'absent'
 
 export const STATUS_LABEL: Record<AttendanceStatus, string> = {
@@ -34,57 +38,48 @@ export type Attendance = {
   updated_at: string
 }
 
-/** 'YYYY-MM-DD'（日本時間） */
-export const toDateStr = (d: Date): string =>
-  `${d.getFullYear()}-` +
-  `${String(d.getMonth() + 1).padStart(2, '0')}-` +
-  `${String(d.getDate()).padStart(2, '0')}`
-
-export const todayStr = () => toDateStr(new Date())
+/* 今日の日付は lib/date に一本化した。既存の import 先を変えずに済むよう再公開する */
+export { todayStr }
 
 /** 開始日から終了日までの日付を並べる（最大62日） */
 export const dateRange = (from: string, to: string): string[] => {
   const list: string[] = []
-  const start = new Date(`${from}T00:00:00`)
-  const end = new Date(`${to}T00:00:00`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return list
-  if (end < start) return list
+  if (!isDateStr(from) || !isDateStr(to) || to < from) return list
 
-  const cur = new Date(start)
-  while (cur <= end && list.length < 62) {
-    list.push(toDateStr(cur))
-    cur.setDate(cur.getDate() + 1)
+  let cur = from
+  while (cur <= to && list.length < 62) {
+    list.push(cur)
+    cur = addDays(cur, 1)
   }
   return list
 }
 
 const WD = ['日', '月', '火', '水', '木', '金', '土']
 
-export const weekdayOf = (dateStr: string) =>
-  WD[new Date(`${dateStr}T00:00:00`).getDay()]
+export const weekdayOf = (dateStr: string) => WD[weekdayIndex(dateStr)]
 
 export const isWeekend = (dateStr: string) => {
-  const d = new Date(`${dateStr}T00:00:00`).getDay()
+  const d = weekdayIndex(dateStr)
   return d === 0 || d === 6
 }
 
 /** 「7月27日(月)」 */
 export const formatShort = (dateStr: string) => {
-  const d = new Date(`${dateStr}T00:00:00`)
-  return `${d.getMonth() + 1}月${d.getDate()}日(${WD[d.getDay()]})`
+  const { month, day } = parseYmd(dateStr)
+  return `${month}月${day}日(${weekdayOf(dateStr)})`
 }
 
-/** 締め切りを過ぎているか。当日以外は常に受け付ける */
+/** 締め切りを過ぎているか（日本時間で判定）。当日以外は常に受け付ける */
 export const isPastDeadline = (
   targetDate: string,
   deadline = '09:00',
   now = new Date()
 ): boolean => {
-  if (targetDate !== toDateStr(now)) return false
+  if (targetDate !== todayStr(now)) return false
   const [h, m] = deadline.split(':').map(Number)
-  const limit = new Date(now)
-  limit.setHours(h ?? 9, m ?? 0, 0, 0)
-  return now > limit
+  const { hour, minute } = nowJST(now)
+  const limit = (Number.isFinite(h) ? h : 9) * 60 + (Number.isFinite(m) ? m : 0)
+  return hour * 60 + minute >= limit
 }
 
 /** 体温が発熱かどうか（37.5度以上を目安とする） */

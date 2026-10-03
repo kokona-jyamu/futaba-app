@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createSupabaseServer } from '@/lib/superbase/server'
 import { dateRange, todayStr, type AttendanceStatus } from '@/lib/attendance'
+import { monthStart, monthEnd, isDateStr } from '@/lib/date'
 
 const VALID_STATUS: AttendanceStatus[] = ['present', 'late', 'absent']
 const MAX_DAYS = 31
@@ -46,11 +47,11 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
-  const now = new Date()
-  const from = url.searchParams.get('from')
-    ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const to = url.searchParams.get('to')
-    ?? `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`
+  const today = todayStr()
+  const fromParam = url.searchParams.get('from')
+  const toParam = url.searchParams.get('to')
+  const from = isDateStr(fromParam) ? fromParam : monthStart(today)
+  const to = isDateStr(toParam) ? toParam : monthEnd(today)
 
   const { data, error } = await supabaseAdmin
     .from('attendances')
