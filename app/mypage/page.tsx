@@ -2,14 +2,22 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import type { Menu, GuardianQuestion, QuestionsResponse } from '@/lib/apiTypes'
+
+/** お気に入り1件（献立の一部の列と一緒に読む） */
+type Favorite = {
+  created_at: string | null
+  menus: Pick<Menu, 'id' | 'served_date' | 'title' | 'photo_url'> | null
+}
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
 import { formatDate, initialOf } from '@/lib/guardian'
-import { THEMES, applyTheme, saveThemeLocal, type ThemeKey } from '@/lib/theme'
+import { THEMES, DEFAULT_THEME, applyTheme, saveThemeLocal, themeOfSettings, type ThemeKey } from '@/lib/theme'
 import AllergenPicker from '@/components/AllergenPicker'
-import { isAllergyPending } from '@/lib/allergens'
+import { isAllergyPending, toAllergenMap } from '@/lib/allergens'
 
 type Tab = 'child' | 'allergy' | 'favorites' | 'questions' | 'settings'
 
@@ -22,8 +30,8 @@ export default function MyPage() {
   const [saving, setSaving] = useState(false)
 
   const [allergens, setAllergens] = useState<Record<string, boolean>>({})
-  const [favorites, setFavorites] = useState<any[]>([])
-  const [questions, setQuestions] = useState<any[]>([])
+  const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [questions, setQuestions] = useState<GuardianQuestion[]>([])
 
   const notify = (text: string, error = false) => {
     setMessage(text)
@@ -34,36 +42,43 @@ export default function MyPage() {
     if (signedOut) router.push('/login')
   }, [signedOut, router])
 
-  useEffect(() => {
-    if (child?.allergens) setAllergens({ ...child.allergens })
-  }, [child])
+  /* 園児の情報が読み込まれたら（読み直されたら）、編集欄をその内容に合わせる */
+  const [syncedChild, setSyncedChild] = useState(child)
+  if (child !== syncedChild) {
+    setSyncedChild(child)
+    setAllergens(toAllergenMap(child?.allergens))
+  }
 
-  /* ---------------- お気に入り ---------------- */
+  /* ---------------- お気に入り・送った質問（タブを開いたときに読む） ---------------- */
 
-  const fetchFavorites = useCallback(async () => {
-    if (!guardian) return
-    const { data } = await supabase
-      .from('favorites')
-      .select('created_at, menus(id, served_date, title, photo_url)')
-      .eq('guardian_id', guardian.id)
-      .order('created_at', { ascending: false })
-    setFavorites(data ?? [])
-  }, [guardian])
+  const requestTab = useCallback(async () => {
+    if (!guardian) return null
 
-  /* ---------------- 送った質問 ---------------- */
+    if (tab === 'favorites') {
+      const { data } = await supabase
+        .from('favorites')
+        .select('created_at, menus(id, served_date, title, photo_url)')
+        .eq('guardian_id', guardian.id)
+        .order('created_at', { ascending: false })
+      return { kind: 'favorites' as const, list: data ?? [] }
+    }
 
-  /* 自分の質問と、それへの返信（replied_to で紐づくもの）だけを API から取る */
-  const fetchQuestions = useCallback(async () => {
-    if (!guardian) return
-    const res = await fetch('/api/questions')
-    const json = await res.json()
-    setQuestions(res.ok ? json.questions : [])
-  }, [guardian])
+    /* 自分の質問と、それへの返信（replied_to で紐づくもの）だけを API から取る */
+    if (tab === 'questions') {
+      const r = await fetchJson<QuestionsResponse>('/api/questions')
+      return { kind: 'questions' as const, list: r.ok ? r.json.questions : [] }
+    }
 
-  useEffect(() => {
-    if (tab === 'favorites') fetchFavorites()
-    if (tab === 'questions') fetchQuestions()
-  }, [tab, fetchFavorites, fetchQuestions])
+    return null
+  }, [guardian, tab])
+
+  const applyTab = (r: Awaited<ReturnType<typeof requestTab>>) => {
+    if (r?.kind === 'favorites') setFavorites(r.list)
+    if (r?.kind === 'questions') setQuestions(r.list)
+  }
+  useLoadEffect(requestTab, applyTab)
+  /* お気に入りを外したあとに取り直す */
+  const fetchFavorites = () => requestTab().then(applyTab)
 
   /* ---------------- 保存 ---------------- */
 
@@ -145,7 +160,7 @@ if (!guardian || !child) {
     )
   }
 
-  const currentTheme = (guardian.settings as any)?.theme ?? 'matcha'
+  const currentTheme = themeOfSettings(guardian.settings) ?? DEFAULT_THEME
 
   return (
     <main className="fa-page">
@@ -258,7 +273,7 @@ if (!guardian || !child) {
               </p>
             )}
             <div className="fa-grid">
-              {favorites.map((f: any) => (
+              {favorites.map((f) => (
                 <article key={f.menus?.id} className="fa-card">
                   {f.menus?.photo_url && (
                     <img src={f.menus.photo_url} alt="" className="fa-thumb" />
@@ -272,7 +287,7 @@ if (!guardian || !child) {
                       </button>
                     </Link>
                     <button
-                      onClick={() => removeFavorite(f.menus?.id)}
+                      onClick={() => { if (f.menus) removeFavorite(f.menus.id) }}
                       className="fa-btn fa-btn--ghost"
                     >
                       はずす
@@ -293,7 +308,7 @@ if (!guardian || !child) {
               </p>
             )}
             <div className="fa-grid fa-grid--2">
-              {questions.map((q: any) => (
+              {questions.map((q) => (
                 <article key={q.id} className="fa-card">
                   <p className="fa-date">
                     {formatDate(q.menus?.served_date)}　{q.menus?.title}
@@ -309,7 +324,7 @@ if (!guardian || !child) {
                       栄養士さんからの返信を待っています。
                     </p>
                   ) : (
-                    q.replies.map((r: any) => (
+                    q.replies.map((r) => (
                       <div key={r.id} className="fa-bubble fa-bubble--reply">
                         <p className="fa-sender">🌿 栄養士より</p>
                         <p className="fa-body">{r.body}</p>

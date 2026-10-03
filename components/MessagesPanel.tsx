@@ -7,25 +7,17 @@
 
 import { useState, useMemo } from 'react'
 import { formatDate } from '@/lib/menu'
+import type { AdminQuestion } from '@/lib/apiTypes'
 
-type Reply = { id: string; body: string; created_at: string }
-type Question = {
-  id: string
-  menu_id: string
-  body: string
-  sender_name: string
-  created_at: string
-  menus?: { title: string; served_date: string }
-  replies: Reply[]
-}
+type Question = AdminQuestion
 
 type Props = {
   messages: Question[]
   onReply: (menuId: string, questionId: string, body: string) => Promise<boolean>
 }
 
-const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString('ja-JP', {
+const formatDateTime = (iso: string | null) =>
+  !iso ? '' : new Date(iso).toLocaleString('ja-JP', {
     month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
     timeZone: 'Asia/Tokyo',
   })
@@ -47,6 +39,8 @@ export default function MessagesPanel({ messages, onReply }: Props) {
     if (!text?.trim()) return
 
     setReplyingId(q.id)
+    /* 質問は必ず献立に紐づく（API で献立と結合して取っている） */
+    if (!q.menu_id) return
     const ok = await onReply(q.menu_id, q.id, text.trim())
     setReplyingId(null)
 
@@ -91,7 +85,7 @@ export default function MessagesPanel({ messages, onReply }: Props) {
 
             <div className="fa-bubble">
               <p className="fa-sender">
-                👤 {q.sender_name}
+                👤 {q.sender_name ?? '保護者'}
                 <span className="fa-msgtime">{formatDateTime(q.created_at)}</span>
               </p>
               <p className="fa-body">{q.body}</p>

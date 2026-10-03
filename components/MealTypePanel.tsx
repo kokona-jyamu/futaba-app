@@ -5,16 +5,24 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type { Tables } from '@/lib/database.types'
+import type { MealTypesResponse, MealTypeChild } from '@/lib/apiTypes'
 import { todayStr, formatShort } from '@/lib/attendance'
+
+type Loaded = FetchResult<MealTypesResponse>
+
+/* 取得だけ行う（画面への反映は apply で行う） */
+const request = () => fetchJson<MealTypesResponse>('/api/admin/meal-types')
 
 export default function MealTypePanel({
   onNotify,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
 }) {
-  const [mealTypes, setMealTypes] = useState<any[]>([])
-  const [children, setChildren] = useState<any[]>([])
+  const [mealTypes, setMealTypes] = useState<Tables<'meal_types'>[]>([])
+  const [children, setChildren] = useState<MealTypeChild[]>([])
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState('')
   const [editingChild, setEditingChild] = useState<string | null>(null)
@@ -27,17 +35,15 @@ export default function MealTypePanel({
   const [newIsBaby, setNewIsBaby] = useState(true)
   const [showTypeForm, setShowTypeForm] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch('/api/admin/meal-types')
-    const json = await res.json()
+  const apply = ({ ok, json }: Loaded) => {
     setLoading(false)
-    if (!res.ok) { onNotify(json.error ?? '取得できませんでした', true); return }
+    if (!ok) { onNotify(json.error ?? '取得できませんでした', true); return }
     setMealTypes(json.mealTypes)
     setChildren(json.children)
-  }, [onNotify])
-
-  useEffect(() => { fetchData() }, [fetchData])
+  }
+  useLoadEffect(request, apply)
+  /* 保存などのあとに取り直す */
+  const fetchData = () => request().then(apply)
 
   const nameOf = (id?: string | null) =>
     mealTypes.find((m) => m.id === id)?.name ?? null
@@ -75,7 +81,7 @@ export default function MealTypePanel({
     fetchData()
   }
 
-  const toggleActive = async (m: any) => {
+  const toggleActive = async (m: Tables<'meal_types'>) => {
     const res = await fetch('/api/admin/meal-types', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -88,7 +94,7 @@ export default function MealTypePanel({
 
   /* ---------------- 園児への割り当て ---------------- */
 
-  const startAssign = (c: any) => {
+  const startAssign = (c: MealTypeChild) => {
     setEditingChild(c.id)
     setPick({ meal_type_id: c.meal_type_id ?? '', start_date: todayStr() })
   }

@@ -8,9 +8,10 @@
  */
 
 import Link from 'next/link'
-import { createSupabaseServer } from '@/lib/superbase/server'
+import { createSupabaseServer } from '@/lib/supabaseServer'
 import { formatDate } from '@/lib/menu'
-import { STANDARD_ALLERGENS, usedAllergens } from '@/lib/allergens'
+import type { Tables } from '@/lib/database.types'
+import { STANDARD_ALLERGENS, usedAllergens, toAllergenMap } from '@/lib/allergens'
 
 type Props = { params: Promise<{ key: string }> }
 
@@ -37,11 +38,11 @@ export default async function AllergenMenuPage({ params }: Props) {
   const all = menus ?? []
 
   /* 確認済みのものだけを2つに分け、未確認は別枠で知らせる */
-  const safe = all.filter((m) => m.allergen_checked && m.allergens?.[key] !== true)
-  const contains = all.filter((m) => m.allergen_checked && m.allergens?.[key] === true)
+  const safe = all.filter((m) => m.allergen_checked && toAllergenMap(m.allergens)[key] !== true)
+  const contains = all.filter((m) => m.allergen_checked && toAllergenMap(m.allergens)[key] === true)
   const unknown = all.filter((m) => !m.allergen_checked)
 
-  const renderCard = (menu: any, state: 'safe' | 'contains') => {
+  const renderCard = (menu: Tables<'menus'>, state: 'safe' | 'contains') => {
     const used = usedAllergens(menu.allergens)
 
     return (

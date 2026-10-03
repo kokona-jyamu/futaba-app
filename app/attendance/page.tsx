@@ -16,6 +16,8 @@ import {
   type AttendanceStatus,
 } from '@/lib/attendance'
 import { monthStart, monthEnd } from '@/lib/date'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import type { Attendance, AttendanceListResponse } from '@/lib/apiTypes'
 
 type Mode = 'single' | 'range'
 
@@ -23,7 +25,7 @@ export default function AttendancePage() {
   const router = useRouter()
   const { loading, guardian, child, signedOut } = useGuardian()
 
-  const [attendances, setAttendances] = useState<any[]>([])
+  const [attendances, setAttendances] = useState<Attendance[]>([])
   const [deadline, setDeadline] = useState('09:00')
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -54,21 +56,21 @@ export default function AttendancePage() {
 
   /* ---------------- 取得 ---------------- */
 
-  const fetchData = useCallback(async () => {
-    if (!guardian) return
-    /* 先月の1日から来月末まで */
+  /* 先月の1日から来月末まで */
+  const request = useCallback(async () => {
+    if (!guardian) return null
     const today = todayStr()
-    const res = await fetch(
-      `/api/attendance?from=${monthStart(today, -1)}&to=${monthEnd(today, 1)}`
-    )
-    const json = await res.json()
-    if (res.ok) {
-      setAttendances(json.attendances)
-      setDeadline(json.deadline)
-    }
+    return fetchJson<AttendanceListResponse>(`/api/attendance?from=${monthStart(today, -1)}&to=${monthEnd(today, 1)}`)
   }, [guardian])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  const apply = (r: Awaited<ReturnType<typeof request>>) => {
+    if (!r || !r.ok) return
+    setAttendances(r.json.attendances)
+    setDeadline(r.json.deadline)
+  }
+  useLoadEffect(request, apply)
+  /* 送信・取り消しのあとに取り直す */
+  const fetchData = () => request().then(apply)
 
   /* ---------------- 対象日 ---------------- */
 
@@ -81,16 +83,18 @@ export default function AttendancePage() {
   const toggleExclude = (d: string) => {
     setExcluded((prev) => {
       const next = new Set(prev)
-      next.has(d) ? next.delete(d) : next.add(d)
+      if (next.has(d)) next.delete(d)
+      else next.add(d)
       return next
     })
   }
 
   /* 期間を選び直したら、土日は既定で外しておく */
-  useEffect(() => {
-    if (mode !== 'range') return
-    setExcluded(new Set(rangeDates.filter(isWeekend)))
-  }, [mode, from, to]) // eslint-disable-line react-hooks/exhaustive-deps
+  const selectRange = (nextFrom: string, nextTo: string) => {
+    setFrom(nextFrom)
+    setTo(nextTo)
+    setExcluded(new Set(dateRange(nextFrom, nextTo).filter(isWeekend)))
+  }
 
   const pastDeadline = targetDates.some((d) => isPastDeadline(d, deadline))
 
@@ -201,7 +205,7 @@ export default function AttendancePage() {
           </button>
           <button
             className={`fa-tab${mode === 'range' ? ' is-on' : ''}`}
-            onClick={() => setMode('range')}
+            onClick={() => { setMode('range'); selectRange(from, to) }}
           >
             何日か続けて
           </button>
@@ -225,7 +229,10 @@ export default function AttendancePage() {
                 <label className="fa-label">はじめの日</label>
                 <input
                   type="date" value={from} min={today}
-                  onChange={(e) => { setFrom(e.target.value); if (e.target.value > to) setTo(e.target.value) }}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    selectRange(v, v > to ? v : to)
+                  }}
                   className="fa-input"
                 />
               </div>
@@ -233,7 +240,7 @@ export default function AttendancePage() {
                 <label className="fa-label">おわりの日</label>
                 <input
                   type="date" value={to} min={from}
-                  onChange={(e) => setTo(e.target.value)}
+                  onChange={(e) => selectRange(from, e.target.value)}
                   className="fa-input"
                 />
               </div>

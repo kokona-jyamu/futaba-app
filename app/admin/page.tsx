@@ -6,13 +6,18 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type {
+  Menu, MenusResponse, AdminQuestion, RepliesResponse,
+  AllergyPendingChild, AllergyPendingResponse,
+} from '@/lib/apiTypes'
 import {
   NUTRIENTS, SCHOOL_ID, num, formatDate,
   parseIngredients, formatIngredients,
 } from '@/lib/menu'
-import { emptyAllergenState, usedAllergens } from '@/lib/allergens'
+import { emptyAllergenState, usedAllergens, toAllergenMap, type AllergenMap } from '@/lib/allergens'
 import { todayStr } from '@/lib/date'
 import AllergenPicker from '@/components/AllergenPicker'
 import ChildrenPanel from '@/components/ChildrenPanel'
@@ -40,6 +45,22 @@ const emptyForm = () => ({
 
 type MenuForm = ReturnType<typeof emptyForm>
 
+type NutrientKey = (typeof NUTRIENTS)[number]['name']
+
+/** 編集中の献立。栄養価は入力中の文字列も入る */
+type EditForm = Omit<Menu, 'allergens' | NutrientKey> &
+  Record<NutrientKey, string | number | null> & {
+    ingredient: string
+    allergens: AllergenMap
+  }
+
+/* 画面を開いたときに読むもの（取得だけ。画面への反映は各 apply で行う） */
+const requestMessages = () => fetchJson<RepliesResponse>('/api/admin/replies')
+/* 下書きを含めるため API 経由で取得する */
+const requestMenus = () => fetchJson<MenusResponse>('/api/admin/menus/list')
+/* 保護者が変更し、まだ職員が確認していないアレルギー情報 */
+const requestAllergyPending = () => fetchJson<AllergyPendingResponse>('/api/admin/children/allergens')
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
     useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children' | 'settings'>('meals')
@@ -52,52 +73,43 @@ export default function AdminPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [copiedFrom, setCopiedFrom] = useState<string | null>(null)
 
-  const [allMenus, setAllMenus] = useState<any[]>([])
+  const [allMenus, setAllMenus] = useState<Menu[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<any>({})
+  const [editForm, setEditForm] = useState<Partial<EditForm>>({})
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
   const [listFilter, setListFilter] = useState<'all' | 'draft' | 'unchecked'>('all')
 
-  const [messages, setMessages] = useState<any[]>([])
-  const [allergyPending, setAllergyPending] = useState<{ id: string; name: string }[]>([])
+  const [messages, setMessages] = useState<AdminQuestion[]>([])
+  const [allergyPending, setAllergyPending] = useState<AllergyPendingChild[]>([])
 
-  const notify = (text: string, error = false) => {
+  /* 各パネルに渡すので作り直さない（作り直すとパネルが毎回データを取り直す） */
+  const notify = useCallback((text: string, error = false) => {
     setMessage(text)
     setIsError(error)
-  }
+  }, [])
 
   /* ---------------- データ取得 ---------------- */
 
-  const fetchMessages = useCallback(async () => {
-    const res = await fetch('/api/admin/replies')
-    const json = await res.json()
-    if (res.ok) setMessages(json.messages)
-  }, [])
+  const applyMessages = useCallback((r: FetchResult<RepliesResponse>) => { if (r.ok) setMessages(r.json.messages) }, [])
+  const applyMenus = useCallback((r: FetchResult<MenusResponse>) => { if (r.ok) setAllMenus(r.json.menus) }, [])
+  const applyAllergyPending = useCallback((r: FetchResult<AllergyPendingResponse>) => { if (r.ok) setAllergyPending(r.json.pending) }, [])
 
-  /* 下書きを含めるため API 経由で取得する */
-  const fetchMenus = useCallback(async () => {
-    const res = await fetch('/api/admin/menus/list')
-    const json = await res.json()
-    if (res.ok) setAllMenus(json.menus)
-  }, [])
+  useLoadEffect(requestMessages, applyMessages)
+  useLoadEffect(requestMenus, applyMenus)
+  useLoadEffect(requestAllergyPending, applyAllergyPending)
 
-  /* 保護者が変更し、まだ職員が確認していないアレルギー情報 */
-  const fetchAllergyPending = useCallback(async () => {
-    const res = await fetch('/api/admin/children/allergens')
-    const json = await res.json()
-    if (res.ok) setAllergyPending(json.pending)
-  }, [])
-
-  useEffect(() => {
-    fetchMessages()
-    fetchMenus()
-    fetchAllergyPending()
-  }, [fetchMessages, fetchMenus, fetchAllergyPending])
+  /* 保存や返信のあとに取り直す */
+  const fetchMessages = useCallback(() => requestMessages().then(applyMessages), [applyMessages])
+  const fetchMenus = useCallback(() => requestMenus().then(applyMenus), [applyMenus])
+  const fetchAllergyPending = useCallback(
+    () => requestAllergyPending().then(applyAllergyPending),
+    [applyAllergyPending]
+  )
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const draftMenus = allMenus.filter((m) => !m.is_published)
-  const openCount = messages.filter((m: any) => (m.replies?.length ?? 0) === 0).length
+  const openCount = messages.filter((m) => m.replies.length === 0).length
 
   /* 今日ぶんの下書き（複数あれば全部出す） */
   const todayDrafts = allMenus.filter(
@@ -147,7 +159,7 @@ export default function AdminPage() {
   }
 
   /* 一覧からの公開・非公開の切り替え */
-  const togglePublish = async (menu: any) => {
+  const togglePublish = async (menu: Menu) => {
     const next = !menu.is_published
     if (!next && !confirm('保護者に見えなくなります。よろしいですか。')) return
 
@@ -190,7 +202,7 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
-  const copyFromMenu = (menu: any) => {
+  const copyFromMenu = (menu: Menu) => {
     setForm({
       served_date: todayStr(),
       title: menu.title ?? '',
@@ -203,7 +215,7 @@ export default function AdminPage() {
       fat: menu.fat?.toString() ?? '',
       salt: menu.salt?.toString() ?? '',
       calcium: menu.calcium?.toString() ?? '',
-      allergens: { ...emptyAllergenState(), ...(menu.allergens || {}) },
+      allergens: { ...emptyAllergenState(), ...toAllergenMap(menu.allergens) },
       allergen_checked: menu.allergen_checked ?? false,
     })
     setPhotoFile(null)
@@ -263,12 +275,12 @@ export default function AdminPage() {
 
   /* ---------------- 編集 ---------------- */
 
-  const startEdit = (menu: any) => {
+  const startEdit = (menu: Menu) => {
     setEditingId(menu.id)
     setEditForm({
       ...menu,
       ingredient: formatIngredients(menu.ingredients),
-      allergens: { ...emptyAllergenState(), ...(menu.allergens || {}) },
+      allergens: { ...emptyAllergenState(), ...toAllergenMap(menu.allergens) },
       allergen_checked: menu.allergen_checked ?? false,
     })
     setEditPhotoFile(null)
@@ -283,14 +295,14 @@ export default function AdminPage() {
   }
 
   const toggleEditAllergen = (key: string) =>
-    setEditForm((f: any) => ({
+    setEditForm((f) => ({
       ...f,
       allergens: { ...f.allergens, [key]: !f.allergens?.[key] },
       allergen_checked: true,
     }))
 
   const declareNoneEdit = () =>
-    setEditForm((f: any) => ({
+    setEditForm((f) => ({
       ...f,
       allergens: emptyAllergenState(),
       allergen_checked: true,
@@ -702,7 +714,7 @@ export default function AdminPage() {
                           <div className="fa-drop"
                             onClick={() => document.getElementById(`edit-photo-${menu.id}`)?.click()}>
                             {editPhotoPreview || editForm.photo_url ? (
-                              <img src={editPhotoPreview || editForm.photo_url} alt="献立の写真"
+                              <img src={editPhotoPreview || editForm.photo_url || undefined} alt="献立の写真"
                                 className="fa-preview" />
                             ) : (
                               <div className="fa-drop-empty">

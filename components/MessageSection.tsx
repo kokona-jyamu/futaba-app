@@ -10,27 +10,15 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import type { GuardianQuestion, QuestionsResponse } from '@/lib/apiTypes'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
 import { WEEKLY_LIMIT, SCHOOL_TEL, nextMondayLabel } from '@/lib/questionLimit'
 
-type Reply = {
-  id: string
-  body: string
-  sender_name: string
-  created_at: string
-}
-
-type Question = {
-  id: string
-  body: string
-  created_at: string
-  replies: Reply[]
-}
-
 export default function MessageSection({ menuId }: { menuId: string }) {
   const { guardian } = useGuardian()
-  const [questions, setQuestions] = useState<Question[]>([])
+  const [questions, setQuestions] = useState<GuardianQuestion[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -39,17 +27,20 @@ export default function MessageSection({ menuId }: { menuId: string }) {
 
   /* ---------------- 自分の質問と残り回数の取得 ---------------- */
 
-  const fetchQuestions = useCallback(async () => {
-    if (!guardian) return
-    const res = await fetch(`/api/questions?menu_id=${encodeURIComponent(menuId)}`)
-    const json = await res.json()
-    if (!res.ok) return
-    setRemaining(json.remaining)
-    /* API は新しい順なので、会話として読めるよう古い順に並べ直す */
-    setQuestions([...json.questions].reverse())
+  const request = useCallback(async () => {
+    if (!guardian) return null
+    return fetchJson<QuestionsResponse>(`/api/questions?menu_id=${encodeURIComponent(menuId)}`)
   }, [guardian, menuId])
 
-  useEffect(() => { fetchQuestions() }, [fetchQuestions])
+  const apply = (r: Awaited<ReturnType<typeof request>>) => {
+    if (!r || !r.ok) return
+    setRemaining(r.json.remaining)
+    /* API は新しい順なので、会話として読めるよう古い順に並べ直す */
+    setQuestions([...r.json.questions].reverse())
+  }
+  useLoadEffect(request, apply)
+  /* 送信のあとに取り直す */
+  const fetchQuestions = () => request().then(apply)
 
   /* ---------------- お気に入り ---------------- */
 
@@ -144,7 +135,7 @@ export default function MessageSection({ menuId }: { menuId: string }) {
             </div>,
             ...q.replies.map((r) => (
               <div key={r.id} className="fa-msg fa-msg--staff">
-                <p className="fa-sender">🌿 {r.sender_name}</p>
+                <p className="fa-sender">🌿 {r.sender_name ?? '栄養士'}</p>
                 <p className="fa-body">{r.body}</p>
               </div>
             )),

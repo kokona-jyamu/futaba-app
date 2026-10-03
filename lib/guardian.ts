@@ -1,5 +1,7 @@
 /* lib/guardian.ts — 保護者アカウントの共通ロジック（クライアント・サーバー共用） */
 
+import type { Tables } from '@/lib/database.types'
+
 /**
  * 出席番号から Supabase Auth 用のメールアドレスを合成する。
  * 保護者はこのアドレスを一切目にしない。
@@ -31,25 +33,11 @@ export const generatePin = (): string => {
 
 export const isValidPin = (pin: string) => /^\d{4}$/.test(pin)
 
-export type Child = {
-  id: string
-  school_id: string
-  login_no: string
-  name: string
-  class_name: string | null
-  allergens: Record<string, boolean>
-  /** 園（職員）が最後に確認した内容。allergens と差があれば確認待ち */
-  allergens_confirmed?: Record<string, boolean>
-  is_active: boolean
-}
-
-export type Guardian = {
-  id: string
-  child_id: string
-  school_id: string
-  display_name: string | null
-  settings: Record<string, unknown>
-}
+/* 列の定義は DB から生成した型に合わせる（npm run gen:types で更新）。
+   allergens / allergens_confirmed / settings は jsonb なので、
+   使うときは toAllergenMap（lib/allergens）や themeOfSettings（lib/theme）を通す */
+export type Child = Tables<'children'>
+export type Guardian = Tables<'guardians'>
 
 /** 園児名から表示用のイニシャルを作る（アイコン用） */
 export const initialOf = (name?: string | null) =>

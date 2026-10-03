@@ -5,43 +5,18 @@
  */
 
 import { NextResponse } from 'next/server'
+import type { Tables, TablesUpdate } from '@/lib/database.types'
+import type { MealTypesResponse } from '@/lib/apiTypes'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
 import { todayStr } from '@/lib/attendance'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
 
 /* ================================================================
    GET: 区分の一覧と、園児ごとの現在の区分
    ================================================================ */
 export async function GET() {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data: mealTypes } = await supabaseAdmin
     .from('meal_types')
@@ -64,15 +39,15 @@ export async function GET() {
         .select('*')
         .in('child_id', ids)
         .order('start_date', { ascending: false })
-    : { data: [] as any[] }
+    : { data: [] as Tables<'child_meal_types'>[] }
 
   const today = todayStr()
-  const current = new Map<string, any>()
+  const current = new Map<string, Tables<'child_meal_types'>>()
   ;(history ?? []).forEach((h) => {
     if (h.start_date <= today && !current.has(h.child_id)) current.set(h.child_id, h)
   })
 
-  return NextResponse.json({
+  return NextResponse.json<MealTypesResponse>({
     mealTypes: mealTypes ?? [],
     children: (children ?? []).map((c) => ({
       ...c,
@@ -88,12 +63,8 @@ export async function GET() {
    body: { name, is_baby, sort_order }
    ================================================================ */
 export async function POST(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const name = String(body?.name ?? '').trim()
@@ -125,12 +96,8 @@ export async function POST(req: Request) {
         | { child_id, meal_type_id, start_date }
    ================================================================ */
 export async function PATCH(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
 
@@ -177,7 +144,7 @@ export async function PATCH(req: Request) {
   const id = String(body?.id ?? '')
   if (!id) return NextResponse.json({ error: 'id が必要です' }, { status: 400 })
 
-  const patch: Record<string, unknown> = {}
+  const patch: TablesUpdate<'meal_types'> = {}
   if (body.name !== undefined) patch.name = String(body.name).trim()
   if (body.is_baby !== undefined) patch.is_baby = body.is_baby === true
   if (body.sort_order !== undefined) patch.sort_order = Number(body.sort_order)

@@ -9,10 +9,11 @@
 import { useState, useMemo } from 'react'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
+import type { Menu } from '@/lib/apiTypes'
 
 type Props = {
-  menus: any[]
-  onPick: (menu: any) => void
+  menus: Menu[]
+  onPick: (menu: Menu) => void
 }
 
 export default function MenuPicker({ menus, onPick }: Props) {

@@ -6,33 +6,11 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
 import { todayStr, hasFever } from '@/lib/attendance'
-import { STANDARD_ALLERGENS, effectiveAllergens, isAllergyPending } from '@/lib/allergens'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
+import { STANDARD_ALLERGENS, effectiveAllergens, isAllergyPending, toAllergenMap, type AllergenMap } from '@/lib/allergens'
+import type { AttendanceSummary, AttendanceChild, AbsentChild, LateChild, MealCount } from '@/lib/apiTypes'
 
 /** その日時点で有効な食事区分を求める */
 function activeMealType(
@@ -49,12 +27,8 @@ const labelOf = (key: string) =>
   STANDARD_ALLERGENS.find((a) => a.key === key)?.label ?? key
 
 export async function GET(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const url = new URL(req.url)
   const date = url.searchParams.get('date') || todayStr()
@@ -68,7 +42,7 @@ export async function GET(req: Request) {
 
   const labelFormat = school?.allergy_label_format ?? '{name}除去'
   const showInCounts = school?.show_allergy_in_counts !== false
-  const commonFree: Record<string, boolean> = school?.common_free_allergens ?? {}
+  const commonFree = toAllergenMap(school?.common_free_allergens)
 
   /* 在籍している園児 */
   const { data: children } = await supabaseAdmin
@@ -79,14 +53,14 @@ export async function GET(req: Request) {
     .order('login_no')
 
   const kids = children ?? []
-  const emptyResult = {
+  const emptyResult: AttendanceSummary = {
     date, mealTypes: [], counts: [], total: 0, enrolled: 0,
     absent: [], late: [], noReport: [], allergyCounts: [],
     allergyChildren: [], feverCount: 0,
     deadline: school?.attendance_deadline?.slice(0, 5) ?? '09:00',
     labelFormat, showInCounts, commonFree,
   }
-  if (kids.length === 0) return NextResponse.json(emptyResult)
+  if (kids.length === 0) return NextResponse.json<AttendanceSummary>(emptyResult)
 
   const ids = kids.map((c) => c.id)
 
@@ -118,20 +92,20 @@ export async function GET(req: Request) {
   })
 
   /* 園全体で除いていない食材だけを、その子の「除去」として扱う */
-  const individualAllergens = (allergens: any): string[] =>
+  const individualAllergens = (allergens: AllergenMap): string[] =>
     STANDARD_ALLERGENS
-      .filter((a) => allergens?.[a.key] === true && commonFree[a.key] !== true)
+      .filter((a) => allergens[a.key] === true && commonFree[a.key] !== true)
       .map((a) => a.key)
 
   /* 集計 */
   const counts = new Map<string, number>()
   /* 区分ID -> 「卵,乳」のような組み合わせ -> 食数 */
   const freeByType = new Map<string, Map<string, number>>()
-  const absent: any[] = []
-  const late: any[] = []
-  const noReport: any[] = []
+  const absent: AbsentChild[] = []
+  const late: LateChild[] = []
+  const noReport: AttendanceChild[] = []
   const allergyCount = new Map<string, number>()
-  const allergyChildren: any[] = []
+  const allergyChildren: AttendanceChild[] = []
   let feverCount = 0
   let total = 0
 
@@ -147,7 +121,7 @@ export async function GET(req: Request) {
       .filter((al) => allergens[al.key] === true)
       .map((al) => ({ key: al.key, label: al.label, emoji: al.emoji }))
 
-    const base = {
+    const base: AttendanceChild = {
       id: c.id, name: c.name, class_name: c.class_name,
       meal_type_id: mealTypeId,
       meal_type_name: mealTypeId ? nameOfType.get(mealTypeId) ?? null : null,
@@ -213,7 +187,7 @@ export async function GET(req: Request) {
       .sort((a, b) => b.count - a.count)
   }
 
-  const countList = (mealTypes ?? []).map((m) => ({
+  const countList: MealCount[] = (mealTypes ?? []).map((m) => ({
     id: m.id, name: m.name, is_baby: m.is_baby,
     count: counts.get(m.id) ?? 0,
     free: buildFree(m.id),
@@ -234,7 +208,7 @@ export async function GET(req: Request) {
       count: allergyCount.get(a.key)!,
     }))
 
-  return NextResponse.json({
+  return NextResponse.json<AttendanceSummary>({
     date,
     mealTypes: mealTypes ?? [],
     counts: countList,

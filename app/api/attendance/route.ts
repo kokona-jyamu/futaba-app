@@ -5,46 +5,22 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireGuardian } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
+import type { AttendanceListResponse } from '@/lib/apiTypes'
 import { dateRange, todayStr, type AttendanceStatus } from '@/lib/attendance'
 import { monthStart, monthEnd, isDateStr } from '@/lib/date'
 
 const VALID_STATUS: AttendanceStatus[] = ['present', 'late', 'absent']
 const MAX_DAYS = 31
 
-async function requireGuardian() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: guardian } = await supabaseAdmin
-    .from('guardians')
-    .select('id, child_id, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!guardian) {
-    throw NextResponse.json({ error: '保護者アカウントではありません' }, { status: 403 })
-  }
-
-  return guardian
-}
-
 /* ================================================================
    GET: 自分の子の出欠を取る
    ?from=YYYY-MM-DD&to=YYYY-MM-DD（省略時は今月）
    ================================================================ */
 export async function GET(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const url = new URL(req.url)
   const today = todayStr()
@@ -70,7 +46,7 @@ export async function GET(req: Request) {
     .eq('id', guardian.school_id)
     .maybeSingle()
 
-  return NextResponse.json({
+  return NextResponse.json<AttendanceListResponse>({
     attendances: data ?? [],
     deadline: school?.attendance_deadline?.slice(0, 5) ?? '09:00',
   })
@@ -85,12 +61,8 @@ export async function GET(req: Request) {
    }
    ================================================================ */
 export async function POST(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const body = await req.json().catch(() => null)
 
@@ -166,12 +138,8 @@ export async function POST(req: Request) {
    body: { dates: string[] }
    ================================================================ */
 export async function DELETE(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const body = await req.json().catch(() => null)
   const dates: string[] = Array.isArray(body?.dates) ? body.dates.map(String) : []

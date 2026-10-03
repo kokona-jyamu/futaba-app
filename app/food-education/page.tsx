@@ -5,8 +5,10 @@
  */
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useLoadEffect } from '@/lib/useLoadEffect'
 import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
@@ -22,27 +24,47 @@ type Event = {
   recipe_steps: string | null
 }
 
+/** いいね用に、この端末を見分けるIDを読む（なければ作って保存する）。描画中には呼ばない */
+const getVisitorId = (): string => {
+  let id = window.localStorage.getItem('visitor_id')
+  if (!id) {
+    id = 'visitor_' + Math.random().toString(36).slice(2, 10)
+    window.localStorage.setItem('visitor_id', id)
+  }
+  return id
+}
+
+/** いいねの件数と、この端末でいいねしたイベントを読む */
+const requestLikes = async () => {
+  const visitorId = getVisitorId()
+  const { data } = await supabase.from('event_likes').select('*')
+  const counts: { [key: string]: number } = {}
+  const mine = new Set<string>()
+  ;(data ?? []).forEach((like) => {
+    if (!like.event_id) return
+    counts[like.event_id] = (counts[like.event_id] || 0) + 1
+    if (like.liked_by === visitorId) mine.add(like.event_id)
+  })
+  return { counts, mine }
+}
+
+/* useSearchParams を使うため Suspense で囲む（静的に生成するページの決まり） */
 export default function FoodEducationPage() {
+  return (
+    <Suspense fallback={<main className="fa-page"><p className="fa-empty">読み込んでいます…</p></main>}>
+      <FoodEducation />
+    </Suspense>
+  )
+}
+
+function FoodEducation() {
+  const searchParams = useSearchParams()
   const [events, setEvents] = useState<Event[]>([])
-  const [tab, setTab] = useState<'records' | 'recipes'>('records')
+  const [tab, setTab] = useState<'records' | 'recipes'>(
+    searchParams.get('tab') === 'recipes' ? 'recipes' : 'records'
+  )
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
-
-  const visitorId = useMemo(() => {
-    if (typeof window === 'undefined') return ''
-    let id = window.localStorage.getItem('visitor_id')
-    if (!id) {
-      id = 'visitor_' + Math.random().toString(36).slice(2, 10)
-      window.localStorage.setItem('visitor_id', id)
-    }
-    return id
-  }, [])
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('tab') === 'recipes') {
-      setTab('recipes')
-    }
-  }, [])
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -55,30 +77,24 @@ export default function FoodEducationPage() {
     fetchEvents()
   }, [])
 
-  const fetchLikes = useCallback(async () => {
-    if (!visitorId) return
-    const { data } = await supabase.from('event_likes').select('*')
-    if (!data) return
-    const counts: { [key: string]: number } = {}
-    const mine = new Set<string>()
-    data.forEach((like) => {
-      counts[like.event_id] = (counts[like.event_id] || 0) + 1
-      if (like.liked_by === visitorId) mine.add(like.event_id)
-    })
+  useLoadEffect(requestLikes, ({ counts, mine }) => {
     setLikeCounts(counts)
     setMyLikes(mine)
-  }, [visitorId])
+  })
 
-  useEffect(() => { fetchLikes() }, [fetchLikes])
+  /* いいね・取り消しを1つ切り替える */
+  const flip = (set: Set<string>, eventId: string) => {
+    const next = new Set(set)
+    if (next.has(eventId)) next.delete(eventId)
+    else next.add(eventId)
+    return next
+  }
 
   const toggleLike = async (eventId: string) => {
     const liked = myLikes.has(eventId)
+    const visitorId = getVisitorId()
 
-    setMyLikes((prev) => {
-      const next = new Set(prev)
-      liked ? next.delete(eventId) : next.add(eventId)
-      return next
-    })
+    setMyLikes((prev) => flip(prev, eventId))
     setLikeCounts((prev) => ({
       ...prev,
       [eventId]: Math.max((prev[eventId] || 0) + (liked ? -1 : 1), 0),
@@ -90,12 +106,9 @@ export default function FoodEducationPage() {
       : await supabase.from('event_likes')
           .insert({ event_id: eventId, liked_by: visitorId })
 
+    /* 保存できなかったら元に戻す */
     if (error) {
-      setMyLikes((prev) => {
-        const next = new Set(prev)
-        liked ? next.add(eventId) : next.delete(eventId)
-        return next
-      })
+      setMyLikes((prev) => flip(prev, eventId))
       setLikeCounts((prev) => ({
         ...prev,
         [eventId]: Math.max((prev[eventId] || 0) + (liked ? 1 : -1), 0),

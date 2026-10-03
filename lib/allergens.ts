@@ -16,6 +16,22 @@ export type AllergenDef = {
   required: boolean
 }
 
+/** アレルギーの状態（キーごとに使う・使わない） */
+export type AllergenMap = Record<string, boolean>
+
+/**
+ * DB の jsonb など、形の分からない値をアレルギーの状態に変換する。
+ * true / false 以外の値や、オブジェクトでないものは捨てる。
+ */
+export const toAllergenMap = (value: unknown): AllergenMap => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const map: AllergenMap = {}
+  for (const [key, on] of Object.entries(value)) {
+    if (typeof on === 'boolean') map[key] = on
+  }
+  return map
+}
+
 /** 表示義務8品目：投稿画面でも常に表示する */
 export const REQUIRED_ALLERGENS: AllergenDef[] = [
   { key: 'egg',       label: '卵',     emoji: '🥚', required: true },
@@ -92,10 +108,12 @@ export const findAllergen = (
 
 /** 献立に登録されているアレルゲンだけを取り出す */
 export const usedAllergens = (
-  allergens: Record<string, boolean> | null | undefined,
+  allergens: unknown,
   custom: CustomAllergen[] = []
-): AllergenDef[] =>
-  mergeAllergens(custom).filter((a) => allergens?.[a.key] === true)
+): AllergenDef[] => {
+  const map = toAllergenMap(allergens)
+  return mergeAllergens(custom).filter((a) => map[a.key] === true)
+}
 
 /** 空のアレルゲン状態（標準28品目すべて false） */
 export const emptyAllergenState = (): Record<string, boolean> =>
@@ -133,14 +151,18 @@ export function sanitizeAllergens(
    この2つに差があれば「未確認の変更あり」とみなす。
    ---------------------------------------------------------------- */
 
+/** children.allergens_updated_by_role の値を、決まった2種類に絞る */
+export const toUpdatedByRole = (role: string | null | undefined): 'guardian' | 'staff' | null =>
+  role === 'guardian' || role === 'staff' ? role : null
+
 /** 選ばれている（true の）キーだけを並べる */
-const onKeys = (allergens?: Record<string, boolean> | null): string[] =>
-  Object.entries(allergens ?? {}).filter(([, on]) => on === true).map(([key]) => key)
+const onKeys = (allergens: unknown): string[] =>
+  Object.entries(toAllergenMap(allergens)).filter(([, on]) => on === true).map(([key]) => key)
 
 /** 確認済みの内容からの差分。added は増えたもの、removed は外されたもの */
 export function allergenDiff(
-  current?: Record<string, boolean> | null,
-  confirmed?: Record<string, boolean> | null
+  current: unknown,
+  confirmed: unknown
 ): { added: string[]; removed: string[] } {
   const now = new Set(onKeys(current))
   const before = new Set(onKeys(confirmed))
@@ -152,8 +174,8 @@ export function allergenDiff(
 
 /** 職員がまだ確認していない変更があるか */
 export const isAllergyPending = (
-  current?: Record<string, boolean> | null,
-  confirmed?: Record<string, boolean> | null
+  current: unknown,
+  confirmed: unknown
 ): boolean => {
   const { added, removed } = allergenDiff(current, confirmed)
   return added.length > 0 || removed.length > 0
@@ -164,8 +186,8 @@ export const isAllergyPending = (
  * どちらかで選ばれていれば除去の対象とする（安全側に寄せる）。
  */
 export const effectiveAllergens = (
-  current?: Record<string, boolean> | null,
-  confirmed?: Record<string, boolean> | null
+  current: unknown,
+  confirmed: unknown
 ): Record<string, boolean> =>
   [...onKeys(current), ...onKeys(confirmed)].reduce(
     (acc, key) => ({ ...acc, [key]: true }),
@@ -173,5 +195,5 @@ export const effectiveAllergens = (
   )
 
 /** 1つでも選ばれているか */
-export const hasAnyAllergen = (allergens?: Record<string, boolean> | null) =>
-  !!allergens && Object.values(allergens).some((v) => v === true)
+export const hasAnyAllergen = (allergens: unknown) =>
+  Object.values(toAllergenMap(allergens)).some((v) => v === true)

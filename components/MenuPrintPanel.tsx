@@ -8,9 +8,10 @@
 import { useState, useMemo } from 'react'
 import { formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
+import type { Menu } from '@/lib/apiTypes'
 import { todayStr, monthStart, parseYmd, weekdayIndex } from '@/lib/date'
 
-type Props = { menus: any[] }
+type Props = { menus: Menu[] }
 
 const MONTHS_BACK = 3
 

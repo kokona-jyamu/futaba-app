@@ -7,30 +7,10 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireGuardian } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
+import type { QuestionsResponse } from '@/lib/apiTypes'
 import { WEEKLY_LIMIT, weekStartOf } from '@/lib/questionLimit'
-
-async function requireGuardian() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: guardian } = await supabaseAdmin
-    .from('guardians')
-    .select('id, child_id, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!guardian) {
-    throw NextResponse.json({ error: '保護者アカウントではありません' }, { status: 403 })
-  }
-
-  return guardian
-}
 
 /** 今週の使用回数を数える */
 async function countThisWeek(guardianId: string) {
@@ -51,12 +31,8 @@ async function countThisWeek(guardianId: string) {
    ほかの家庭の質問は返さない（園児名が分かってしまうため）
    ================================================================ */
 export async function GET(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const { used } = await countThisWeek(guardian.id)
 
@@ -84,7 +60,7 @@ export async function GET(req: Request) {
         .order('created_at', { ascending: true })
     : { data: [] }
 
-  return NextResponse.json({
+  return NextResponse.json<QuestionsResponse>({
     used,
     limit: WEEKLY_LIMIT,
     remaining: Math.max(WEEKLY_LIMIT - used, 0),
@@ -100,12 +76,8 @@ export async function GET(req: Request) {
    body: { menu_id, body }
    ================================================================ */
 export async function POST(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const payload = await req.json().catch(() => null)
   const menu_id = String(payload?.menu_id ?? '')

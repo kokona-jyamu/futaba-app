@@ -5,33 +5,19 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
+import { toAllergenMap, toUpdatedByRole } from '@/lib/allergens'
+import type { ChildListItem, ChildrenListResponse } from '@/lib/apiTypes'
 
 export async function GET() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    return NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data, error } = await supabaseAdmin
     .from('children_with_account')
     .select('*')
-    .eq('school_id', profile.school_id)
+    .eq('school_id', staff.school_id)
     .order('class_name', { ascending: true })
     .order('login_no', { ascending: true })
 
@@ -43,15 +29,27 @@ export async function GET() {
   const { data: allergenRows } = await supabaseAdmin
     .from('children')
     .select('id, allergens, allergens_confirmed, allergens_updated_at, allergens_updated_by_role')
-    .eq('school_id', profile.school_id)
+    .eq('school_id', staff.school_id)
 
   const allergyOf = new Map((allergenRows ?? []).map((c) => [c.id, c]))
-  const empty = {
-    allergens: {}, allergens_confirmed: {},
-    allergens_updated_at: null, allergens_updated_by_role: null,
-  }
 
-  return NextResponse.json({
-    children: (data ?? []).map((c) => ({ ...c, ...(allergyOf.get(c.id) ?? empty), id: c.id })),
+  /* ビューの列は型の上では空を許すため、id のない行は除き、残りは既定値で埋める */
+  const children: ChildListItem[] = (data ?? []).flatMap((c) => {
+    if (!c.id) return []
+    const a = allergyOf.get(c.id)
+    return [{
+      id: c.id,
+      login_no: c.login_no ?? '',
+      name: c.name ?? '',
+      class_name: c.class_name,
+      has_account: c.has_account === true,
+      last_seen_at: c.last_seen_at,
+      allergens: toAllergenMap(a?.allergens),
+      allergens_confirmed: toAllergenMap(a?.allergens_confirmed),
+      allergens_updated_at: a?.allergens_updated_at ?? null,
+      allergens_updated_by_role: toUpdatedByRole(a?.allergens_updated_by_role),
+    }]
   })
+
+  return NextResponse.json<ChildrenListResponse>({ children })
 }

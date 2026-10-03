@@ -10,6 +10,7 @@
 
 import 'server-only'
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SECRET_KEY
@@ -18,6 +19,6 @@ if (!url || !serviceKey) {
   throw new Error('SUPABASE_SECRET_KEY / NEXT_PUBLIC_SUPABASE_URL が未設定です')
 }
 
-export const supabaseAdmin = createClient(url, serviceKey, {
+export const supabaseAdmin = createClient<Database>(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })

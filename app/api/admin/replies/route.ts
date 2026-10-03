@@ -5,43 +5,17 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id, user_name')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
+import type { RepliesResponse } from '@/lib/apiTypes'
 
 /* ================================================================
    POST: 質問に返信する
    body: { menu_id, body, question_id }
    ================================================================ */
 export async function POST(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const menu_id = String(body?.menu_id ?? '')
@@ -85,12 +59,8 @@ export async function POST(req: Request) {
    GET: 保護者からの質問一覧（返信も一緒に返す）
    ================================================================ */
 export async function GET() {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   /* 質問 */
   const { data: questions, error } = await supabaseAdmin
@@ -103,7 +73,7 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   const list = questions ?? []
-  if (list.length === 0) return NextResponse.json({ messages: [] })
+  if (list.length === 0) return NextResponse.json<RepliesResponse>({ messages: [] })
 
   /* それぞれへの返信 */
   const { data: replies } = await supabaseAdmin
@@ -118,5 +88,5 @@ export async function GET() {
     replies: (replies ?? []).filter((r) => r.replied_to === q.id),
   }))
 
-  return NextResponse.json({ messages: withReplies })
+  return NextResponse.json<RepliesResponse>({ messages: withReplies })
 }

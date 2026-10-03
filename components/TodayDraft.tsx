@@ -8,9 +8,10 @@
 import { useState } from 'react'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
+import type { Menu } from '@/lib/apiTypes'
 
 type Props = {
-  menu: any
+  menu: Menu
   onPublish: (
     id: string,
     patch: { nutritionist_comment: string; why_eat_note: string; photo_url: string | null }
@@ -79,7 +80,7 @@ export default function TodayDraft({ menu, onPublish, onUploadPhoto }: Props) {
             <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
           ))
         )}
-        {menu.kcal && <span className="fa-tag fa-tag--plain">{menu.kcal} kcal</span>}
+        {menu.kcal != null && <span className="fa-tag fa-tag--plain">{menu.kcal} kcal</span>}
       </div>
 
       {ingredients && (

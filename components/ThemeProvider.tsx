@@ -12,7 +12,7 @@
 
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { applyTheme, loadThemeLocal, saveThemeLocal, type ThemeKey } from '@/lib/theme'
+import { applyTheme, loadThemeLocal, saveThemeLocal, themeOfSettings } from '@/lib/theme'
 
 export default function ThemeProvider() {
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function ThemeProvider() {
         .eq('id', session.user.id)
         .maybeSingle()
 
-      const theme = (data?.settings as any)?.theme as ThemeKey | undefined
+      const theme = themeOfSettings(data?.settings)
       if (theme) {
         applyTheme(theme)
         saveThemeLocal(theme)

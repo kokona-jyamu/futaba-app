@@ -1,4 +1,6 @@
-/* middleware.ts  ← プロジェクトのルート直下（package.json と同じ階層）
+/* proxy.ts  ← プロジェクトのルート直下（package.json と同じ階層）
+ *
+ * Next.js 16 で middleware.ts から名前が変わった（中身の働きは同じ）。
  *
  * /admin 配下を職員だけに制限する。
  * /admin/login だけは未ログインでも開けるようにする（そうしないと入口が塞がる）。
@@ -8,18 +10,20 @@
 
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import type { Database } from '@/lib/database.types'
+import { isStaffRole } from '@/lib/roles'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  /* ログインページ自体は素通りさせる */
-  if (pathname.startsWith('/admin/login')) {
+  /* ログインページ自体は素通りさせる（/admin/login-xxx などは通さない） */
+  if (pathname === '/admin/login' || pathname === '/admin/login/') {
     return NextResponse.next()
   }
 
   let response = NextResponse.next({ request })
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -51,7 +55,7 @@ export async function middleware(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle()
 
-  if (!profile || !['nutritionist', 'admin'].includes(profile.role)) {
+  if (!profile || !isStaffRole(profile.role)) {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
 

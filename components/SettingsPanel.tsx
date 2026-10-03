@@ -5,7 +5,9 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type { SettingsResponse, SchoolSettings, EnrolledAllergen } from '@/lib/apiTypes'
 import { STANDARD_ALLERGENS, findAllergen } from '@/lib/allergens'
 
 const LABEL_PRESETS = [
@@ -15,29 +17,30 @@ const LABEL_PRESETS = [
   { value: '{name}なし', sample: '卵なし' },
 ]
 
+type Loaded = FetchResult<SettingsResponse>
+
+/* 取得だけ行う（画面への反映は apply で行う） */
+const request = () => fetchJson<SettingsResponse>('/api/admin/settings')
+
 export default function SettingsPanel({
   onNotify,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
 }) {
-  const [settings, setSettings] = useState<any>(null)
-  const [enrolled, setEnrolled] = useState<any[]>([])
+  const [settings, setSettings] = useState<SchoolSettings | null>(null)
+  const [enrolled, setEnrolled] = useState<EnrolledAllergen[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch('/api/admin/settings')
-    const json = await res.json()
+  const apply = ({ ok, json }: Loaded) => {
     setLoading(false)
-    if (!res.ok) { onNotify(json.error ?? '取得できませんでした', true); return }
+    if (!ok) { onNotify(json.error ?? '取得できませんでした', true); return }
     setSettings(json.settings)
     setEnrolled(json.enrolledAllergens)
-  }, [onNotify])
+  }
+  useLoadEffect(request, apply)
 
-  useEffect(() => { fetchData() }, [fetchData])
-
-  const save = async (patch: Record<string, unknown>) => {
+  const save = async (patch: Partial<SchoolSettings>) => {
     setSaving(true)
     const res = await fetch('/api/admin/settings', {
       method: 'PATCH',
@@ -49,7 +52,7 @@ export default function SettingsPanel({
 
     if (!res.ok) { onNotify(json.error, true); return }
     onNotify('設定を保存しました。')
-    setSettings((s: any) => ({ ...s, ...patch }))
+    setSettings((s) => (s ? { ...s, ...patch } : s))
   }
 
   if (loading) return <p className="fa-empty">読み込んでいます…</p>
@@ -92,7 +95,7 @@ export default function SettingsPanel({
                   <div className="fa-childline">
                     <span className="fa-childline-name">{a.emoji} {a.label}</span>
                     <span className="fa-childline-class">
-                      {e.children.map((c: any) => c.name).join('、')}
+                      {e.children.map((c) => c.name).join('、')}
                     </span>
                   </div>
                   <span className="fa-countbadge">{e.count}名</span>

@@ -6,9 +6,9 @@
  */
 
 import Link from 'next/link'
-import { createSupabaseServer } from '@/lib/superbase/server'
+import { createSupabaseServer } from '@/lib/supabaseServer'
 import { formatDate, formatIngredients } from '@/lib/menu'
-import { REQUIRED_ALLERGENS, OPTIONAL_ALLERGENS, usedAllergens } from '@/lib/allergens'
+import { usedAllergens } from '@/lib/allergens'
 import MessageSection from '@/components/MessageSection'
 
 type Props = { params: Promise<{ id: string }> }
@@ -47,7 +47,7 @@ export default async function MenuDetail({ params }: Props) {
       {menu.photo_url ? (
         <img
           src={menu.photo_url}
-          alt={menu.title}
+          alt={menu.title ?? ''}
           style={{
             width: '100%', maxHeight: 320, objectFit: 'cover',
             borderRadius: 'var(--fa-r)', marginBottom: 20,

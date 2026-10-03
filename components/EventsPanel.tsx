@@ -5,7 +5,9 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type { EventsResponse, FoodEvent } from '@/lib/apiTypes'
 import { supabase } from '@/lib/supabase'
 import { SCHOOL_ID, formatDate } from '@/lib/menu'
 import { phaseOf, phaseLabel, isAhead } from '@/lib/eventStatus'
@@ -29,12 +31,17 @@ const toArray = (text: string): string[] =>
 const toText = (list?: string[] | null): string =>
   Array.isArray(list) ? list.join('、') : ''
 
+type Loaded = FetchResult<EventsResponse>
+
+/* 取得だけ行う（画面への反映は apply で行う） */
+const request = () => fetchJson<EventsResponse>('/api/admin/events')
+
 export default function EventsPanel({
   onNotify,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
 }) {
-  const [events, setEvents] = useState<any[]>([])
+  const [events, setEvents] = useState<FoodEvent[]>([])
   const [form, setForm] = useState<EventForm>(emptyForm())
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -42,14 +49,13 @@ export default function EventsPanel({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'ahead' | 'nophoto'>('all')
 
-  const fetchEvents = useCallback(async () => {
-    const res = await fetch('/api/admin/events')
-    const json = await res.json()
-    if (res.ok) setEvents(json.events)
+  const apply = ({ ok, json }: Loaded) => {
+    if (ok) setEvents(json.events)
     else onNotify(json.error ?? '取得できませんでした', true)
-  }, [onNotify])
-
-  useEffect(() => { fetchEvents() }, [fetchEvents])
+  }
+  useLoadEffect(request, apply)
+  /* 保存などのあとに取り直す */
+  const fetchEvents = () => request().then(apply)
 
   /* 終わったのに写真がないもの＝記録の入力待ち */
   const needsRecord = useMemo(
@@ -93,7 +99,7 @@ export default function EventsPanel({
     setPhotoPreview(null)
   }
 
-  const startEdit = (e: any) => {
+  const startEdit = (e: FoodEvent) => {
     setForm({
       id: e.id,
       event_date: e.event_date ?? '',
@@ -157,7 +163,7 @@ export default function EventsPanel({
     fetchEvents()
   }
 
-  const remove = async (e: any) => {
+  const remove = async (e: FoodEvent) => {
     if (!confirm(`「${e.title}」を削除します。元に戻せません。`)) return
 
     const res = await fetch('/api/admin/events', {

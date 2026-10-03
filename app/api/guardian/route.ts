@@ -7,31 +7,11 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireGuardian } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
 import { sanitizeAllergens } from '@/lib/allergens'
-import { THEMES } from '@/lib/theme'
-
-async function requireGuardian() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: guardian } = await supabaseAdmin
-    .from('guardians')
-    .select('id, child_id, school_id, settings')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!guardian) {
-    throw NextResponse.json({ error: '保護者アカウントではありません' }, { status: 403 })
-  }
-
-  return guardian
-}
+import { THEMES, settingsWithTheme, type ThemeKey } from '@/lib/theme'
+import type { TablesUpdate } from '@/lib/database.types'
 
 const THEME_KEYS = new Set<string>(THEMES.map((t) => t.key))
 
@@ -44,12 +24,8 @@ const THEME_KEYS = new Set<string>(THEMES.map((t) => t.key))
    }
    ================================================================ */
 export async function PATCH(req: Request) {
-  let guardian
-  try {
-    guardian = await requireGuardian()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const guardian = await requireGuardian()
+  if (guardian instanceof NextResponse) return guardian
 
   const body = await req.json().catch(() => null)
   if (!body || typeof body !== 'object') {
@@ -79,14 +55,14 @@ export async function PATCH(req: Request) {
   }
 
   /* ---------------- 画面の色・最終ログイン ---------------- */
-  const patch: Record<string, unknown> = {}
+  const patch: TablesUpdate<'guardians'> = {}
 
   if (body.theme !== undefined) {
     const theme = String(body.theme)
     if (!THEME_KEYS.has(theme)) {
       return NextResponse.json({ error: '色の指定が不正です' }, { status: 400 })
     }
-    patch.settings = { ...(guardian.settings ?? {}), theme }
+    patch.settings = settingsWithTheme(guardian.settings, theme as ThemeKey)
   }
 
   if (body.seen === true) {

@@ -5,19 +5,27 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type { Tables } from '@/lib/database.types'
+import type { ClassesResponse, ClassChild } from '@/lib/apiTypes'
 import { todayStr, formatShort } from '@/lib/attendance'
 import { nowJST } from '@/lib/date'
 
 type Mode = 'list' | 'promote'
+
+type Loaded = FetchResult<ClassesResponse>
+
+/* 取得だけ行う（画面への反映は apply で行う） */
+const request = () => fetchJson<ClassesResponse>('/api/admin/classes')
 
 export default function ClassPanel({
   onNotify,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
 }) {
-  const [classes, setClasses] = useState<any[]>([])
-  const [children, setChildren] = useState<any[]>([])
+  const [classes, setClasses] = useState<Tables<'classes'>[]>([])
+  const [children, setChildren] = useState<ClassChild[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<Mode>('list')
   const [showForm, setShowForm] = useState(false)
@@ -35,17 +43,15 @@ export default function ClassPanel({
   const [plan, setPlan] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch('/api/admin/classes')
-    const json = await res.json()
+  const apply = ({ ok, json }: Loaded) => {
     setLoading(false)
-    if (!res.ok) { onNotify(json.error ?? '取得できませんでした', true); return }
+    if (!ok) { onNotify(json.error ?? '取得できませんでした', true); return }
     setClasses(json.classes)
     setChildren(json.children)
-  }, [onNotify])
-
-  useEffect(() => { fetchData() }, [fetchData])
+  }
+  useLoadEffect(request, apply)
+  /* 保存などのあとに取り直す */
+  const fetchData = () => request().then(apply)
 
   const nameOf = (id?: string | null) =>
     classes.find((c) => c.id === id)?.name ?? null
@@ -55,7 +61,7 @@ export default function ClassPanel({
 
   /* クラスごとにまとめる */
   const grouped = useMemo(() => {
-    const map = new Map<string, any[]>()
+    const map = new Map<string, ClassChild[]>()
     active.forEach((c) => {
       const key = c.class_id ?? '__none'
       const list = map.get(key) ?? []
@@ -89,7 +95,7 @@ export default function ClassPanel({
 
   /* ---------------- 1人ずつの変更 ---------------- */
 
-  const startAssign = (c: any) => {
+  const startAssign = (c: ClassChild) => {
     setEditingChild(c.id)
     setPick({ class_id: c.class_id ?? '', start_date: todayStr() })
   }
@@ -114,7 +120,7 @@ export default function ClassPanel({
     fetchData()
   }
 
-  const restore = async (c: any) => {
+  const restore = async (c: ClassChild) => {
     if (!confirm(`${c.name}さんを在籍に戻します。`)) return
 
     const res = await fetch('/api/admin/classes', {

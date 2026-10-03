@@ -12,22 +12,12 @@ import { initialOf } from '@/lib/guardian'
 import { phaseOf, isAhead } from '@/lib/eventStatus'
 import { STATUS_LABEL, type AttendanceStatus } from '@/lib/attendance'
 import { todayStr, nowJST, monthEnd } from '@/lib/date'
+import type { Tables } from '@/lib/database.types'
+import type { Attendance } from '@/lib/apiTypes'
 
-type Menu = {
-  id: string
-  served_date: string
-  title: string
-  nutritionist_comment: string
-  photo_url: string | null
-}
-
-type Event = {
-  id: string
-  event_date: string
-  title: string
-  description: string | null
-  status: 'upcoming' | 'past'
-}
+/* 一覧に使う列だけを DB の型から取り出す */
+type Menu = Pick<Tables<'menus'>, 'id' | 'served_date' | 'title' | 'nutritionist_comment' | 'photo_url'>
+type Event = Tables<'food_education_events'>
 
 const TABS = ['給食', '食育', 'アレルゲン', '地域だより'] as const
 type Tab = (typeof TABS)[number]
@@ -44,7 +34,7 @@ export default function Home() {
   /* currentMonth は 0〜11（カレンダー描画用） */
   const [currentYear, setCurrentYear] = useState(() => nowJST().year)
   const [currentMonth, setCurrentMonth] = useState(() => nowJST().month - 1)
-  const [upcomingAtt, setUpcomingAtt] = useState<any[]>([])
+  const [upcomingAtt, setUpcomingAtt] = useState<Attendance[]>([])
   const { child, guardian } = useGuardian()
 
   useEffect(() => {

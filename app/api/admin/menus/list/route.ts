@@ -6,36 +6,21 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
+import type { MenusResponse } from '@/lib/apiTypes'
 
 export async function GET() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    return NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data, error } = await supabaseAdmin
     .from('menus')
     .select('*')
-    .eq('school_id', profile.school_id)
+    .eq('school_id', staff.school_id)
     .order('served_date', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-  return NextResponse.json({ menus: data ?? [] })
+  return NextResponse.json<MenusResponse>({ menus: data ?? [] })
 }

@@ -1,24 +1,15 @@
 /* components/ChildrenPanel.tsx — 管理画面の「園児」タブ */
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
+import type { ChildListItem, ChildrenListResponse, ChildrenBulkResponse, BulkChildResult } from '@/lib/apiTypes'
 import { initialOf } from '@/lib/guardian'
 import { usedAllergens, allergenDiff, isAllergyPending, findAllergen } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 
-type Child = {
-  id: string
-  login_no: string
-  name: string
-  class_name: string | null
-  has_account: boolean
-  last_seen_at: string | null
-  allergens: Record<string, boolean>
-  /** 職員が最後に確認した内容 */
-  allergens_confirmed: Record<string, boolean>
-  allergens_updated_at: string | null
-  allergens_updated_by_role: 'guardian' | 'staff' | null
-}
+/** 一覧の1件（API の応答の形をそのまま使う） */
+type Child = ChildListItem
 
 const formatJstDate = (iso: string) =>
   new Date(iso).toLocaleString('ja-JP', {
@@ -33,6 +24,11 @@ type Issued = {
   class_name: string | null
   pin: string
 }
+
+type Loaded = FetchResult<ChildrenListResponse>
+
+/* 取得だけ行う（画面への反映は apply で行う） */
+const request = () => fetchJson<ChildrenListResponse>('/api/admin/children/list')
 
 export default function ChildrenPanel({
   onNotify,
@@ -59,14 +55,13 @@ export default function ChildrenPanel({
   const [allergyDraft, setAllergyDraft] = useState<Record<string, boolean>>({})
   const [onlyPending, setOnlyPending] = useState(false)
 
-  const fetchChildren = useCallback(async () => {
-    const res = await fetch('/api/admin/children/list')
-    const json = await res.json()
-    if (res.ok) setChildren(json.children)
+  const apply = ({ ok, json }: Loaded) => {
+    if (ok) setChildren(json.children)
     else onNotify(json.error ?? '一覧を取得できませんでした', true)
-  }, [onNotify])
-
-  useEffect(() => { fetchChildren() }, [fetchChildren])
+  }
+  useLoadEffect(request, apply)
+  /* 保存などのあとに取り直す */
+  const fetchChildren = () => request().then(apply)
 
   /* ---------------- 単票登録 ---------------- */
 
@@ -122,21 +117,21 @@ export default function ChildrenPanel({
       return
     }
     setLoading(true)
-    const res = await fetch('/api/admin/children/bulk', {
+    const r = await fetchJson<ChildrenBulkResponse>('/api/admin/children/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: parsedRows }),
     })
-    const json = await res.json()
     setLoading(false)
 
-    if (!res.ok) { onNotify(json.error, true); return }
+    if (!r.ok) { onNotify(r.json.error, true); return }
+    const json = r.json
 
-    const ok = json.results.filter((r: any) => r.ok)
+    const ok = json.results.filter((x): x is Extract<BulkChildResult, { ok: true }> => x.ok)
     setIssued(ok)
     setBulkText('')
 
-    const failed = json.results.filter((r: any) => !r.ok)
+    const failed = json.results.filter((x): x is Extract<BulkChildResult, { ok: false }> => !x.ok)
     if (failed.length > 0) {
       onNotify(
         `${json.succeeded}件を登録しました。${json.failed}件は失敗（${failed[0].login_no}: ${failed[0].error} ほか）`,

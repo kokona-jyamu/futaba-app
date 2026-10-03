@@ -5,32 +5,10 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
 
-const STAFF_ROLES = ['nutritionist', 'admin']
 const MAX_ROWS = 60
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
 
 type Row = {
   served_date: string
@@ -46,12 +24,8 @@ type Row = {
 }
 
 export async function POST(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const rows: Row[] = Array.isArray(body?.rows) ? body.rows : []

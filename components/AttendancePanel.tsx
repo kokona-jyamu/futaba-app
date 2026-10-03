@@ -5,7 +5,9 @@
  */
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import type { AttendanceSummary, AttendanceChild } from '@/lib/apiTypes'
 import { formatShort, todayStr, hasFever, reasonLabel } from '@/lib/attendance'
 import { addDays } from '@/lib/date'
 
@@ -14,14 +16,14 @@ type Props = {
 }
 
 /** 名前・区分・アレルゲンを1行にまとめる */
-function ChildLine({ c }: { c: any }) {
+function ChildLine({ c }: { c: AttendanceChild }) {
   return (
     <div className="fa-childline">
       <span className="fa-childline-name">{c.name}</span>
       {c.meal_type_name && (
         <span className="fa-tag fa-tag--none">{c.meal_type_name}</span>
       )}
-      {c.allergens?.map((a: any) => (
+      {c.allergens.map((a) => (
         <span key={a.key} className="fa-tag">{a.label}</span>
       ))}
       {c.allergy_pending && (
@@ -36,19 +38,19 @@ function ChildLine({ c }: { c: any }) {
 
 export default function AttendancePanel({ onNotify }: Props) {
   const [date, setDate] = useState(todayStr())
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<AttendanceSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch(`/api/admin/attendance?date=${date}`)
-    const json = await res.json()
+  /* 日付を素早く切り替えても、古い日付の結果で上書きしない */
+  const request = useCallback(
+    () => fetchJson<AttendanceSummary>(`/api/admin/attendance?date=${date}`),
+    [date]
+  )
+  useLoadEffect(request, ({ ok, json }) => {
     setLoading(false)
-    if (res.ok) setData(json)
+    if (ok) setData(json)
     else onNotify(json.error ?? '取得できませんでした', true)
-  }, [date, onNotify])
-
-  useEffect(() => { fetchData() }, [fetchData])
+  })
 
   const shiftDate = (days: number) => setDate(addDays(date, days))
 
@@ -56,7 +58,7 @@ export default function AttendancePanel({ onNotify }: Props) {
   if (!data) return null
 
   const isToday = date === todayStr()
-  const lunchCounts = data.counts.filter((c: any) => c.count > 0)
+  const lunchCounts = data.counts.filter((c) => c.count > 0)
   const hasIndividual = data.allergyChildren?.length > 0
 
   return (
@@ -127,7 +129,7 @@ export default function AttendancePanel({ onNotify }: Props) {
           </p>
         ) : (
           <div className="fa-mealblocks">
-            {lunchCounts.map((c: any) => (
+            {lunchCounts.map((c) => (
               <div
                 key={c.id}
                 className={`fa-mealblock${c.id === '__unset' ? ' is-unset' : ''}`}
@@ -139,13 +141,13 @@ export default function AttendancePanel({ onNotify }: Props) {
                   </span>
                   {c.free.length > 0 && (
                     <span className="fa-mealblock-sub">
-                      うち {c.free.reduce((s: number, f: any) => s + f.count, 0)}食は個別対応
+                      うち {c.free.reduce((s, f) => s + f.count, 0)}食は個別対応
                     </span>
                   )}
                 </div>
                 {c.free.length > 0 && (
                   <div className="fa-mealblock-body">
-                    {c.free.map((f: any) => (
+                    {c.free.map((f) => (
                       <span key={f.keys.join()} className="fa-freetag">
                         {f.label} {f.count}食
                       </span>
@@ -157,7 +159,7 @@ export default function AttendancePanel({ onNotify }: Props) {
           </div>
         )}
 
-        {data.counts.some((c: any) => c.id === '__unset' && c.count > 0) && (
+        {data.counts.some((c) => c.id === '__unset' && c.count > 0) && (
           <p className="fa-note" style={{ marginTop: 12 }}>
             食事区分が設定されていない園児がいます。「園児」タブから設定してください。
           </p>
@@ -175,7 +177,7 @@ export default function AttendancePanel({ onNotify }: Props) {
             今日登園する子のうち、登録のある園児です。
           </p>
           <div className="fa-attlist">
-            {data.allergyChildren.map((c: any) => (
+            {data.allergyChildren.map((c) => (
               <div key={c.id} className="fa-attrow">
                 <ChildLine c={c} />
               </div>
@@ -194,7 +196,7 @@ export default function AttendancePanel({ onNotify }: Props) {
             <p className="fa-note" style={{ marginTop: 12 }}>欠席の連絡はありません。</p>
           ) : (
             <div className="fa-attlist">
-              {data.absent.map((c: any) => (
+              {data.absent.map((c) => (
                 <div key={c.id} className="fa-attrow" style={{ display: 'block' }}>
                   <ChildLine c={c} />
                   <p className="fa-attmeta">
@@ -222,7 +224,7 @@ export default function AttendancePanel({ onNotify }: Props) {
             <p className="fa-note" style={{ marginTop: 12 }}>遅刻の連絡はありません。</p>
           ) : (
             <div className="fa-attlist">
-              {data.late.map((c: any) => (
+              {data.late.map((c) => (
                 <div key={c.id} className="fa-attrow" style={{ display: 'block' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                     <div style={{ minWidth: 0, flex: 1 }}>

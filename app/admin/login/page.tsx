@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { isStaffRole } from '@/lib/roles'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -19,7 +20,7 @@ export default function AdminLoginPage() {
     }
     const { data: profile } = await supabase
       .from('users').select('role, school_id').eq('id', data.user.id).single()
-    if (!profile || !['nutritionist', 'admin'].includes(profile.role)) {
+    if (!profile || !isStaffRole(profile.role)) {
       await supabase.auth.signOut()
       setError('この画面は管理者（栄養士）専用です'); setLoading(false); return
     }

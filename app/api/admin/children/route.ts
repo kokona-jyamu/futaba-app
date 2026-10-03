@@ -9,37 +9,9 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
 import { noToEmail, pinToPassword, generatePin, isValidPin } from '@/lib/guardian'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-/* ----------------------------------------------------------------
-   ログイン中のユーザーが職員かどうかを確認し、その school_id を返す。
-   職員でなければ Response を throw する。
-   ---------------------------------------------------------------- */
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  /* RLS を迂回して確認する（自分の行しか読めない設定でも動くように） */
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
 
 /* ================================================================
    POST: 園児を登録し、保護者アカウントを発行する
@@ -47,12 +19,8 @@ async function requireStaff() {
    返る pin は「この1回だけ」表示できる。DBに平文では残らない。
    ================================================================ */
 export async function POST(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const login_no = String(body?.login_no ?? '').trim()
@@ -120,12 +88,8 @@ export async function POST(req: Request) {
    body: { child_id, pin? }
    ================================================================ */
 export async function PATCH(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const child_id = String(body?.child_id ?? '')
@@ -163,12 +127,8 @@ export async function PATCH(req: Request) {
    body: { child_id }
    ================================================================ */
 export async function DELETE(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const child_id = String(body?.child_id ?? '')

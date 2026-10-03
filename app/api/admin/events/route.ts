@@ -5,43 +5,26 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
+import type { EventsResponse } from '@/lib/apiTypes'
+import { isDateStr } from '@/lib/date'
+import { str, strList, type Body } from '@/lib/parse'
 
-const STAFF_ROLES = ['nutritionist', 'admin']
+/** 受け取った値から、DBに入れてよい項目だけを取り出す。日付と行事名は必須 */
+function pickFields(body: Body) {
+  const event_date = body.event_date
+  const title = str(body.title)
+  if (!isDateStr(event_date) || !title) return null
 
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
-
-function pickFields(body: any) {
   return {
-    event_date: body.event_date,
-    title: body.title,
-    description: body.description || null,
-    photo_url: body.photo_url || null,
-    recipe_title: body.recipe_title || null,
-    recipe_ingredients: Array.isArray(body.recipe_ingredients) && body.recipe_ingredients.length > 0
-      ? body.recipe_ingredients
-      : null,
-    recipe_steps: body.recipe_steps || null,
+    event_date,
+    title,
+    description: str(body.description),
+    photo_url: str(body.photo_url),
+    recipe_title: str(body.recipe_title),
+    recipe_ingredients: strList(body.recipe_ingredients),
+    recipe_steps: str(body.recipe_steps),
   }
 }
 
@@ -49,12 +32,8 @@ function pickFields(body: any) {
    GET: 一覧
    ================================================================ */
 export async function GET() {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data, error } = await supabaseAdmin
     .from('food_education_events')
@@ -63,28 +42,25 @@ export async function GET() {
     .order('event_date', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  return NextResponse.json({ events: data ?? [] })
+  return NextResponse.json<EventsResponse>({ events: data ?? [] })
 }
 
 /* ================================================================
    POST: 新規登録
    ================================================================ */
 export async function POST(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
-  const body = await req.json().catch(() => null)
-  if (!body?.event_date || !body?.title) {
+  const body: Body = (await req.json().catch(() => null)) ?? {}
+  const fields = pickFields(body)
+  if (!fields) {
     return NextResponse.json({ error: '日付と行事名は必須です' }, { status: 400 })
   }
 
   const { data, error } = await supabaseAdmin
     .from('food_education_events')
-    .insert({ ...pickFields(body), school_id: staff.school_id, status: 'auto' })
+    .insert({ ...fields, school_id: staff.school_id, status: 'auto' })
     .select()
     .single()
 
@@ -96,20 +72,21 @@ export async function POST(req: Request) {
    PATCH: 更新
    ================================================================ */
 export async function PATCH(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
-  const body = await req.json().catch(() => null)
-  const id = String(body?.id ?? '')
+  const body: Body = (await req.json().catch(() => null)) ?? {}
+  const id = String(body.id ?? '')
   if (!id) return NextResponse.json({ error: 'id が必要です' }, { status: 400 })
+
+  const fields = pickFields(body)
+  if (!fields) {
+    return NextResponse.json({ error: '日付と行事名は必須です' }, { status: 400 })
+  }
 
   const { data, error } = await supabaseAdmin
     .from('food_education_events')
-    .update(pickFields(body))
+    .update(fields)
     .eq('id', id)
     .eq('school_id', staff.school_id)
     .select()
@@ -125,12 +102,8 @@ export async function PATCH(req: Request) {
    DELETE: 削除
    ================================================================ */
 export async function DELETE(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const id = String(body?.id ?? '')

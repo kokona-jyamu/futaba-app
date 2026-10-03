@@ -8,46 +8,39 @@
  */
 
 import { NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
-import { sanitizeAllergens, allergenDiff, isAllergyPending } from '@/lib/allergens'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
+import {
+  sanitizeAllergens, allergenDiff, isAllergyPending, toAllergenMap, toUpdatedByRole,
+} from '@/lib/allergens'
+import type {
+  AllergyPendingChild, AllergyPendingResponse, AllergyUpdateResponse,
+} from '@/lib/apiTypes'
 
 /* 1つの文字列のまま書く（連結すると Supabase が結果の型を推論できなくなる） */
 const ALLERGY_COLUMNS = 'id, login_no, name, class_name, allergens, allergens_confirmed, allergens_updated_at, allergens_updated_by_role'
+
+/** 画面に返す形（AllergyUpdateResponse）に整える */
+const toAllergyInfo = (c: {
+  id: string
+  allergens: unknown
+  allergens_confirmed: unknown
+  allergens_updated_at: string | null
+  allergens_updated_by_role: string | null
+}): AllergyUpdateResponse['child'] => ({
+  id: c.id,
+  allergens: toAllergenMap(c.allergens),
+  allergens_confirmed: toAllergenMap(c.allergens_confirmed),
+  allergens_updated_at: c.allergens_updated_at,
+  allergens_updated_by_role: toUpdatedByRole(c.allergens_updated_by_role),
+})
 
 /* ================================================================
    GET: 職員がまだ確認していない変更がある園児の一覧
    ================================================================ */
 export async function GET() {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data, error } = await supabaseAdmin
     .from('children')
@@ -58,11 +51,14 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-  const pending = (data ?? [])
+  const pending: AllergyPendingChild[] = (data ?? [])
     .filter((c) => isAllergyPending(c.allergens, c.allergens_confirmed))
-    .map((c) => ({ ...c, ...allergenDiff(c.allergens, c.allergens_confirmed) }))
+    .map((c) => ({
+      id: c.id, login_no: c.login_no, name: c.name, class_name: c.class_name,
+      ...allergenDiff(c.allergens, c.allergens_confirmed),
+    }))
 
-  return NextResponse.json({ pending })
+  return NextResponse.json<AllergyPendingResponse>({ pending })
 }
 
 /* ================================================================
@@ -71,12 +67,8 @@ export async function GET() {
        | { child_id, confirm: true, expected } … 画面に出ていた内容を確認済みにする
    ================================================================ */
 export async function PATCH(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
   const child_id = String(body?.child_id ?? '')
@@ -125,7 +117,8 @@ export async function PATCH(req: Request) {
       .maybeSingle()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ child: data })
+    if (!data) return NextResponse.json({ error: '対象の園児が見つかりません' }, { status: 404 })
+    return NextResponse.json<AllergyUpdateResponse>({ child: toAllergyInfo(data) })
   }
 
   /* ---------------- 職員による編集 ---------------- */
@@ -155,5 +148,5 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: '対象の園児が見つかりません' }, { status: 404 })
 
-  return NextResponse.json({ child: data })
+  return NextResponse.json<AllergyUpdateResponse>({ child: toAllergyInfo(data) })
 }

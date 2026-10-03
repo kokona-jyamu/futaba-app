@@ -4,39 +4,15 @@
  */
 
 import { NextResponse } from 'next/server'
+import type { TablesUpdate } from '@/lib/database.types'
+import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/superbase/server'
-
-const STAFF_ROLES = ['nutritionist', 'admin']
-
-async function requireStaff() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw NextResponse.json({ error: 'ログインが必要です' }, { status: 401 })
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('id, role, school_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile || !STAFF_ROLES.includes(profile.role)) {
-    throw NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
-  }
-
-  return profile
-}
+import { sanitizeAllergens, toAllergenMap } from '@/lib/allergens'
+import type { SettingsResponse } from '@/lib/apiTypes'
 
 export async function GET() {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const { data, error } = await supabaseAdmin
     .from('schools')
@@ -56,7 +32,7 @@ export async function GET() {
 
   const inUse = new Map<string, { name: string; class_name: string | null }[]>()
   ;(children ?? []).forEach((c) => {
-    Object.entries(c.allergens ?? {}).forEach(([key, on]) => {
+    Object.entries(toAllergenMap(c.allergens)).forEach(([key, on]) => {
       if (on !== true) return
       const list = inUse.get(key) ?? []
       list.push({ name: c.name, class_name: c.class_name })
@@ -64,10 +40,11 @@ export async function GET() {
     })
   })
 
-  return NextResponse.json({
+  return NextResponse.json<SettingsResponse>({
     settings: {
       ...data,
       attendance_deadline: data.attendance_deadline?.slice(0, 5) ?? '09:00',
+      common_free_allergens: toAllergenMap(data.common_free_allergens),
     },
     enrolledAllergens: [...inUse.entries()].map(([key, kids]) => ({
       key, count: kids.length, children: kids,
@@ -76,15 +53,11 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  let staff
-  try {
-    staff = await requireStaff()
-  } catch (res) {
-    return res as NextResponse
-  }
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
 
   const body = await req.json().catch(() => null)
-  const patch: Record<string, unknown> = {}
+  const patch: TablesUpdate<'schools'> = {}
 
   if (body?.attendance_deadline !== undefined) {
     patch.attendance_deadline = String(body.attendance_deadline)
@@ -103,7 +76,11 @@ export async function PATCH(req: Request) {
     patch.show_allergy_in_counts = body.show_allergy_in_counts === true
   }
   if (body?.common_free_allergens !== undefined) {
-    patch.common_free_allergens = body.common_free_allergens ?? {}
+    const parsed = sanitizeAllergens(body.common_free_allergens ?? {})
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
+    }
+    patch.common_free_allergens = parsed.allergens
   }
 
   if (Object.keys(patch).length === 0) {

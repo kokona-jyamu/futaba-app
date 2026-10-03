@@ -1,5 +1,7 @@
 /* lib/theme.ts — テーマカラーの定義と適用（定義は API からも参照する） */
 
+import type { Json } from '@/lib/database.types'
+
 export type ThemeKey = 'matcha' | 'sakura' | 'sky' | 'apricot' | 'lavender'
 
 export type Theme = {
@@ -72,6 +74,22 @@ export const DEFAULT_THEME: ThemeKey = 'matcha'
 
 export const getTheme = (key?: string | null): Theme =>
   THEMES.find((t) => t.key === key) ?? THEMES[0]
+
+/** guardians.settings（jsonb）に、ほかの設定を残したままテーマを書き込む */
+export const settingsWithTheme = (settings: unknown, theme: ThemeKey): { [key: string]: Json | undefined } => {
+  const base =
+    settings && typeof settings === 'object' && !Array.isArray(settings)
+      ? (settings as { [key: string]: Json | undefined })
+      : {}
+  return { ...base, theme }
+}
+
+/** guardians.settings（jsonb）から、保存されているテーマを取り出す。なければ null */
+export const themeOfSettings = (settings: unknown): ThemeKey | null => {
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null
+  const key = (settings as { theme?: unknown }).theme
+  return THEMES.some((t) => t.key === key) ? (key as ThemeKey) : null
+}
 
 /** :root に CSS 変数を上書きする */
 export function applyTheme(key?: string | null) {
