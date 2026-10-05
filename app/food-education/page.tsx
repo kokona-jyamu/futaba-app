@@ -12,6 +12,7 @@ import { useLoadEffect } from '@/lib/useLoadEffect'
 import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
+import Image from 'next/image'
 
 type Event = {
   id: string
@@ -196,7 +197,14 @@ function FoodEducation() {
                   {past.map((e) => (
                     <article key={e.id} className="fa-event">
                       {e.photo_url ? (
-                        <img src={e.photo_url} alt={e.title} className="fa-event-photo" />
+                        <Image
+                          src={e.photo_url}
+                          alt={e.title}
+                          width={600}
+                          height={400}
+                          sizes="(max-width: 700px) 100vw, 400px"
+                          className="fa-event-photo"
+                        />
                       ) : (
                         <div className="fa-event-photo--empty">🌾 写真準備中</div>
                       )}

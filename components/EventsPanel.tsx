@@ -11,6 +11,7 @@ import type { EventsResponse, FoodEvent } from '@/lib/apiTypes'
 import { supabase } from '@/lib/supabase'
 import { SCHOOL_ID, formatDate } from '@/lib/menu'
 import { phaseOf, phaseLabel, isAhead } from '@/lib/eventStatus'
+import AdminImg from '@/components/AdminImg'
 
 const emptyForm = () => ({
   id: '',
@@ -222,7 +223,7 @@ export default function EventsPanel({
         <label className="fa-label">写真</label>
         <div className="fa-drop" onClick={() => document.getElementById('event-photo')?.click()}>
           {photoPreview ? (
-            <img src={photoPreview} alt="選んだ写真" className="fa-preview" />
+            <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
           ) : (
             <div className="fa-drop-empty">
               <span className="fa-drop-icon">📷</span>
@@ -347,7 +348,7 @@ export default function EventsPanel({
           const phase = phaseOf(e.event_date)
           return (
             <article key={e.id} className="fa-card">
-              {e.photo_url && <img src={e.photo_url} alt="" className="fa-thumb" />}
+              {e.photo_url && <AdminImg src={e.photo_url} alt="" className="fa-thumb" />}
 
               <p className="fa-date">
                 {formatDate(e.event_date)}

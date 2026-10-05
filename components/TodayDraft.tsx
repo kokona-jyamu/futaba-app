@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
 import type { Menu } from '@/lib/apiTypes'
+import AdminImg from '@/components/AdminImg'
 
 type Props = {
   menu: Menu
@@ -95,7 +96,7 @@ export default function TodayDraft({ menu, onPublish, onUploadPhoto }: Props) {
             onClick={() => document.getElementById(`today-photo-${menu.id}`)?.click()}
           >
             {photoPreview ? (
-              <img src={photoPreview} alt="選んだ写真" className="fa-preview" />
+              <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
             ) : (
               <div className="fa-drop-empty">
                 <span className="fa-drop-icon">📷</span>

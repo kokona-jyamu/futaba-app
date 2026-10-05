@@ -12,6 +12,7 @@ type Favorite = {
 }
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
 import { formatDate, initialOf } from '@/lib/guardian'
@@ -276,7 +277,14 @@ if (!guardian || !child) {
               {favorites.map((f) => (
                 <article key={f.menus?.id} className="fa-card">
                   {f.menus?.photo_url && (
-                    <img src={f.menus.photo_url} alt="" className="fa-thumb" />
+                    <Image
+                      src={f.menus.photo_url}
+                      alt=""
+                      width={600}
+                      height={400}
+                      sizes="(max-width: 700px) 100vw, 400px"
+                      className="fa-thumb"
+                    />
                   )}
                   <p className="fa-date">{formatDate(f.menus?.served_date)}</p>
                   <p className="fa-menuname">{f.menus?.title}</p>

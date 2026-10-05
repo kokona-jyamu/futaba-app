@@ -6,6 +6,7 @@
  */
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { createSupabaseServer } from '@/lib/supabaseServer'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
@@ -45,11 +46,16 @@ export default async function MenuDetail({ params }: Props) {
       </div>
 
       {menu.photo_url ? (
-        <img
+        /* 幅・高さは縦横比の目安。表示の大きさは style で決める（ページ最上部の写真なので先読みする） */
+        <Image
           src={menu.photo_url}
           alt={menu.title ?? ''}
+          width={1200}
+          height={800}
+          sizes="(max-width: 720px) 100vw, 720px"
+          preload
           style={{
-            width: '100%', maxHeight: 320, objectFit: 'cover',
+            width: '100%', height: 'auto', maxHeight: 320, objectFit: 'cover',
             borderRadius: 'var(--fa-r)', marginBottom: 20,
           }}
         />

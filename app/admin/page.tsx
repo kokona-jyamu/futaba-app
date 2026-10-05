@@ -31,6 +31,7 @@ import AttendancePanel from '@/components/AttendancePanel'
 import MealTypePanel from '@/components/MealTypePanel'
 import ClassPanel from '@/components/ClassPanel'
 import SettingsPanel from '@/components/SettingsPanel'
+import AdminImg from '@/components/AdminImg'
 
 const emptyForm = () => ({
   served_date: '',
@@ -576,7 +577,7 @@ export default function AdminPage() {
                 <label className="fa-label">写真</label>
                 <div className="fa-drop" onClick={() => document.getElementById('photo-input')?.click()}>
                   {photoPreview ? (
-                    <img src={photoPreview} alt="選んだ写真" className="fa-preview" />
+                    <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
                   ) : (
                     <div className="fa-drop-empty">
                       <span className="fa-drop-icon">📷</span>
@@ -714,7 +715,7 @@ export default function AdminPage() {
                           <div className="fa-drop"
                             onClick={() => document.getElementById(`edit-photo-${menu.id}`)?.click()}>
                             {editPhotoPreview || editForm.photo_url ? (
-                              <img src={editPhotoPreview || editForm.photo_url || undefined} alt="献立の写真"
+                              <AdminImg src={editPhotoPreview || editForm.photo_url || undefined} alt="献立の写真"
                                 className="fa-preview" />
                             ) : (
                               <div className="fa-drop-empty">
@@ -778,7 +779,7 @@ export default function AdminPage() {
                     </>
                   ) : (
                     <>
-                      {menu.photo_url && <img src={menu.photo_url} alt="" className="fa-thumb" />}
+                      {menu.photo_url && <AdminImg src={menu.photo_url} alt="" className="fa-thumb" />}
 
                       <p className="fa-date">
                         {formatDate(menu.served_date)}
