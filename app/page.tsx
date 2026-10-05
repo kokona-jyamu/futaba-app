@@ -16,7 +16,7 @@ import type { Tables } from '@/lib/database.types'
 import type { Attendance } from '@/lib/apiTypes'
 
 /* 一覧に使う列だけを DB の型から取り出す */
-type Menu = Pick<Tables<'menus'>, 'id' | 'served_date' | 'title' | 'nutritionist_comment' | 'photo_url'>
+type Menu = Pick<Tables<'menus'>, 'id' | 'served_date' | 'title' | 'nutritionist_comment'>
 type Event = Tables<'food_education_events'>
 
 const TABS = ['給食', '食育', 'アレルゲン', '地域だより'] as const
@@ -47,7 +47,7 @@ export default function Home() {
     const fetchData = async () => {
       const { data: menuData } = await supabase
         .from('menus')
-        .select('id, served_date, title, nutritionist_comment, photo_url')
+        .select('id, served_date, title, nutritionist_comment')
         .eq('school_id', SCHOOL_ID)
         .order('served_date', { ascending: false })
       if (menuData) setMenus(menuData)

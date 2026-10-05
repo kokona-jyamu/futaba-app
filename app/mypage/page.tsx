@@ -3,13 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
-import type { Menu, GuardianQuestion, QuestionsResponse } from '@/lib/apiTypes'
-
-/** お気に入り1件（献立の一部の列と一緒に読む） */
-type Favorite = {
-  created_at: string | null
-  menus: Pick<Menu, 'id' | 'served_date' | 'title' | 'photo_url'> | null
-}
+import type { Favorite, FavoritesResponse, GuardianQuestion, QuestionsResponse } from '@/lib/apiTypes'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -55,13 +49,10 @@ export default function MyPage() {
   const requestTab = useCallback(async () => {
     if (!guardian) return null
 
+    /* 小さい写真（お盆全体 → 主菜 → 他の料理）はサーバー側で選んで返す */
     if (tab === 'favorites') {
-      const { data } = await supabase
-        .from('favorites')
-        .select('created_at, menus(id, served_date, title, photo_url)')
-        .eq('guardian_id', guardian.id)
-        .order('created_at', { ascending: false })
-      return { kind: 'favorites' as const, list: data ?? [] }
+      const r = await fetchJson<FavoritesResponse>('/api/guardian/favorites')
+      return { kind: 'favorites' as const, list: r.ok ? r.json.favorites : [] }
     }
 
     /* 自分の質問と、それへの返信（replied_to で紐づくもの）だけを API から取る */
@@ -275,10 +266,10 @@ if (!guardian || !child) {
             )}
             <div className="fa-grid">
               {favorites.map((f) => (
-                <article key={f.menus?.id} className="fa-card">
-                  {f.menus?.photo_url && (
+                <article key={f.menu_id} className="fa-card">
+                  {f.photo_url && (
                     <Image
-                      src={f.menus.photo_url}
+                      src={f.photo_url}
                       alt=""
                       width={600}
                       height={400}
@@ -286,16 +277,16 @@ if (!guardian || !child) {
                       className="fa-thumb"
                     />
                   )}
-                  <p className="fa-date">{formatDate(f.menus?.served_date)}</p>
-                  <p className="fa-menuname">{f.menus?.title}</p>
+                  <p className="fa-date">{formatDate(f.served_date)}</p>
+                  <p className="fa-menuname">{f.title}</p>
                   <div className="fa-btnrow">
-                    <Link href={`/menu/${f.menus?.id}`} className="fa-link" style={{ flex: 1 }}>
+                    <Link href={`/menu/${f.menu_id}`} className="fa-link" style={{ flex: 1 }}>
                       <button className="fa-btn fa-btn--sky" style={{ width: '100%' }}>
                         見る
                       </button>
                     </Link>
                     <button
-                      onClick={() => { if (f.menus) removeFavorite(f.menus.id) }}
+                      onClick={() => removeFavorite(f.menu_id)}
                       className="fa-btn fa-btn--ghost"
                     >
                       はずす

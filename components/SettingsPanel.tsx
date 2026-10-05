@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type { SettingsResponse, SchoolSettings, EnrolledAllergen } from '@/lib/apiTypes'
 import { STANDARD_ALLERGENS, findAllergen } from '@/lib/allergens'
+import PhotoKindsPanel from '@/components/PhotoKindsPanel'
 
 const LABEL_PRESETS = [
   { value: '{name}除去', sample: '卵除去' },
@@ -24,8 +25,11 @@ const request = () => fetchJson<SettingsResponse>('/api/admin/settings')
 
 export default function SettingsPanel({
   onNotify,
+  onPhotoKindsChange,
 }: {
   onNotify: (msg: string, isError?: boolean) => void
+  /** 写真の種類を変えたあと（献立の写真の登録欄に反映するため） */
+  onPhotoKindsChange?: () => void
 }) {
   const [settings, setSettings] = useState<SchoolSettings | null>(null)
   const [enrolled, setEnrolled] = useState<EnrolledAllergen[]>([])
@@ -75,6 +79,9 @@ export default function SettingsPanel({
 
   return (
     <section>
+      {/* 献立の写真の種類 */}
+      <PhotoKindsPanel onNotify={onNotify} onChange={onPhotoKindsChange} />
+
       {/* 在籍している子のアレルギー */}
       <section className="fa-card" style={{ marginBottom: 18 }}>
         <h2 className="fa-cardtitle">いま在籍している子のアレルギー</h2>

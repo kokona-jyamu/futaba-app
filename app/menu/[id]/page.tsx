@@ -6,8 +6,10 @@
  */
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { createSupabaseServer } from '@/lib/supabaseServer'
+import { getPhotoKinds } from '@/lib/photoKinds'
+import { mainPhotoOf, dishPhotoList } from '@/lib/menuPhotos'
+import MenuPhotos from '@/components/MenuPhotos'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
 import MessageSection from '@/components/MessageSection'
@@ -36,6 +38,13 @@ export default async function MenuDetail({ params }: Props) {
   const used = usedAllergens(menu.allergens)
   const ingredients = formatIngredients(menu.ingredients)
 
+  /* 写真：大きく出す1枚（お盆全体 → 主菜 → 他の料理）と、料理ごとの写真（大きく出したものは除く） */
+  const kinds = menu.school_id ? await getPhotoKinds(menu.school_id) : []
+  const mainPhoto = mainPhotoOf(menu, kinds)
+  const dishes = dishPhotoList(menu.dish_photos, kinds)
+    .filter((p) => p.kind.id !== mainPhoto?.fromKindId)
+    .map((p) => ({ kindId: p.kind.id, label: p.kind.label, url: p.url }))
+
   return (
     <main className="fa-page" style={{ maxWidth: 720 }}>
       <Link href="/" className="fa-back">← 給食だよりに戻る</Link>
@@ -45,25 +54,11 @@ export default async function MenuDetail({ params }: Props) {
         <h1 className="fa-title" style={{ marginTop: 4 }}>{menu.title}</h1>
       </div>
 
-      {menu.photo_url ? (
-        /* 幅・高さは縦横比の目安。表示の大きさは style で決める（ページ最上部の写真なので先読みする） */
-        <Image
-          src={menu.photo_url}
-          alt={menu.title ?? ''}
-          width={1200}
-          height={800}
-          sizes="(max-width: 720px) 100vw, 720px"
-          preload
-          style={{
-            width: '100%', height: 'auto', maxHeight: 320, objectFit: 'cover',
-            borderRadius: 'var(--fa-r)', marginBottom: 20,
-          }}
-        />
-      ) : (
-        <div className="fa-event-photo--empty" style={{ borderRadius: 'var(--fa-r)', marginBottom: 20 }}>
-          🍽 写真準備中
-        </div>
-      )}
+      <MenuPhotos
+        title={menu.title ?? ''}
+        mainUrl={mainPhoto?.url ?? null}
+        dishes={dishes}
+      />
 
       {/* アレルギー */}
       <section className="fa-card" style={{ marginBottom: 16 }}>

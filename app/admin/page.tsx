@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type {
   Menu, MenusResponse, AdminQuestion, RepliesResponse,
-  AllergyPendingChild, AllergyPendingResponse,
+  AllergyPendingChild, AllergyPendingResponse, PhotoKindsResponse,
 } from '@/lib/apiTypes'
 import {
   NUTRIENTS, SCHOOL_ID, num, formatDate,
@@ -32,6 +32,8 @@ import MealTypePanel from '@/components/MealTypePanel'
 import ClassPanel from '@/components/ClassPanel'
 import SettingsPanel from '@/components/SettingsPanel'
 import AdminImg from '@/components/AdminImg'
+import MenuPhotoInputs from '@/components/MenuPhotoInputs'
+import { toDishPhotos, mainPhotoOf, type DishPhotos, type PhotoKind } from '@/lib/menuPhotos'
 
 const emptyForm = () => ({
   served_date: '',
@@ -42,6 +44,8 @@ const emptyForm = () => ({
   kcal: '', carb: '', protein: '', fat: '', salt: '', calcium: '',
   allergens: emptyAllergenState(),
   allergen_checked: false,
+  tray_photo_url: null as string | null,
+  dish_photos: {} as DishPhotos,
 })
 
 type MenuForm = ReturnType<typeof emptyForm>
@@ -49,10 +53,11 @@ type MenuForm = ReturnType<typeof emptyForm>
 type NutrientKey = (typeof NUTRIENTS)[number]['name']
 
 /** 編集中の献立。栄養価は入力中の文字列も入る */
-type EditForm = Omit<Menu, 'allergens' | NutrientKey> &
+type EditForm = Omit<Menu, 'allergens' | 'dish_photos' | NutrientKey> &
   Record<NutrientKey, string | number | null> & {
     ingredient: string
     allergens: AllergenMap
+    dish_photos: DishPhotos
   }
 
 /* 画面を開いたときに読むもの（取得だけ。画面への反映は各 apply で行う） */
@@ -61,6 +66,8 @@ const requestMessages = () => fetchJson<RepliesResponse>('/api/admin/replies')
 const requestMenus = () => fetchJson<MenusResponse>('/api/admin/menus/list')
 /* 保護者が変更し、まだ職員が確認していないアレルギー情報 */
 const requestAllergyPending = () => fetchJson<AllergyPendingResponse>('/api/admin/children/allergens')
+/* 写真の種類（主食・汁物・主菜・副菜 など。園ごとに設定） */
+const requestPhotoKinds = () => fetchJson<PhotoKindsResponse>('/api/admin/photo-kinds')
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
@@ -70,19 +77,16 @@ export default function AdminPage() {
   const [isError, setIsError] = useState(false)
 
   const [form, setForm] = useState<MenuForm>(emptyForm())
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [copiedFrom, setCopiedFrom] = useState<string | null>(null)
 
   const [allMenus, setAllMenus] = useState<Menu[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<EditForm>>({})
-  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
-  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
   const [listFilter, setListFilter] = useState<'all' | 'draft' | 'unchecked'>('all')
 
   const [messages, setMessages] = useState<AdminQuestion[]>([])
   const [allergyPending, setAllergyPending] = useState<AllergyPendingChild[]>([])
+  const [photoKinds, setPhotoKinds] = useState<PhotoKind[]>([])
 
   /* 各パネルに渡すので作り直さない（作り直すとパネルが毎回データを取り直す） */
   const notify = useCallback((text: string, error = false) => {
@@ -98,7 +102,10 @@ export default function AdminPage() {
 
   useLoadEffect(requestMessages, applyMessages)
   useLoadEffect(requestMenus, applyMenus)
+  const applyPhotoKinds = useCallback((r: FetchResult<PhotoKindsResponse>) => { if (r.ok) setPhotoKinds(r.json.kinds) }, [])
+
   useLoadEffect(requestAllergyPending, applyAllergyPending)
+  useLoadEffect(requestPhotoKinds, applyPhotoKinds)
 
   /* 保存や返信のあとに取り直す */
   const fetchMessages = useCallback(() => requestMessages().then(applyMessages), [applyMessages])
@@ -107,6 +114,8 @@ export default function AdminPage() {
     () => requestAllergyPending().then(applyAllergyPending),
     [applyAllergyPending]
   )
+  /* 設定画面で写真の種類を変えたあとに取り直す */
+  const fetchPhotoKinds = useCallback(() => requestPhotoKinds().then(applyPhotoKinds), [applyPhotoKinds])
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const draftMenus = allMenus.filter((m) => !m.is_published)
@@ -140,7 +149,7 @@ export default function AdminPage() {
 
   const publishDraft = async (
     id: string,
-    patch: { nutritionist_comment: string; why_eat_note: string; photo_url: string | null }
+    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dish_photos: DishPhotos }
   ): Promise<boolean> => {
     const res = await fetch('/api/admin/menus', {
       method: 'PATCH',
@@ -182,13 +191,6 @@ export default function AdminPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
-  }
-
   const toggleAllergen = (key: string) =>
     setForm((f) => ({
       ...f,
@@ -218,9 +220,10 @@ export default function AdminPage() {
       calcium: menu.calcium?.toString() ?? '',
       allergens: { ...emptyAllergenState(), ...toAllergenMap(menu.allergens) },
       allergen_checked: menu.allergen_checked ?? false,
+      /* 写真はその日ごとに入れ直す */
+      tray_photo_url: null,
+      dish_photos: {},
     })
-    setPhotoFile(null)
-    setPhotoPreview(null)
     setCopiedFrom(menu.title)
     setMessage('')
   }
@@ -238,12 +241,6 @@ export default function AdminPage() {
     setLoading(true)
     setMessage('')
 
-    let photoUrl: string | null = null
-    if (photoFile) {
-      photoUrl = await uploadPhoto(photoFile)
-      if (!photoUrl) { setLoading(false); return }
-    }
-
     const res = await fetch('/api/admin/menus', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,7 +255,8 @@ export default function AdminPage() {
         allergens: form.allergens,
         allergen_checked: true,
         is_published: true,
-        photo_url: photoUrl,
+        tray_photo_url: form.tray_photo_url,
+        dish_photos: form.dish_photos,
       }),
     })
     const json = await res.json()
@@ -268,8 +266,6 @@ export default function AdminPage() {
 
     notify('献立を公開しました。')
     setForm(emptyForm())
-    setPhotoFile(null)
-    setPhotoPreview(null)
     setCopiedFrom(null)
     fetchMenus()
   }
@@ -283,16 +279,13 @@ export default function AdminPage() {
       ingredient: formatIngredients(menu.ingredients),
       allergens: { ...emptyAllergenState(), ...toAllergenMap(menu.allergens) },
       allergen_checked: menu.allergen_checked ?? false,
+      dish_photos: toDishPhotos(menu.dish_photos),
     })
-    setEditPhotoFile(null)
-    setEditPhotoPreview(null)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
     setEditForm({})
-    setEditPhotoFile(null)
-    setEditPhotoPreview(null)
   }
 
   const toggleEditAllergen = (key: string) =>
@@ -309,13 +302,6 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
-  const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setEditPhotoFile(file)
-    setEditPhotoPreview(URL.createObjectURL(file))
-  }
-
   const saveEdit = async () => {
     if (!editForm.allergen_checked) {
       notify('アレルギーを確認してください。使っている食材を選ぶか「該当なし」を押してください。', true)
@@ -323,13 +309,6 @@ export default function AdminPage() {
     }
 
     setLoading(true)
-
-    let photoUrl = editForm.photo_url ?? null
-    if (editPhotoFile) {
-      const uploaded = await uploadPhoto(editPhotoFile)
-      if (!uploaded) { setLoading(false); return }
-      photoUrl = uploaded
-    }
 
     const res = await fetch('/api/admin/menus', {
       method: 'PATCH',
@@ -346,7 +325,8 @@ export default function AdminPage() {
         allergens: editForm.allergens,
         allergen_checked: true,
         is_published: editForm.is_published !== false,
-        photo_url: photoUrl,
+        tray_photo_url: editForm.tray_photo_url ?? null,
+        dish_photos: editForm.dish_photos ?? {},
       }),
     })
     const json = await res.json()
@@ -491,6 +471,7 @@ export default function AdminPage() {
         <TodayDraft
           key={m.id}
           menu={m}
+          photoKinds={photoKinds}
           onPublish={publishDraft}
           onUploadPhoto={uploadPhoto}
         />
@@ -575,18 +556,13 @@ export default function AdminPage() {
                   className="fa-input fa-textarea" />
 
                 <label className="fa-label">写真</label>
-                <div className="fa-drop" onClick={() => document.getElementById('photo-input')?.click()}>
-                  {photoPreview ? (
-                    <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
-                  ) : (
-                    <div className="fa-drop-empty">
-                      <span className="fa-drop-icon">📷</span>
-                      <span className="fa-drop-text">タップして写真を選ぶ</span>
-                      <span className="fa-drop-sub">JPG・PNG</span>
-                    </div>
-                  )}
-                </div>
-                <input id="photo-input" type="file" accept="image/*" onChange={handlePhotoChange} hidden />
+                <MenuPhotoInputs
+                  kinds={photoKinds}
+                  value={{ tray: form.tray_photo_url, dish: form.dish_photos }}
+                  onChange={(p) => setForm((f) => ({ ...f, tray_photo_url: p.tray, dish_photos: p.dish }))}
+                  onUpload={uploadPhoto}
+                  idPrefix="post-photo"
+                />
               </section>
 
               <section className="fa-card">
@@ -712,20 +688,13 @@ export default function AdminPage() {
                             className="fa-input fa-textarea" />
 
                           <label className="fa-label">写真</label>
-                          <div className="fa-drop"
-                            onClick={() => document.getElementById(`edit-photo-${menu.id}`)?.click()}>
-                            {editPhotoPreview || editForm.photo_url ? (
-                              <AdminImg src={editPhotoPreview || editForm.photo_url || undefined} alt="献立の写真"
-                                className="fa-preview" />
-                            ) : (
-                              <div className="fa-drop-empty">
-                                <span className="fa-drop-icon">📷</span>
-                                <span className="fa-drop-text">タップして写真を選ぶ</span>
-                              </div>
-                            )}
-                          </div>
-                          <input id={`edit-photo-${menu.id}`} type="file" accept="image/*"
-                            onChange={handleEditPhotoChange} hidden />
+                          <MenuPhotoInputs
+                            kinds={photoKinds}
+                            value={{ tray: editForm.tray_photo_url ?? null, dish: editForm.dish_photos ?? {} }}
+                            onChange={(p) => setEditForm((f) => ({ ...f, tray_photo_url: p.tray, dish_photos: p.dish }))}
+                            onUpload={uploadPhoto}
+                            idPrefix={`edit-photo-${menu.id}`}
+                          />
                         </div>
 
                         <div>
@@ -779,7 +748,9 @@ export default function AdminPage() {
                     </>
                   ) : (
                     <>
-                      {menu.photo_url && <AdminImg src={menu.photo_url} alt="" className="fa-thumb" />}
+                      {mainPhotoOf(menu, photoKinds) && (
+                        <AdminImg src={mainPhotoOf(menu, photoKinds)!.url} alt="" className="fa-thumb" />
+                      )}
 
                       <p className="fa-date">
                         {formatDate(menu.served_date)}
@@ -847,7 +818,7 @@ export default function AdminPage() {
 
         {/* ---------- 設定 ---------- */}
         {activeTab === 'settings' && (
-          <SettingsPanel onNotify={notify} />
+          <SettingsPanel onNotify={notify} onPhotoKindsChange={fetchPhotoKinds} />
         )}
       </div>
     </main>

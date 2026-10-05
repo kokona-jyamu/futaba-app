@@ -118,3 +118,43 @@
     font-size: 16px;
   }
 }
+
+/* ===== 献立詳細の写真（お盆全体＋料理ごと）  components/MenuPhotos.tsx ===== */
+.fa-menuphotos { margin-bottom: 20px; }
+.fa-menuphotos-main {
+  position: relative; display: block; width: 100%;
+  padding: 0; border: 0; background: none; cursor: default;
+}
+.fa-menuphotos-main img {
+  display: block; width: 100%; height: auto; max-height: 320px;
+  object-fit: cover; border-radius: var(--fa-r);
+}
+.fa-menuphotos-hint { display: none; }
+
+/* 料理ごとの写真：2列×2段 */
+.fa-dishgrid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px; margin-top: 10px;
+}
+.fa-dish { margin: 0; }
+.fa-dish img {
+  display: block; width: 100%; height: 140px;
+  object-fit: cover; border-radius: 12px;
+}
+.fa-dish figcaption {
+  margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--fa-ink-2);
+}
+
+/* スマホ：大きい写真だけを出し、タップで料理ごとの写真を開く */
+@media (max-width: 699px) {
+  .fa-menuphotos-main { cursor: pointer; }
+  .fa-menuphotos-main:disabled { cursor: default; }
+  .fa-menuphotos-hint {
+    display: inline-flex; position: absolute; right: 10px; bottom: 10px;
+    padding: 5px 10px; border-radius: 999px;
+    background: rgba(0, 0, 0, .55); color: #fff;
+    font-size: 12px; font-weight: 700;
+  }
+  .fa-dishgrid:not(.is-open) { display: none; }
+  .fa-dish img { height: 120px; }
+}

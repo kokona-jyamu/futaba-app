@@ -11,13 +11,20 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sanitizeAllergens } from '@/lib/allergens'
 import { isDateStr } from '@/lib/date'
 import { str, strList, numOrNull, type Body } from '@/lib/parse'
+import { sanitizeMenuPhotos } from '@/lib/menuPhotos'
+import { getPhotoKinds } from '@/lib/photoKinds'
+
+/** その園の写真の種類のID（写真の検証に使う） */
+const kindIdsOf = async (schoolId: string) =>
+  new Set((await getPhotoKinds(schoolId)).map((k) => k.id))
 
 /**
  * 受け取った値から、DBに入れてよい項目だけを取り出す。
  * 日付・献立名・アレルギーの確認が済んでいないものは受け付けない。
  */
 function pickMenuFields(
-  body: Body
+  body: Body,
+  kindIds: Set<string>
 ): { ok: true; fields: Omit<TablesInsert<'menus'>, 'school_id'> } | { ok: false; error: string } {
   const served_date = body.served_date
   const title = str(body.title)
@@ -29,6 +36,8 @@ function pickMenuFields(
   }
   const allergens = sanitizeAllergens(body.allergens ?? {})
   if (!allergens.ok) return { ok: false, error: allergens.error }
+  const photos = sanitizeMenuPhotos({ tray: body.tray_photo_url, dish: body.dish_photos }, kindIds)
+  if (!photos.ok) return { ok: false, error: photos.error }
 
   return {
     ok: true,
@@ -46,7 +55,8 @@ function pickMenuFields(
       calcium: numOrNull(body.calcium),
       allergens: allergens.allergens,
       allergen_checked: true,
-      photo_url: str(body.photo_url),
+      tray_photo_url: photos.tray,
+      dish_photos: photos.dish,
       is_published: body.is_published !== false,
     },
   }
@@ -60,7 +70,7 @@ export async function POST(req: Request) {
   if (staff instanceof NextResponse) return staff
 
   const body: Body | null = await req.json().catch(() => null)
-  const picked = pickMenuFields(body ?? {})
+  const picked = pickMenuFields(body ?? {}, await kindIdsOf(staff.school_id))
   if (!picked.ok) return NextResponse.json({ error: picked.error }, { status: 400 })
 
   const { data, error } = await supabaseAdmin
@@ -89,7 +99,15 @@ export async function PATCH(req: Request) {
     const patch: TablesUpdate<'menus'> = {}
     if (body.nutritionist_comment !== undefined) patch.nutritionist_comment = str(body.nutritionist_comment)
     if (body.why_eat_note !== undefined) patch.why_eat_note = str(body.why_eat_note)
-    if (body.photo_url !== undefined) patch.photo_url = str(body.photo_url)
+    if (body.tray_photo_url !== undefined || body.dish_photos !== undefined) {
+      const photos = sanitizeMenuPhotos(
+        { tray: body.tray_photo_url, dish: body.dish_photos },
+        await kindIdsOf(staff.school_id)
+      )
+      if (!photos.ok) return NextResponse.json({ error: photos.error }, { status: 400 })
+      if (body.tray_photo_url !== undefined) patch.tray_photo_url = photos.tray
+      if (body.dish_photos !== undefined) patch.dish_photos = photos.dish
+    }
     if (body.is_published !== undefined) patch.is_published = body.is_published === true
 
     const { data, error } = await supabaseAdmin
@@ -104,7 +122,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ menu: data })
   }
   
-  const picked = pickMenuFields(body)
+  const picked = pickMenuFields(body, await kindIdsOf(staff.school_id))
   if (!picked.ok) return NextResponse.json({ error: picked.error }, { status: 400 })
 
   /* 他園の献立を触れないよう school_id で絞る */

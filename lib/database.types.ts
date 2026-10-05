@@ -468,6 +468,7 @@ export type Database = {
           calcium: number | null
           carb: number | null
           created_at: string | null
+          dish_photos: Json
           fat: number | null
           id: string
           ingredients: string[] | null
@@ -481,6 +482,7 @@ export type Database = {
           school_id: string | null
           served_date: string
           title: string | null
+          tray_photo_url: string | null
           why_eat_note: string | null
         }
         Insert: {
@@ -489,6 +491,7 @@ export type Database = {
           calcium?: number | null
           carb?: number | null
           created_at?: string | null
+          dish_photos?: Json
           fat?: number | null
           id?: string
           ingredients?: string[] | null
@@ -502,6 +505,7 @@ export type Database = {
           school_id?: string | null
           served_date: string
           title?: string | null
+          tray_photo_url?: string | null
           why_eat_note?: string | null
         }
         Update: {
@@ -510,6 +514,7 @@ export type Database = {
           calcium?: number | null
           carb?: number | null
           created_at?: string | null
+          dish_photos?: Json
           fat?: number | null
           id?: string
           ingredients?: string[] | null
@@ -523,6 +528,7 @@ export type Database = {
           school_id?: string | null
           served_date?: string
           title?: string | null
+          tray_photo_url?: string | null
           why_eat_note?: string | null
         }
         Relationships: [
@@ -650,6 +656,44 @@ export type Database = {
         }
         Relationships: []
       }
+      school_photo_kinds: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          preset_key: string | null
+          school_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          preset_key?: string | null
+          school_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          preset_key?: string | null
+          school_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_photo_kinds_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schools: {
         Row: {
           address: string | null
@@ -659,6 +703,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          photo_kind_limit: number
           prefecture: string | null
           show_allergy_in_counts: boolean
         }
@@ -670,6 +715,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          photo_kind_limit?: number
           prefecture?: string | null
           show_allergy_in_counts?: boolean
         }
@@ -681,6 +727,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          photo_kind_limit?: number
           prefecture?: string | null
           show_allergy_in_counts?: boolean
         }

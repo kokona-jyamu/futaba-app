@@ -9,49 +9,40 @@ import { useState } from 'react'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
 import type { Menu } from '@/lib/apiTypes'
-import AdminImg from '@/components/AdminImg'
+import MenuPhotoInputs, { type MenuPhotoValue } from '@/components/MenuPhotoInputs'
+import { toDishPhotos, type DishPhotos, type PhotoKind } from '@/lib/menuPhotos'
 
 type Props = {
   menu: Menu
+  /** 園の写真の種類（主食・汁物・主菜・副菜 など） */
+  photoKinds: PhotoKind[]
   onPublish: (
     id: string,
-    patch: { nutritionist_comment: string; why_eat_note: string; photo_url: string | null }
+    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dish_photos: DishPhotos }
   ) => Promise<boolean>
   onUploadPhoto: (file: File) => Promise<string | null>
 }
 
-export default function TodayDraft({ menu, onPublish, onUploadPhoto }: Props) {
+export default function TodayDraft({ menu, photoKinds, onPublish, onUploadPhoto }: Props) {
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState(menu.nutritionist_comment ?? '')
   const [note, setNote] = useState(menu.why_eat_note ?? '')
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(menu.photo_url ?? null)
+  const [photos, setPhotos] = useState<MenuPhotoValue>({
+    tray: menu.tray_photo_url,
+    dish: toDishPhotos(menu.dish_photos),
+  })
   const [loading, setLoading] = useState(false)
 
   const used = usedAllergens(menu.allergens)
   const ingredients = formatIngredients(menu.ingredients)
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
-  }
-
   const publish = async () => {
     setLoading(true)
-
-    let photoUrl = menu.photo_url ?? null
-    if (photoFile) {
-      const uploaded = await onUploadPhoto(photoFile)
-      if (!uploaded) { setLoading(false); return }
-      photoUrl = uploaded
-    }
-
     await onPublish(menu.id, {
       nutritionist_comment: comment,
       why_eat_note: note,
-      photo_url: photoUrl,
+      tray_photo_url: photos.tray,
+      dish_photos: photos.dish,
     })
     setLoading(false)
   }
@@ -91,25 +82,12 @@ export default function TodayDraft({ menu, onPublish, onUploadPhoto }: Props) {
       {open && (
         <div style={{ marginTop: 18 }}>
           <label className="fa-label">写真</label>
-          <div
-            className="fa-drop"
-            onClick={() => document.getElementById(`today-photo-${menu.id}`)?.click()}
-          >
-            {photoPreview ? (
-              <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
-            ) : (
-              <div className="fa-drop-empty">
-                <span className="fa-drop-icon">📷</span>
-                <span className="fa-drop-text">タップして写真を選ぶ</span>
-              </div>
-            )}
-          </div>
-          <input
-            id={`today-photo-${menu.id}`}
-            type="file"
-            accept="image/*"
-            onChange={handlePhoto}
-            hidden
+          <MenuPhotoInputs
+            kinds={photoKinds}
+            value={photos}
+            onChange={setPhotos}
+            onUpload={onUploadPhoto}
+            idPrefix={`today-photo-${menu.id}`}
           />
 
           <label className="fa-label">栄養士コメント</label>

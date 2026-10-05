@@ -672,3 +672,17 @@
 .fa-childline-class {
   font-size: 11px; color: var(--fa-muted);
 }
+
+/* ===== 献立の写真の登録欄  components/MenuPhotoInputs.tsx ===== */
+.fa-photoslot { margin-top: 10px; }
+.fa-photoslot-label { margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--fa-ink-2); }
+.fa-photoslots {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+}
+.fa-photoslots .fa-preview { max-height: 120px; }
+.fa-photoslot-remove {
+  margin-top: 4px; padding: 2px 8px; border: 0; background: none;
+  font-size: 12px; color: var(--fa-ink-2); cursor: pointer;
+}
+
+.fa-countbadge.is-full { background: var(--fa-apricot); color: #fff; }

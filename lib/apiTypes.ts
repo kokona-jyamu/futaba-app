@@ -9,6 +9,7 @@
 
 import type { Tables } from '@/lib/database.types'
 import type { AllergenMap } from '@/lib/allergens'
+import type { PhotoKind } from '@/lib/menuPhotos'
 
 /** どの API も、失敗したときは error を返す */
 export type ApiError = { error: string }
@@ -169,6 +170,16 @@ export type SettingsResponse = {
   enrolledAllergens: EnrolledAllergen[]
 }
 
+/* ---------- /api/admin/photo-kinds：写真の種類 ---------- */
+
+export type PhotoKindsResponse = {
+  kinds: PhotoKind[]
+  /** 使える種類の数（使う設定にできる数）の上限 */
+  limit: number
+}
+
+export type PhotoKindResponse = { kind: PhotoKind }
+
 /* ---------- /api/admin/events・/api/admin/menus/list ---------- */
 
 export type FoodEvent = Tables<'food_education_events'>
@@ -196,6 +207,18 @@ export type RepliesResponse = { messages: AdminQuestion[] }
 
 export type Attendance = Tables<'attendances'>
 export type AttendanceListResponse = { attendances: Attendance[]; deadline: string }
+
+/* ---------- /api/guardian/favorites：お気に入り ---------- */
+
+export type Favorite = {
+  menu_id: string
+  served_date: string
+  title: string | null
+  /** 小さい写真（お盆全体 → 主菜 → 他の料理）。なければ null */
+  photo_url: string | null
+}
+
+export type FavoritesResponse = { favorites: Favorite[] }
 
 /* ---------- /api/questions：自分の質問と返信 ---------- */
 

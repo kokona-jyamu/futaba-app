@@ -68,7 +68,8 @@ export async function POST(req: Request) {
       is_published: false,
       nutritionist_comment: null,
       why_eat_note: null,
-      photo_url: null,
+      tray_photo_url: null,
+      dish_photos: {},
     }))
 
   if (toInsert.length === 0) {
