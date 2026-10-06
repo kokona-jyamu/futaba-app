@@ -8,28 +8,38 @@
 import { useState } from 'react'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
-import type { Menu } from '@/lib/apiTypes'
-import MenuPhotoInputs, { type MenuPhotoValue } from '@/components/MenuPhotoInputs'
-import { toDishPhotos, type DishPhotos, type PhotoKind } from '@/lib/menuPhotos'
+import type { AdminMenu, DishSummary } from '@/lib/apiTypes'
+import MenuDishesEditor, {
+  fromMenuDishes, toApiDishes, type MenuDishesValue,
+} from '@/components/MenuDishesEditor'
+import type { PhotoKind } from '@/lib/menuPhotos'
 
 type Props = {
-  menu: Menu
+  menu: AdminMenu
   /** 園の写真の種類（主食・汁物・主菜・副菜 など） */
   photoKinds: PhotoKind[]
+  /** 園の料理の一覧 */
+  library: DishSummary[]
   onPublish: (
     id: string,
-    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dish_photos: DishPhotos }
+    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dishes: { dish_id: string; photo_url: string | null }[] }
   ) => Promise<boolean>
   onUploadPhoto: (file: File) => Promise<string | null>
+  onNotify: (msg: string, isError?: boolean) => void
+  /** 料理を登録・変更したあと */
+  onLibraryChange: () => void
 }
 
-export default function TodayDraft({ menu, photoKinds, onPublish, onUploadPhoto }: Props) {
+export default function TodayDraft({
+  menu, photoKinds, library, onPublish, onUploadPhoto, onNotify, onLibraryChange,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [comment, setComment] = useState(menu.nutritionist_comment ?? '')
   const [note, setNote] = useState(menu.why_eat_note ?? '')
-  const [photos, setPhotos] = useState<MenuPhotoValue>({
+  /* 月間登録で入れた料理があれば、そのまま出しておく */
+  const [dishes, setDishes] = useState<MenuDishesValue>({
     tray: menu.tray_photo_url,
-    dish: toDishPhotos(menu.dish_photos),
+    items: fromMenuDishes(menu.menu_dishes),
   })
   const [loading, setLoading] = useState(false)
 
@@ -41,8 +51,8 @@ export default function TodayDraft({ menu, photoKinds, onPublish, onUploadPhoto 
     await onPublish(menu.id, {
       nutritionist_comment: comment,
       why_eat_note: note,
-      tray_photo_url: photos.tray,
-      dish_photos: photos.dish,
+      tray_photo_url: dishes.tray,
+      dishes: toApiDishes(dishes.items),
     })
     setLoading(false)
   }
@@ -81,12 +91,15 @@ export default function TodayDraft({ menu, photoKinds, onPublish, onUploadPhoto 
 
       {open && (
         <div style={{ marginTop: 18 }}>
-          <label className="fa-label">写真</label>
-          <MenuPhotoInputs
+          <label className="fa-label">料理と写真</label>
+          <MenuDishesEditor
             kinds={photoKinds}
-            value={photos}
-            onChange={setPhotos}
+            library={library}
+            value={dishes}
+            onChange={setDishes}
             onUpload={onUploadPhoto}
+            onNotify={onNotify}
+            onLibraryChange={onLibraryChange}
             idPrefix={`today-photo-${menu.id}`}
           />
 

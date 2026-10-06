@@ -7,9 +7,11 @@
 
 import Link from 'next/link'
 import { createSupabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { getPhotoKinds } from '@/lib/photoKinds'
-import { mainPhotoOf, dishPhotoList } from '@/lib/menuPhotos'
-import MenuPhotos from '@/components/MenuPhotos'
+import { mainPhotoOf, orderDishes } from '@/lib/menuPhotos'
+import { toRecipe, hasRecipe } from '@/lib/recipes'
+import MenuPhotos, { type MenuPhotoDish } from '@/components/MenuPhotos'
 import { formatDate, formatIngredients } from '@/lib/menu'
 import { usedAllergens } from '@/lib/allergens'
 import MessageSection from '@/components/MessageSection'
@@ -38,12 +40,34 @@ export default async function MenuDetail({ params }: Props) {
   const used = usedAllergens(menu.allergens)
   const ingredients = formatIngredients(menu.ingredients)
 
-  /* 写真：大きく出す1枚（お盆全体 → 主菜 → 他の料理）と、料理ごとの写真（大きく出したものは除く） */
+  /* その日の料理とレシピ。dishes / menu_dishes はブラウザから読めないため、
+     献立が見られること（上の RLS つきの読み取り）を確かめてからサーバー側で読む */
   const kinds = menu.school_id ? await getPhotoKinds(menu.school_id) : []
-  const mainPhoto = mainPhotoOf(menu, kinds)
-  const dishes = dishPhotoList(menu.dish_photos, kinds)
-    .filter((p) => p.kind.id !== mainPhoto?.fromKindId)
-    .map((p) => ({ kindId: p.kind.id, label: p.kind.label, url: p.url }))
+  const { data: rows } = await supabaseAdmin
+    .from('menu_dishes')
+    .select('id, photo_url, sort_order, dishes(id, kind_id, name, recipe_servings, recipe_ingredients, recipe_steps, recipe_tip)')
+    .eq('menu_id', menu.id)
+
+  const dayDishes = orderDishes(
+    (rows ?? []).flatMap((r) =>
+      r.dishes ? [{ ...r, kind_id: r.dishes.kind_id, dish: r.dishes }] : []
+    ),
+    kinds
+  )
+
+  /* 写真：大きく出す1枚（お盆全体 → 主菜 → 他の料理）。同じ写真はカードに重ねて出さない */
+  const mainPhoto = mainPhotoOf(menu.tray_photo_url, dayDishes, kinds)
+  const labelOf = new Map(kinds.map((k) => [k.id, k.label]))
+  const dishes: MenuPhotoDish[] = dayDishes.map((d) => {
+    const recipe = toRecipe(d.dish)
+    return {
+      id: d.id,
+      kindLabel: labelOf.get(d.kind_id) ?? '',
+      name: d.dish.name,
+      url: d === mainPhoto?.fromDish ? null : d.photo_url,
+      recipe: hasRecipe(recipe) ? recipe : null,
+    }
+  })
 
   return (
     <main className="fa-page" style={{ maxWidth: 720 }}>

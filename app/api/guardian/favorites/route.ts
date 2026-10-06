@@ -19,7 +19,8 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('favorites')
-    .select('created_at, menus(id, served_date, title, tray_photo_url, dish_photos, is_published, school_id)')
+    /* 1つの文字列のまま書く（連結すると Supabase が結果の型を推論できなくなる） */
+    .select('created_at, menus(id, served_date, title, tray_photo_url, is_published, school_id, menu_dishes(photo_url, sort_order, dishes(kind_id)))')
     .eq('guardian_id', guardian.id)
     .order('created_at', { ascending: false })
 
@@ -35,7 +36,13 @@ export async function GET() {
       menu_id: m.id,
       served_date: m.served_date,
       title: m.title,
-      photo_url: mainPhotoOf(m, kinds)?.url ?? null,
+      photo_url: mainPhotoOf(
+        m.tray_photo_url,
+        m.menu_dishes.flatMap((d) =>
+          d.dishes ? [{ kind_id: d.dishes.kind_id, photo_url: d.photo_url, sort_order: d.sort_order }] : []
+        ),
+        kinds
+      )?.url ?? null,
     }]
   })
 

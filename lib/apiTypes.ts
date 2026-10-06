@@ -186,7 +186,50 @@ export type FoodEvent = Tables<'food_education_events'>
 export type EventsResponse = { events: FoodEvent[] }
 
 export type Menu = Tables<'menus'>
-export type MenusResponse = { menus: Menu[] }
+
+/* ---------- 料理とレシピ ---------- */
+
+/** 保護者向けのレシピ（家庭で作れる分量） */
+export type Recipe = {
+  /** 何人分（例：大人2人・子ども2人分） */
+  servings: string | null
+  ingredients: { name: string; amount: string }[]
+  /** 作り方（手順ごと） */
+  steps: string[]
+  /** ひとことポイント */
+  tip: string | null
+}
+
+/** 料理の一覧の1件（料理を選ぶ欄で使う） */
+export type DishSummary = {
+  id: string
+  kind_id: string
+  name: string
+  has_recipe: boolean
+  /** 前回出したときの写真（「前回の写真を使う」用） */
+  last_photo_url: string | null
+  last_served_date: string | null
+  times_served: number
+}
+
+export type DishesResponse = { dishes: DishSummary[] }
+
+/** 料理1件とレシピ（レシピの編集で使う） */
+export type DishDetail = { id: string; kind_id: string; name: string; recipe: Recipe }
+export type DishResponse = { dish: DishDetail }
+
+/** その日の献立に入っている料理（その日の写真つき） */
+export type MenuDish = {
+  id: string
+  dish_id: string
+  photo_url: string | null
+  sort_order: number
+  dish: { id: string; kind_id: string; name: string }
+}
+
+/** 管理画面の献立（入っている料理も一緒に返す） */
+export type AdminMenu = Menu & { menu_dishes: MenuDish[] }
+export type MenusResponse = { menus: AdminMenu[] }
 
 /* ---------- /api/admin/replies：保護者からの質問 ---------- */
 

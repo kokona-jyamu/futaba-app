@@ -158,3 +158,36 @@
   .fa-dishgrid:not(.is-open) { display: none; }
   .fa-dish img { height: 120px; }
 }
+
+
+/* ===== 料理のカード（写真なし・種類と料理名）とレシピ  components/MenuPhotos.tsx・RecipeView.tsx ===== */
+.fa-dish-nophoto {
+  display: flex; align-items: center; justify-content: center;
+  height: 140px; border-radius: 12px;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha); font-size: 12px;
+}
+.fa-dish figcaption { display: flex; flex-direction: column; gap: 2px; }
+.fa-dish-kind { font-size: 11px; font-weight: 700; color: var(--fa-matcha); }
+.fa-dish-name { font-size: 13px; font-weight: 700; color: var(--fa-ink); }
+.fa-dish figcaption .fa-textlink { align-self: flex-start; margin-top: 2px; }
+
+.fa-recipeview {
+  margin-top: 14px; padding: 16px 18px; border-radius: var(--fa-r);
+  background: #fff; border: 1px solid var(--fa-line);
+}
+.fa-recipe-servings { margin-top: 2px; font-size: 12px; color: var(--fa-ink-2); }
+.fa-rv-ings { margin: 0 0 12px; }
+.fa-rv-ing {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 5px 0; border-bottom: 1px dashed var(--fa-line); font-size: 13px;
+}
+.fa-rv-ing dt { color: var(--fa-ink); }
+.fa-rv-ing dd { margin: 0; color: var(--fa-ink-2); white-space: nowrap; }
+.fa-rv-steps { margin: 0 0 12px; padding-left: 1.4em; font-size: 13px; line-height: 1.9; color: var(--fa-ink); }
+.fa-recipe-tip {
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--fa-matcha-soft); font-size: 12.5px; line-height: 1.8; color: var(--fa-ink);
+}
+@media (max-width: 699px) {
+  .fa-dish-nophoto { height: 120px; }
+}

@@ -10,8 +10,9 @@ import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type {
-  Menu, MenusResponse, AdminQuestion, RepliesResponse,
+  AdminMenu, MenusResponse, AdminQuestion, RepliesResponse,
   AllergyPendingChild, AllergyPendingResponse, PhotoKindsResponse,
+  DishSummary, DishesResponse,
 } from '@/lib/apiTypes'
 import {
   NUTRIENTS, SCHOOL_ID, num, formatDate,
@@ -32,8 +33,8 @@ import MealTypePanel from '@/components/MealTypePanel'
 import ClassPanel from '@/components/ClassPanel'
 import SettingsPanel from '@/components/SettingsPanel'
 import AdminImg from '@/components/AdminImg'
-import MenuPhotoInputs from '@/components/MenuPhotoInputs'
-import { toDishPhotos, mainPhotoOf, type DishPhotos, type PhotoKind } from '@/lib/menuPhotos'
+import MenuDishesEditor, { fromMenuDishes, toApiDishes, type EditorDish } from '@/components/MenuDishesEditor'
+import { mainPhotoOf, type PhotoKind } from '@/lib/menuPhotos'
 
 const emptyForm = () => ({
   served_date: '',
@@ -45,7 +46,7 @@ const emptyForm = () => ({
   allergens: emptyAllergenState(),
   allergen_checked: false,
   tray_photo_url: null as string | null,
-  dish_photos: {} as DishPhotos,
+  dishes: [] as EditorDish[],
 })
 
 type MenuForm = ReturnType<typeof emptyForm>
@@ -53,11 +54,11 @@ type MenuForm = ReturnType<typeof emptyForm>
 type NutrientKey = (typeof NUTRIENTS)[number]['name']
 
 /** 編集中の献立。栄養価は入力中の文字列も入る */
-type EditForm = Omit<Menu, 'allergens' | 'dish_photos' | NutrientKey> &
+type EditForm = Omit<AdminMenu, 'allergens' | 'menu_dishes' | NutrientKey> &
   Record<NutrientKey, string | number | null> & {
     ingredient: string
     allergens: AllergenMap
-    dish_photos: DishPhotos
+    dishes: EditorDish[]
   }
 
 /* 画面を開いたときに読むもの（取得だけ。画面への反映は各 apply で行う） */
@@ -68,6 +69,8 @@ const requestMenus = () => fetchJson<MenusResponse>('/api/admin/menus/list')
 const requestAllergyPending = () => fetchJson<AllergyPendingResponse>('/api/admin/children/allergens')
 /* 写真の種類（主食・汁物・主菜・副菜 など。園ごとに設定） */
 const requestPhotoKinds = () => fetchJson<PhotoKindsResponse>('/api/admin/photo-kinds')
+/* 園の料理の一覧（料理を選ぶ欄で使う） */
+const requestDishes = () => fetchJson<DishesResponse>('/api/admin/dishes')
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
@@ -79,7 +82,7 @@ export default function AdminPage() {
   const [form, setForm] = useState<MenuForm>(emptyForm())
   const [copiedFrom, setCopiedFrom] = useState<string | null>(null)
 
-  const [allMenus, setAllMenus] = useState<Menu[]>([])
+  const [allMenus, setAllMenus] = useState<AdminMenu[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<EditForm>>({})
   const [listFilter, setListFilter] = useState<'all' | 'draft' | 'unchecked'>('all')
@@ -87,6 +90,7 @@ export default function AdminPage() {
   const [messages, setMessages] = useState<AdminQuestion[]>([])
   const [allergyPending, setAllergyPending] = useState<AllergyPendingChild[]>([])
   const [photoKinds, setPhotoKinds] = useState<PhotoKind[]>([])
+  const [dishLibrary, setDishLibrary] = useState<DishSummary[]>([])
 
   /* 各パネルに渡すので作り直さない（作り直すとパネルが毎回データを取り直す） */
   const notify = useCallback((text: string, error = false) => {
@@ -106,6 +110,8 @@ export default function AdminPage() {
 
   useLoadEffect(requestAllergyPending, applyAllergyPending)
   useLoadEffect(requestPhotoKinds, applyPhotoKinds)
+  const applyDishes = useCallback((r: FetchResult<DishesResponse>) => { if (r.ok) setDishLibrary(r.json.dishes) }, [])
+  useLoadEffect(requestDishes, applyDishes)
 
   /* 保存や返信のあとに取り直す */
   const fetchMessages = useCallback(() => requestMessages().then(applyMessages), [applyMessages])
@@ -116,6 +122,8 @@ export default function AdminPage() {
   )
   /* 設定画面で写真の種類を変えたあとに取り直す */
   const fetchPhotoKinds = useCallback(() => requestPhotoKinds().then(applyPhotoKinds), [applyPhotoKinds])
+  /* 料理を登録・変更したあと、献立を保存したあと（前回の写真・回数が変わる）に取り直す */
+  const fetchDishes = useCallback(() => requestDishes().then(applyDishes), [applyDishes])
 
   const uncheckedMenus = allMenus.filter((m) => !m.allergen_checked)
   const draftMenus = allMenus.filter((m) => !m.is_published)
@@ -133,6 +141,15 @@ export default function AdminPage() {
 
   /* ---------------- 写真 ---------------- */
 
+  /** 一覧に出す写真（お盆全体 → 主菜 → 他の料理）。なければ null */
+  const listPhotoOf = (menu: AdminMenu) =>
+    mainPhotoOf(
+      menu.tray_photo_url,
+      menu.menu_dishes.map((d) => ({ kind_id: d.dish.kind_id, photo_url: d.photo_url, sort_order: d.sort_order })),
+      photoKinds
+    )?.url ?? null
+
+
   const uploadPhoto = async (file: File): Promise<string | null> => {
     const ext = file.name.split('.').pop()
     const fileName = `${SCHOOL_ID}/${Date.now()}.${ext}`
@@ -149,7 +166,7 @@ export default function AdminPage() {
 
   const publishDraft = async (
     id: string,
-    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dish_photos: DishPhotos }
+    patch: { nutritionist_comment: string; why_eat_note: string; tray_photo_url: string | null; dishes: { dish_id: string; photo_url: string | null }[] }
   ): Promise<boolean> => {
     const res = await fetch('/api/admin/menus', {
       method: 'PATCH',
@@ -165,11 +182,12 @@ export default function AdminPage() {
 
     notify('保護者に公開しました。')
     fetchMenus()
+    fetchDishes()
     return true
   }
 
   /* 一覧からの公開・非公開の切り替え */
-  const togglePublish = async (menu: Menu) => {
+  const togglePublish = async (menu: AdminMenu) => {
     const next = !menu.is_published
     if (!next && !confirm('保護者に見えなくなります。よろしいですか。')) return
 
@@ -205,7 +223,7 @@ export default function AdminPage() {
       allergen_checked: true,
     }))
 
-  const copyFromMenu = (menu: Menu) => {
+  const copyFromMenu = (menu: AdminMenu) => {
     setForm({
       served_date: todayStr(),
       title: menu.title ?? '',
@@ -222,7 +240,8 @@ export default function AdminPage() {
       allergen_checked: menu.allergen_checked ?? false,
       /* 写真はその日ごとに入れ直す */
       tray_photo_url: null,
-      dish_photos: {},
+      /* 料理（とレシピ）は引き継ぎ、写真はその日ごとに入れ直す */
+      dishes: fromMenuDishes(menu.menu_dishes).map((d) => ({ ...d, photo_url: null })),
     })
     setCopiedFrom(menu.title)
     setMessage('')
@@ -256,7 +275,7 @@ export default function AdminPage() {
         allergen_checked: true,
         is_published: true,
         tray_photo_url: form.tray_photo_url,
-        dish_photos: form.dish_photos,
+        dishes: toApiDishes(form.dishes),
       }),
     })
     const json = await res.json()
@@ -265,6 +284,7 @@ export default function AdminPage() {
     if (!res.ok) { notify('保存できませんでした。' + json.error, true); return }
 
     notify('献立を公開しました。')
+    fetchDishes()
     setForm(emptyForm())
     setCopiedFrom(null)
     fetchMenus()
@@ -272,14 +292,14 @@ export default function AdminPage() {
 
   /* ---------------- 編集 ---------------- */
 
-  const startEdit = (menu: Menu) => {
+  const startEdit = (menu: AdminMenu) => {
     setEditingId(menu.id)
     setEditForm({
       ...menu,
       ingredient: formatIngredients(menu.ingredients),
       allergens: { ...emptyAllergenState(), ...toAllergenMap(menu.allergens) },
       allergen_checked: menu.allergen_checked ?? false,
-      dish_photos: toDishPhotos(menu.dish_photos),
+      dishes: fromMenuDishes(menu.menu_dishes),
     })
   }
 
@@ -326,7 +346,7 @@ export default function AdminPage() {
         allergen_checked: true,
         is_published: editForm.is_published !== false,
         tray_photo_url: editForm.tray_photo_url ?? null,
-        dish_photos: editForm.dish_photos ?? {},
+        dishes: toApiDishes(editForm.dishes ?? []),
       }),
     })
     const json = await res.json()
@@ -336,6 +356,7 @@ export default function AdminPage() {
 
     setAllMenus((prev) => prev.map((m) => (m.id === editingId ? json.menu : m)))
     notify('献立を更新しました。')
+    fetchDishes()
     cancelEdit()
   }
 
@@ -472,8 +493,11 @@ export default function AdminPage() {
           key={m.id}
           menu={m}
           photoKinds={photoKinds}
+          library={dishLibrary}
           onPublish={publishDraft}
           onUploadPhoto={uploadPhoto}
+          onNotify={notify}
+          onLibraryChange={fetchDishes}
         />
       ))}
 
@@ -524,7 +548,7 @@ export default function AdminPage() {
         {/* ---------- 1日ずつ投稿 ---------- */}
         {activeTab === 'post' && (
           <>
-            <MenuPicker menus={allMenus} onPick={copyFromMenu} />
+            <MenuPicker menus={allMenus} kinds={photoKinds} onPick={copyFromMenu} />
 
             {copiedFrom && (
               <p className="fa-copied">
@@ -548,6 +572,12 @@ export default function AdminPage() {
                 </label>
                 <input id="title" type="text" name="title" value={form.title}
                   onChange={handleChange} placeholder="例：さばの味噌煮定食" className="fa-input" />
+                {form.dishes.length > 0 && (
+                  <button type="button" className="fa-filterbtn" style={{ marginTop: 6 }}
+                    onClick={() => setForm((f) => ({ ...f, title: f.dishes.map((d) => d.name).join('・') }))}>
+                    料理名から献立名を入れる
+                  </button>
+                )}
 
                 <label className="fa-label" htmlFor="ingredient">主な食材</label>
                 <textarea id="ingredient" name="ingredient" value={form.ingredient}
@@ -555,12 +585,15 @@ export default function AdminPage() {
                   placeholder="さば、みそ、しょうが、にんじん（読点か改行で区切ってください）"
                   className="fa-input fa-textarea" />
 
-                <label className="fa-label">写真</label>
-                <MenuPhotoInputs
+                <label className="fa-label">料理と写真</label>
+                <MenuDishesEditor
                   kinds={photoKinds}
-                  value={{ tray: form.tray_photo_url, dish: form.dish_photos }}
-                  onChange={(p) => setForm((f) => ({ ...f, tray_photo_url: p.tray, dish_photos: p.dish }))}
+                  library={dishLibrary}
+                  value={{ tray: form.tray_photo_url, items: form.dishes }}
+                  onChange={(v) => setForm((f) => ({ ...f, tray_photo_url: v.tray, dishes: v.items }))}
                   onUpload={uploadPhoto}
+                  onNotify={notify}
+                  onLibraryChange={fetchDishes}
                   idPrefix="post-photo"
                 />
               </section>
@@ -680,6 +713,12 @@ export default function AdminPage() {
                           <input type="text" value={editForm.title || ''}
                             onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                             className="fa-input" />
+                          {(editForm.dishes ?? []).length > 0 && (
+                            <button type="button" className="fa-filterbtn" style={{ marginTop: 6 }}
+                              onClick={() => setEditForm((f) => ({ ...f, title: (f.dishes ?? []).map((d) => d.name).join('・') }))}>
+                              料理名から献立名を入れる
+                            </button>
+                          )}
 
                           <label className="fa-label">主な食材</label>
                           <textarea value={editForm.ingredient || ''} rows={2}
@@ -687,12 +726,15 @@ export default function AdminPage() {
                             placeholder="読点か改行で区切ってください"
                             className="fa-input fa-textarea" />
 
-                          <label className="fa-label">写真</label>
-                          <MenuPhotoInputs
+                          <label className="fa-label">料理と写真</label>
+                          <MenuDishesEditor
                             kinds={photoKinds}
-                            value={{ tray: editForm.tray_photo_url ?? null, dish: editForm.dish_photos ?? {} }}
-                            onChange={(p) => setEditForm((f) => ({ ...f, tray_photo_url: p.tray, dish_photos: p.dish }))}
+                            library={dishLibrary}
+                            value={{ tray: editForm.tray_photo_url ?? null, items: editForm.dishes ?? [] }}
+                            onChange={(v) => setEditForm((f) => ({ ...f, tray_photo_url: v.tray, dishes: v.items }))}
                             onUpload={uploadPhoto}
+                            onNotify={notify}
+                            onLibraryChange={fetchDishes}
                             idPrefix={`edit-photo-${menu.id}`}
                           />
                         </div>
@@ -748,9 +790,7 @@ export default function AdminPage() {
                     </>
                   ) : (
                     <>
-                      {mainPhotoOf(menu, photoKinds) && (
-                        <AdminImg src={mainPhotoOf(menu, photoKinds)!.url} alt="" className="fa-thumb" />
-                      )}
+                      {listPhotoOf(menu) && <AdminImg src={listPhotoOf(menu)!} alt="" className="fa-thumb" />}
 
                       <p className="fa-date">
                         {formatDate(menu.served_date)}
