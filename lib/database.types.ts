@@ -267,6 +267,60 @@ export type Database = {
         }
         Relationships: []
       }
+      dishes: {
+        Row: {
+          created_at: string
+          id: string
+          kind_id: string
+          name: string
+          recipe_ingredients: Json
+          recipe_servings: string | null
+          recipe_steps: string[] | null
+          recipe_tip: string | null
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind_id: string
+          name: string
+          recipe_ingredients?: Json
+          recipe_servings?: string | null
+          recipe_steps?: string[] | null
+          recipe_tip?: string | null
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind_id?: string
+          name?: string
+          recipe_ingredients?: Json
+          recipe_servings?: string | null
+          recipe_steps?: string[] | null
+          recipe_tip?: string | null
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dishes_kind_id_fkey"
+            columns: ["kind_id"]
+            isOneToOne: false
+            referencedRelation: "school_photo_kinds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dishes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_likes: {
         Row: {
           created_at: string | null
@@ -460,6 +514,48 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      menu_dishes: {
+        Row: {
+          created_at: string
+          dish_id: string
+          id: string
+          menu_id: string
+          photo_url: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          dish_id: string
+          id?: string
+          menu_id: string
+          photo_url?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          dish_id?: string
+          id?: string
+          menu_id?: string
+          photo_url?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_dishes_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_dishes_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menus: {
         Row: {
