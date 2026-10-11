@@ -1,10 +1,14 @@
-/* app/login/page.tsx — 保護者用ログイン（出席番号 + PIN） */
+/* app/login/page.tsx — 保護者用ログイン（出席番号 + PIN）
+ *
+ * PIN はサーバー（/api/login）で確かめる。間違いが続くとロックされる。
+ * PIN は6桁。移行期限（2026-11-30）までは、これまでの4桁も使える。
+ */
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { noToEmail, pinToPassword, isValidPin } from '@/lib/guardian'
+import { isValidPin } from '@/lib/guardian'
+import { fetchJson } from '@/lib/useLoadEffect'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,23 +23,24 @@ export default function LoginPage() {
       return
     }
     if (!isValidPin(pin)) {
-      setError('PINは4桁の数字です。')
+      setError('PINは6桁の数字です（これまでの4桁のPINも使えます）。')
       return
     }
 
     setLoading(true)
     setError('')
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: noToEmail(loginNo),
-      password: pinToPassword(loginNo, pin),
+    const r = await fetchJson<{ ok: true }>('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login_no: loginNo, pin }),
     })
 
     setLoading(false)
 
-    if (authError) {
-      /* どちらが違うかは伝えない（総当たりの手掛かりになるため） */
-      setError('出席番号かPINが違うようです。お手元の用紙をご確認ください。')
+    if (!r.ok) {
+      /* どちらが違うかは伝えない（総当たりの手掛かりになるため）。ロック中はその旨が返る */
+      setError(r.json.error)
       setPin('')
       return
     }
@@ -68,17 +73,17 @@ export default function LoginPage() {
             className="fa-input"
           />
 
-          <label className="fa-label" htmlFor="pin">PIN（4桁）</label>
+          <label className="fa-label" htmlFor="pin">PIN（6桁）</label>
           <input
             id="pin"
             type="password"
             inputMode="numeric"
-            maxLength={4}
+            maxLength={6}
             autoComplete="current-password"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
-            placeholder="••••"
+            placeholder="••••••"
             className="fa-input"
             style={{ letterSpacing: '.4em' }}
           />

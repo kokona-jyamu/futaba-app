@@ -12,26 +12,13 @@ export const ACCOUNT_DOMAIN = 'futaba-hoiku.invalid'
 export const noToEmail = (loginNo: string) =>
   `no-${loginNo.trim().toLowerCase()}@${ACCOUNT_DOMAIN}`
 
-/**
- * PIN を Supabase Auth のパスワードに変換する。
- * Supabase は既定で6文字以上を要求するため、4桁PINをそのままは使えない。
- * 出席番号を混ぜて長さを確保しつつ、同じPINでも番号が違えば別の値になるようにする。
+/*
+ * PIN の発行・確認・ロックはサーバー専用の lib/pinAuth.ts で行う。
+ * これから発行する PIN は6桁。移行期限（2026-11-30）までは旧方式の4桁も使える。
  */
-export const pinToPassword = (loginNo: string, pin: string) =>
-  `futaba_${loginNo.trim()}_${pin.trim()}`
 
-/** 4桁のPINをランダム生成（0000 と 1234 のような弱いものは避ける） */
-export const generatePin = (): string => {
-  const weak = new Set(['0000', '1111', '2222', '3333', '4444', '5555',
-    '6666', '7777', '8888', '9999', '1234', '4321', '0123'])
-  let pin = ''
-  do {
-    pin = String(Math.floor(Math.random() * 10000)).padStart(4, '0')
-  } while (weak.has(pin))
-  return pin
-}
-
-export const isValidPin = (pin: string) => /^\d{4}$/.test(pin)
+/** ログイン画面で受け付ける PIN の形（6桁、移行期間中は4桁も） */
+export const isValidPin = (pin: string) => /^(\d{4}|\d{6})$/.test(pin)
 
 /* 列の定義は DB から生成した型に合わせる（npm run gen:types で更新）。
    allergens / allergens_confirmed / settings は jsonb なので、

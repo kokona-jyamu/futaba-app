@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { toAllergenMap, toUpdatedByRole } from '@/lib/allergens'
+import { LEGACY_PIN_LOGIN_UNTIL, lockKeyOf } from '@/lib/pinAuth'
 import type { ChildListItem, ChildrenListResponse } from '@/lib/apiTypes'
 
 export async function GET() {
@@ -33,6 +34,21 @@ export async function GET() {
 
   const allergyOf = new Map((allergenRows ?? []).map((c) => [c.id, c]))
 
+  /* ログインの仕組み（新しい仕組みに切り替わったか）とロックの状態 */
+  const guardianIds = (data ?? []).flatMap((c) => (c.guardian_id ? [c.guardian_id] : []))
+  const loginNos = (data ?? []).flatMap((c) => (c.login_no ? [lockKeyOf(c.login_no)] : []))
+  const [{ data: creds }, { data: locks }] = await Promise.all([
+    guardianIds.length
+      ? supabaseAdmin.from('guardian_credentials').select('guardian_id').in('guardian_id', guardianIds)
+      : Promise.resolve({ data: [] as { guardian_id: string }[] }),
+    loginNos.length
+      ? supabaseAdmin.from('guardian_login_locks').select('login_no, locked_until, hard_locked').in('login_no', loginNos)
+      : Promise.resolve({ data: [] as { login_no: string; locked_until: string | null; hard_locked: boolean }[] }),
+  ])
+  const migrated = new Set((creds ?? []).map((c) => c.guardian_id))
+  const lockOf = new Map((locks ?? []).map((l) => [l.login_no, l]))
+  const now = new Date()
+
   /* ビューの列は型の上では空を許すため、id のない行は除き、残りは既定値で埋める */
   const children: ChildListItem[] = (data ?? []).flatMap((c) => {
     if (!c.id) return []
@@ -48,8 +64,15 @@ export async function GET() {
       allergens_confirmed: toAllergenMap(a?.allergens_confirmed),
       allergens_updated_at: a?.allergens_updated_at ?? null,
       allergens_updated_by_role: toUpdatedByRole(a?.allergens_updated_by_role),
+      pin_status: !c.guardian_id ? 'none' : migrated.has(c.guardian_id) ? 'new' : 'legacy',
+      lock: (() => {
+        const l = c.login_no ? lockOf.get(lockKeyOf(c.login_no)) : undefined
+        if (!l) return null
+        if (l.hard_locked) return 'hard'
+        return l.locked_until && new Date(l.locked_until) > now ? 'temp' : null
+      })(),
     }]
   })
 
-  return NextResponse.json<ChildrenListResponse>({ children })
+  return NextResponse.json<ChildrenListResponse>({ children, legacy_until: LEGACY_PIN_LOGIN_UNTIL })
 }

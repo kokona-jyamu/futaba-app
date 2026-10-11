@@ -5,6 +5,8 @@ import { useState, useMemo } from 'react'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type { ChildListItem, ChildrenListResponse, ChildrenBulkResponse, BulkChildResult } from '@/lib/apiTypes'
 import { initialOf } from '@/lib/guardian'
+import { todayStr } from '@/lib/date'
+import { formatShort } from '@/lib/attendance'
 import { usedAllergens, allergenDiff, isAllergyPending, findAllergen } from '@/lib/allergens'
 import AllergenPicker from '@/components/AllergenPicker'
 
@@ -55,8 +57,12 @@ export default function ChildrenPanel({
   const [allergyDraft, setAllergyDraft] = useState<Record<string, boolean>>({})
   const [onlyPending, setOnlyPending] = useState(false)
 
+  /* 旧方式（4桁PIN）でログインできる最後の日 */
+  const [legacyUntil, setLegacyUntil] = useState('')
+  const [stopping, setStopping] = useState(false)
+
   const apply = ({ ok, json }: Loaded) => {
-    if (ok) setChildren(json.children)
+    if (ok) { setChildren(json.children); setLegacyUntil(json.legacy_until) }
     else onNotify(json.error ?? '一覧を取得できませんでした', true)
   }
   useLoadEffect(request, apply)
@@ -227,6 +233,77 @@ export default function ChildrenPanel({
     onAllergyChange?.()
   }
 
+  /* ---------------- ログイン（旧方式・ロック） ---------------- */
+
+  const legacyCount = children.filter((c) => c.pin_status === 'legacy').length
+  const hardLocked = children.filter((c) => c.lock === 'hard')
+  /* 期限を過ぎたか（日本時間） */
+  const legacyClosed = !!legacyUntil && todayStr() > legacyUntil
+
+  const stopLegacy = async () => {
+    if (!confirm(
+      `旧方式（4桁）のままの${legacyCount}名のアカウントを止めます。\n` +
+      '止めたアカウントは、PINを再発行するまでログインできません。よろしいですか。'
+    )) return
+    setStopping(true)
+    const r = await fetchJson<{ stopped: number; failed: number }>('/api/admin/children/legacy-stop', { method: 'POST' })
+    setStopping(false)
+    if (!r.ok) { onNotify(r.json.error, true); return }
+    onNotify(
+      `${r.json.stopped}名のアカウントを止めました。` +
+      (r.json.failed > 0 ? `${r.json.failed}名は止められませんでした。もう一度お試しください。` : ''),
+      r.json.failed > 0
+    )
+    fetchChildren()
+  }
+
+  const renderLoginNotice = () => (
+    <>
+      {hardLocked.length > 0 && (
+        <div className="fa-warnbox" style={{ marginBottom: 14 }}>
+          <p className="fa-warntitle">ログインがロックされている園児が{hardLocked.length}名います</p>
+          <p className="fa-warntext">
+            {hardLocked.slice(0, 3).map((c) => `${c.name}さん`).join('、')}
+            {hardLocked.length > 3 && ` ほか${hardLocked.length - 3}名`}
+            。PINの間違いが続いたため止めています。保護者に確認のうえ「PIN再発行」で解除してください。
+          </p>
+        </div>
+      )}
+
+      {legacyCount > 0 && legacyUntil && (
+        <div className="fa-warnbox" style={{ marginBottom: 14 }}>
+          {legacyClosed ? (
+            <>
+              <p className="fa-warntitle">旧方式（4桁）のままのアカウントが{legacyCount}名あります</p>
+              <p className="fa-warntext">
+                移行の期限（{formatShort(legacyUntil)}）を過ぎました。安全のため、下のボタンで止めてください。
+                止めたあとは、保護者からお申し出があったときに「PIN再発行」で6桁のPINをお渡しください。
+              </p>
+              <button
+                onClick={stopLegacy}
+                disabled={stopping}
+                className="fa-btn fa-btn--rose"
+                style={{ marginTop: 10, flex: '0 0 auto' }}
+              >
+                {stopping ? '処理中…' : '旧方式のアカウントを停止'}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="fa-warntitle">
+                旧方式（4桁）のままのアカウントが{legacyCount}名あります
+              </p>
+              <p className="fa-warntext">
+                {formatShort(legacyUntil)}までに一度ログインすると、自動で新しい仕組みに切り替わります（PINはそのまま使えます）。
+                期限までにログインがなかった方は、期限後にPINの再発行が必要です。
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  )
+
   /* ---------------- 絞り込み ---------------- */
 
   const pendingCount = useMemo(
@@ -255,8 +332,9 @@ export default function ChildrenPanel({
               PINは今だけ表示されます
             </h2>
             <p style={{ fontSize: 12.5, lineHeight: 1.8, color: 'var(--fa-ink-2)' }}>
-              PINは暗号化して保存されるため、この画面を閉じると二度と確認できません。
-              印刷して保護者へお渡しください。忘れた場合は再発行になります。
+              PINは元に戻せない形で保存されるため、この画面を閉じると園の管理画面でも二度と確認できません。
+              印刷して保護者へお渡しください。印刷の画面で「PDFに保存」を選ぶと、PDFとして保管することもできます。
+              忘れた場合は再発行になります。
             </p>
           </div>
           <div className="fa-btnrow">
@@ -286,7 +364,7 @@ export default function ChildrenPanel({
                   <p className="fa-slip-value">{s.login_no}</p>
                 </div>
                 <div>
-                  <p className="fa-slip-label">PIN（4桁）</p>
+                  <p className="fa-slip-label">PIN（6桁）</p>
                   <p className="fa-slip-value">{s.pin}</p>
                 </div>
               </div>
@@ -322,6 +400,8 @@ export default function ChildrenPanel({
       {/* ---------- 一覧 ---------- */}
       {mode === 'list' && (
         <>
+          {renderLoginNotice()}
+
           {pendingCount > 0 && (
             <div className="fa-warnbox" style={{ marginBottom: 14 }}>
               <p className="fa-warntitle">
@@ -376,6 +456,22 @@ export default function ChildrenPanel({
                     ? `最終ログイン：${new Date(c.last_seen_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`
                     : 'まだログインされていません'}
                 </p>
+
+                {(c.pin_status === 'legacy' || c.lock) && (
+                  <div className="fa-tagrow">
+                    {c.lock === 'hard' && (
+                      <span className="fa-tag fa-tag--err">🔒 ロック中（PINの再発行が必要）</span>
+                    )}
+                    {c.lock === 'temp' && (
+                      <span className="fa-tag fa-tag--unknown">🔒 一時ロック中（15分）</span>
+                    )}
+                    {c.pin_status === 'legacy' && (
+                      <span className="fa-tag fa-tag--plain">
+                        {legacyClosed ? '旧方式のまま（PINの再発行が必要）' : '旧方式（4桁）のまま'}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {allergyChildId === c.id ? (
                   <div className="fa-tint fa-tint--apricot">

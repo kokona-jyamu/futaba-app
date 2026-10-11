@@ -84,9 +84,17 @@ export type ChildListItem = {
   allergens_confirmed: AllergenMap
   allergens_updated_at: string | null
   allergens_updated_by_role: 'guardian' | 'staff' | null
+  /** ログインの仕組み。new＝新しい仕組み（6桁）、legacy＝旧方式（4桁）のまま、none＝アカウントなし */
+  pin_status: 'new' | 'legacy' | 'none'
+  /** ログインのロック。hard＝園の再発行までロック、temp＝15分のロック中 */
+  lock: 'hard' | 'temp' | null
 }
 
-export type ChildrenListResponse = { children: ChildListItem[] }
+export type ChildrenListResponse = {
+  children: ChildListItem[]
+  /** 旧方式（4桁）でログインできる最後の日 */
+  legacy_until: string
+}
 
 /* ---------- /api/admin/children/bulk：名簿からの一括登録 ---------- */
 

@@ -8,7 +8,8 @@ import { NextResponse } from 'next/server'
 import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import type { BulkChildResult, ChildrenBulkResponse } from '@/lib/apiTypes'
-import { noToEmail, pinToPassword, generatePin } from '@/lib/guardian'
+import { noToEmail } from '@/lib/guardian'
+import { issuePin, randomAuthPassword } from '@/lib/pinAuth'
 
 const MAX_ROWS = 300
 
@@ -43,8 +44,6 @@ export async function POST(req: Request) {
       continue
     }
 
-    const pin = generatePin()
-
     /* 1. 園児 */
     const { data: child, error: childErr } = await supabaseAdmin
       .from('children')
@@ -65,7 +64,8 @@ export async function POST(req: Request) {
     /* 2. Auth ユーザー */
     const { data: created, error: authErr } = await supabaseAdmin.auth.admin.createUser({
       email: noToEmail(login_no),
-      password: pinToPassword(login_no, pin),
+      /* パスワードは誰にも知らせないランダムな値（ログインは PIN をサーバーで確かめる） */
+      password: randomAuthPassword(),
       email_confirm: true,
       user_metadata: { login_no, child_name: name },
     })
@@ -96,7 +96,16 @@ export async function POST(req: Request) {
       continue
     }
 
-    results.push({ ok: true, login_no, name, class_name, pin })
+    /* 4. PIN（6桁） */
+    const issued = await issuePin(created.user.id, login_no)
+    if ('error' in issued) {
+      await supabaseAdmin.auth.admin.deleteUser(created.user.id)
+      await supabaseAdmin.from('children').delete().eq('id', child.id)
+      results.push({ ok: false, login_no, name, error: 'PINを発行できませんでした：' + issued.error })
+      continue
+    }
+
+    results.push({ ok: true, login_no, name, class_name, pin: issued.pin })
   }
 
   return NextResponse.json<ChildrenBulkResponse>({

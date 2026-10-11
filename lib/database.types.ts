@@ -440,6 +440,69 @@ export type Database = {
           },
         ]
       }
+      guardian_credentials: {
+        Row: {
+          created_at: string
+          guardian_id: string
+          pin_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guardian_id: string
+          pin_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guardian_id?: string
+          pin_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_credentials_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: true
+            referencedRelation: "children_with_account"
+            referencedColumns: ["guardian_id"]
+          },
+          {
+            foreignKeyName: "guardian_credentials_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: true
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardian_login_locks: {
+        Row: {
+          failed_streak: number
+          failed_total: number
+          hard_locked: boolean
+          locked_until: string | null
+          login_no: string
+          updated_at: string
+        }
+        Insert: {
+          failed_streak?: number
+          failed_total?: number
+          hard_locked?: boolean
+          locked_until?: string | null
+          login_no: string
+          updated_at?: string
+        }
+        Update: {
+          failed_streak?: number
+          failed_total?: number
+          hard_locked?: boolean
+          locked_until?: string | null
+          login_no?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guardians: {
         Row: {
           child_id: string
@@ -885,6 +948,15 @@ export type Database = {
     }
     Functions: {
       current_school_id: { Args: never; Returns: string }
+      guardian_login_failed: {
+        Args: { p_login_no: string }
+        Returns: {
+          failed_streak: number
+          failed_total: number
+          hard_locked: boolean
+          locked_until: string
+        }[]
+      }
       is_staff: { Args: never; Returns: boolean }
       my_child_id: { Args: never; Returns: string }
       my_school_id: { Args: never; Returns: string }
