@@ -414,7 +414,7 @@ export default function AdminPage() {
 
   return (
     <main className="fa-page">
-      <header className="fa-head fa-noprint">
+      <header className="fa-head fa-head--admin fa-noprint">
         <div className="fa-headrow">
           <div>
             <p className="fa-eyebrow">栄養士専用</p>
@@ -430,28 +430,28 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'meals' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('meals')}
           >
-            <span className="fa-tab-icon">🍚</span>食数
+            食数
           </button>
           <button
             role="tab" aria-selected={activeTab === 'post'}
             className={`fa-tab${activeTab === 'post' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('post')}
           >
-            <span className="fa-tab-icon">📝</span>1日ずつ
+            1日ずつ
           </button>
           <button
             role="tab" aria-selected={activeTab === 'bulk'}
             className={`fa-tab${activeTab === 'bulk' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('bulk')}
           >
-            <span className="fa-tab-icon">📅</span>月間登録
+            月間登録
           </button>
           <button
             role="tab" aria-selected={activeTab === 'edit'}
             className={`fa-tab${activeTab === 'edit' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('edit')}
           >
-            <span className="fa-tab-icon">✏️</span>編集
+            編集
             {draftMenus.length > 0 && <span className="fa-badge">{draftMenus.length}</span>}
           </button>
           <button
@@ -459,21 +459,21 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'print' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('print')}
           >
-            <span className="fa-tab-icon">🖨️</span>献立表
+            献立表
           </button>
           <button
             role="tab" aria-selected={activeTab === 'events'}
             className={`fa-tab${activeTab === 'events' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('events')}
           >
-          <span className="fa-tab-icon">🌾</span>食育
+            食育
           </button>
           <button
             role="tab" aria-selected={activeTab === 'messages'}
             className={`fa-tab${activeTab === 'messages' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('messages')}
           >
-            <span className="fa-tab-icon">💬</span>質問
+            質問
             {openCount > 0 && <span className="fa-badge">{openCount}</span>}
           </button>
           <button
@@ -481,7 +481,7 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'children' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('children')}
           >
-            <span className="fa-tab-icon">👶</span>園児
+            園児
             {allergyPending.length > 0 && <span className="fa-badge">{allergyPending.length}</span>}
           </button>
           
@@ -491,7 +491,7 @@ export default function AdminPage() {
             className={`fa-tab${activeTab === 'settings' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
-            <span className="fa-tab-icon">⚙️</span>設定
+            設定
           </button>
         </nav>
       </header>

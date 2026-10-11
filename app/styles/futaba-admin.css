@@ -732,3 +732,13 @@
 /* ===== 管理画面の見出しとログアウト ===== */
 .fa-headrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .fa-logoutbtn { flex: 0 0 auto; width: auto; padding: 7px 14px; font-size: 12px; }
+
+/* 管理画面の見出しは2段にする：上に「給食管理」とログアウト、下にタブ（見出しが折り返さないように） */
+.fa-head.fa-head--admin { display: block; }
+.fa-head--admin .fa-headrow { align-items: center; }
+.fa-head--admin .fa-title { white-space: nowrap; }
+.fa-head--admin .fa-tabs { margin-top: 14px; }
+@media (min-width: 700px) {
+  .fa-head.fa-head--admin { display: block; }
+  .fa-head--admin .fa-tabs--6 { justify-content: start; }
+}
