@@ -7,6 +7,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type {
@@ -91,6 +92,15 @@ export default function AdminPage() {
   const [allergyPending, setAllergyPending] = useState<AllergyPendingChild[]>([])
   const [photoKinds, setPhotoKinds] = useState<PhotoKind[]>([])
   const [dishLibrary, setDishLibrary] = useState<DishSummary[]>([])
+
+  const router = useRouter()
+
+  /** ログアウトして、管理者ログイン画面に戻る（この端末だけ。ほかの端末のログインはそのまま） */
+  const handleLogout = async () => {
+    await supabase.auth.signOut({ scope: 'local' })
+    router.replace('/admin/login')
+    router.refresh()
+  }
 
   /* 各パネルに渡すので作り直さない（作り直すとパネルが毎回データを取り直す） */
   const notify = useCallback((text: string, error = false) => {
@@ -405,9 +415,14 @@ export default function AdminPage() {
   return (
     <main className="fa-page">
       <header className="fa-head fa-noprint">
-        <div>
-          <p className="fa-eyebrow">栄養士専用</p>
-          <h1 className="fa-title">給食管理</h1>
+        <div className="fa-headrow">
+          <div>
+            <p className="fa-eyebrow">栄養士専用</p>
+            <h1 className="fa-title">給食管理</h1>
+          </div>
+          <button type="button" onClick={handleLogout} className="fa-btn fa-btn--ghost fa-logoutbtn">
+            ログアウト
+          </button>
         </div>
         <nav className="fa-tabs fa-tabs--6" role="tablist">
           <button

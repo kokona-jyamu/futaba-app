@@ -727,3 +727,8 @@
 @media (max-width: 699px) {
   .fa-dishitem { grid-template-columns: 96px minmax(0, 1fr); }
 }
+
+
+/* ===== 管理画面の見出しとログアウト ===== */
+.fa-headrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.fa-logoutbtn { flex: 0 0 auto; width: auto; padding: 7px 14px; font-size: 12px; }
