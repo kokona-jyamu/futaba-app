@@ -6,6 +6,7 @@
  * /admin/login だけは未ログインでも開けるようにする（そうしないと入口が塞がる）。
  *
  * サーバー側で判定するので、ブラウザの localStorage をいじっても突破できない。
+ * 職員は2段階認証（認証アプリの確認コード）まで済んでいないと入れない。
  */
 
 import { NextResponse, type NextRequest } from 'next/server'
@@ -56,6 +57,12 @@ export async function proxy(request: NextRequest) {
     .maybeSingle()
 
   if (!profile || !isStaffRole(profile.role)) {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  /* パスワードだけでは入れない。確認コードの入力（初回は登録）はログイン画面で行う */
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (aal?.currentLevel !== 'aal2') {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
 

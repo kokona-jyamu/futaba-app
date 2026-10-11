@@ -8,6 +8,9 @@
  *
  * と書く。users / guardians は RLS で自分の行しか読めないため、
  * 確認には secret キーのクライアントを使う。
+ *
+ * 職員は2段階認証（認証アプリの確認コード）まで済んでいること（aal2）も確かめる。
+ * パスワードだけでログインした状態では、職員用の API は使えない。
  */
 
 import 'server-only'
@@ -39,6 +42,13 @@ async function currentUserId(): Promise<string | null> {
   return user?.id ?? null
 }
 
+/** 2段階認証（確認コード）まで済んでいるか */
+async function hasSecondFactor(): Promise<boolean> {
+  const supabase = await createSupabaseServer()
+  const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  return data?.currentLevel === 'aal2'
+}
+
 /** 職員（栄養士・園管理者）であることを確認し、その school_id などを返す */
 export async function requireStaff(): Promise<Staff | NextResponse> {
   const userId = await currentUserId()
@@ -54,6 +64,14 @@ export async function requireStaff(): Promise<Staff | NextResponse> {
 
   if (!profile || !isStaffRole(profile.role)) {
     return NextResponse.json({ error: 'この操作の権限がありません' }, { status: 403 })
+  }
+
+  /* パスワードだけでは使わせない（確認コードまで済んでいること） */
+  if (!(await hasSecondFactor())) {
+    return NextResponse.json(
+      { error: '2段階認証が済んでいません。管理画面にログインし直してください。' },
+      { status: 403 }
+    )
   }
 
   /* 所属する園が決まっていないと、どの園のデータを扱うか決められない */
