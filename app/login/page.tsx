@@ -2,13 +2,18 @@
  *
  * PIN はサーバー（/api/login）で確かめる。間違いが続くとロックされる。
  * PIN は6桁。移行期限（2026-11-30）までは、これまでの4桁も使える。
+ * マイページで端末を登録した方は、出席番号とPINを入れずに指紋・顔認証でもログインできる。
  */
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { isValidPin } from '@/lib/guardian'
-import { fetchJson } from '@/lib/useLoadEffect'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser'
+
+/** この端末（ブラウザ）が指紋・顔認証に対応しているか */
+const checkSupport = async () => browserSupportsWebAuthn()
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,6 +21,48 @@ export default function LoginPage() {
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [passkeySupported, setPasskeySupported] = useState(false)
+
+  useLoadEffect(checkSupport, setPasskeySupported)
+
+  /** ログインできたらトップへ */
+  const goHome = () => {
+    /* 旧方式のフラグが残っていると混乱するので掃除しておく */
+    localStorage.removeItem('futaba_logged_in')
+    router.push('/')
+    router.refresh()
+  }
+
+  /* ---------------- 指紋・顔認証でログイン ---------------- */
+
+  const handlePasskeyLogin = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const opt = await fetchJson<Parameters<typeof startAuthentication>[0]['optionsJSON']>(
+        '/api/passkeys/login/options',
+        { method: 'POST' }
+      )
+      if (!opt.ok) { setError(opt.json.error); return }
+
+      /* ここでスマホの指紋・顔認証の画面が出る */
+      const response = await startAuthentication({ optionsJSON: opt.json })
+
+      const r = await fetchJson<{ ok: true }>('/api/passkeys/login/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response }),
+      })
+      if (!r.ok) { setError(r.json.error); return }
+      goHome()
+    } catch {
+      setError('指紋・顔認証をやめたか、うまくいきませんでした。もう一度お試しいただくか、PINでログインしてください。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* ---------------- 出席番号とPINでログイン ---------------- */
 
   const handleLogin = async () => {
     if (!loginNo.trim()) {
@@ -45,10 +92,7 @@ export default function LoginPage() {
       return
     }
 
-    /* 旧方式のフラグが残っていると混乱するので掃除しておく */
-    localStorage.removeItem('futaba_logged_in')
-    router.push('/')
-    router.refresh()
+    goHome()
   }
 
   return (
@@ -103,6 +147,25 @@ export default function LoginPage() {
             >
               {loading ? 'ログイン中…' : 'ログイン'}
             </button>
+
+            {passkeySupported && (
+              <>
+                <p style={{ margin: '14px 0', textAlign: 'center', fontSize: 12, color: 'var(--fa-muted)' }}>
+                  または
+                </p>
+                <button
+                  onClick={handlePasskeyLogin}
+                  disabled={loading}
+                  className="fa-btn fa-btn--sky"
+                  style={{ width: '100%' }}
+                >
+                  指紋・顔認証でログイン
+                </button>
+                <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.7, color: 'var(--fa-muted)' }}>
+                  マイページの「設定」で、この端末を登録した方が使えます。
+                </p>
+              </>
+            )}
           </div>
 
           <p style={{ marginTop: 16, fontSize: 12, lineHeight: 1.8, color: 'var(--fa-muted)' }}>

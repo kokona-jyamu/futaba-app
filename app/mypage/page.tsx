@@ -12,6 +12,7 @@ import { useGuardian } from '@/lib/useGuardian'
 import { formatDate, initialOf } from '@/lib/guardian'
 import { THEMES, DEFAULT_THEME, applyTheme, saveThemeLocal, themeOfSettings, type ThemeKey } from '@/lib/theme'
 import AllergenPicker from '@/components/AllergenPicker'
+import PasskeySettings from '@/components/PasskeySettings'
 import { isAllergyPending, toAllergenMap } from '@/lib/allergens'
 
 type Tab = 'child' | 'allergy' | 'favorites' | 'questions' | 'settings'
@@ -357,6 +358,8 @@ if (!guardian || !child) {
                 </button>
               ))}
             </div>
+
+            <PasskeySettings onNotify={notify} />
 
             <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--fa-line)' }}>
               <h2 className="fa-cardtitle">アカウント</h2>

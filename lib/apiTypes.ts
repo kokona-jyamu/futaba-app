@@ -271,6 +271,17 @@ export type Favorite = {
 
 export type FavoritesResponse = { favorites: Favorite[] }
 
+/* ---------- /api/passkeys：生体認証で使う端末 ---------- */
+
+export type PasskeyItem = {
+  id: string
+  device_name: string | null
+  created_at: string
+  last_used_at: string | null
+}
+
+export type PasskeysResponse = { passkeys: PasskeyItem[] }
+
 /* ---------- /api/questions：自分の質問と返信 ---------- */
 
 export type GuardianQuestion = Pick<Tables<'messages'>, 'id' | 'menu_id' | 'body' | 'created_at'> & {

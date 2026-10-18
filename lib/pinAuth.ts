@@ -89,6 +89,7 @@ export const randomAuthPassword = () => `${randomBytes(32).toString('base64url')
  * 保護者に新しい PIN を発行する（新規・一括・再発行で共通）。
  *  - PIN を変換して保存する
  *  - Supabase のパスワードをランダムな値に変える
+ *  - 登録済みの生体認証（パスキー）をすべて解除する
  *  - その出席番号のロックを解く
  * 返した PIN はこの1回だけ画面に出す。
  */
@@ -104,6 +105,14 @@ export async function issuePin(guardianId: string, loginNo: string): Promise<{ p
     password: randomAuthPassword(),
   })
   if (authErr) return { error: authErr.message }
+
+  /* 再発行は「スマホをなくした」「PINを知られたかもしれない」ときが多いので、
+     登録済みの生体認証もすべて解除する（なくした端末からログインされないように） */
+  const { error: passkeyErr } = await supabaseAdmin
+    .from('guardian_passkeys')
+    .delete()
+    .eq('guardian_id', guardianId)
+  if (passkeyErr) return { error: passkeyErr.message }
 
   await clearLock(loginNo)
   return { pin }

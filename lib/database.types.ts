@@ -503,6 +503,57 @@ export type Database = {
         }
         Relationships: []
       }
+      guardian_passkeys: {
+        Row: {
+          counter: number
+          created_at: string
+          credential_id: string
+          device_name: string | null
+          guardian_id: string
+          id: string
+          last_used_at: string | null
+          public_key: string
+          transports: string[] | null
+        }
+        Insert: {
+          counter?: number
+          created_at?: string
+          credential_id: string
+          device_name?: string | null
+          guardian_id: string
+          id?: string
+          last_used_at?: string | null
+          public_key: string
+          transports?: string[] | null
+        }
+        Update: {
+          counter?: number
+          created_at?: string
+          credential_id?: string
+          device_name?: string | null
+          guardian_id?: string
+          id?: string
+          last_used_at?: string | null
+          public_key?: string
+          transports?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_passkeys_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "children_with_account"
+            referencedColumns: ["guardian_id"]
+          },
+          {
+            foreignKeyName: "guardian_passkeys_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardians: {
         Row: {
           child_id: string
@@ -923,6 +974,48 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webauthn_challenges: {
+        Row: {
+          challenge: string
+          created_at: string
+          expires_at: string
+          guardian_id: string | null
+          id: string
+          purpose: string
+        }
+        Insert: {
+          challenge: string
+          created_at?: string
+          expires_at: string
+          guardian_id?: string | null
+          id?: string
+          purpose: string
+        }
+        Update: {
+          challenge?: string
+          created_at?: string
+          expires_at?: string
+          guardian_id?: string | null
+          id?: string
+          purpose?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webauthn_challenges_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "children_with_account"
+            referencedColumns: ["guardian_id"]
+          },
+          {
+            foreignKeyName: "webauthn_challenges_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
             referencedColumns: ["id"]
           },
         ]

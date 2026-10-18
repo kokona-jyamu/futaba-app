@@ -12,8 +12,7 @@
 
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createSupabaseServer } from '@/lib/supabaseServer'
-import { noToEmail } from '@/lib/guardian'
+import { createGuardianSession } from '@/lib/guardianSession'
 import {
   isLegacyPeriod, verifyPin, verifyDummy, verifyLegacyPin, migrateLegacy,
   readLock, recordFailure, clearLock, lockMessage,
@@ -97,20 +96,9 @@ export async function POST(req: Request) {
   /* 成功：回数を消し、サーバー側でログイン状態を作る（Cookie に保存される） */
   await clearLock(loginNo)
 
-  const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'magiclink',
-    email: noToEmail(loginNo),
-  })
-  if (linkError || !link.properties?.hashed_token) {
-    return NextResponse.json({ error: 'ログインできませんでした。時間をおいてお試しください。' }, { status: 500 })
-  }
-
-  const supabase = await createSupabaseServer()
-  const { error: sessionError } = await supabase.auth.verifyOtp({
-    type: 'magiclink',
-    token_hash: link.properties.hashed_token,
-  })
+  const sessionError = await createGuardianSession(loginNo)
   if (sessionError) {
+    console.error('ログイン状態を作れませんでした', sessionError)
     return NextResponse.json({ error: 'ログインできませんでした。時間をおいてお試しください。' }, { status: 500 })
   }
 
