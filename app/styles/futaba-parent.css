@@ -165,31 +165,37 @@
 /* ==================================================================
    5. アレルゲンタイル
    ================================================================== */
+/* Material Design 3 のアウトラインのボタン（高さ48px・角丸8px・枠線1px・文字だけ）。
+   押すと、そのアレルゲンを使っていない献立のページへ移る */
 .fa-tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 @media (min-width: 700px) {
-  .fa-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .fa-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 }
 @media (min-width: 1080px) {
-  .fa-tiles { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 16px; }
+  .fa-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 .fa-tile {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  aspect-ratio: 1; padding: 8px;
-  border: 1.5px solid var(--fa-line); border-radius: 14px;
-  background: var(--fa-card);
-  transition: border-color .15s, background .15s, transform .15s;
+  display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  min-height: 48px; padding: 0 8px 0 14px;
+  border: 1px solid #CFCBC1; border-radius: 8px;
+  background: var(--fa-card); color: var(--fa-ink);
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
 }
-.fa-link:hover .fa-tile {
-  border-color: var(--fa-apricot); background: var(--fa-apricot-soft); transform: translateY(-2px);
-}
-.fa-tile-emoji { font-size: 30px; line-height: 1; }
+.fa-tile:hover { background: #F4F2EC; }
+.fa-tile:focus-visible { outline: 2px solid var(--fa-matcha); outline-offset: 2px; }
 .fa-tile-label {
-  font-size: 12px; font-weight: 500; color: var(--fa-ink); text-align: center; line-height: 1.3;
+  min-width: 0; font-size: 14px; font-weight: 500; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+/* 表示義務8品目は文字を太くして見分ける */
+.fa-tile.is-required .fa-tile-label { font-weight: 700; }
+.fa-tile-arrow { flex: 0 0 auto; color: var(--fa-ink-2); }
 
 /* ==================================================================
    6. 予告・イベント

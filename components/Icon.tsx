@@ -10,6 +10,7 @@
 
 const PATHS = {
   check: 'M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z',
+  chevron_right: 'M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z',
 } as const
 
 export type IconName = keyof typeof PATHS
