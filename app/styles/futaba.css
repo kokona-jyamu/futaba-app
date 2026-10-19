@@ -37,8 +37,9 @@
   --fa-w: 100%;      /* スマホ */
   --fa-pad: 16px;
 
-  --fa-font: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans",
-    "Noto Sans JP", system-ui, sans-serif;
+  /* 本文の字体：Google の Noto Sans JP（app/layout.tsx の next/font で読み込み、--font-noto-sans-jp に入る）。
+     読み込む前や失敗したときは端末の字体 */
+  --fa-font: var(--font-noto-sans-jp), "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
 }
 
 /* 幅のブレークポイントを :root 側で切り替える。
