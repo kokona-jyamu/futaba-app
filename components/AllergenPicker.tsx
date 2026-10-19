@@ -4,10 +4,12 @@
  *  - 義務8品目は常に表示
  *  - 推奨20品目＋園独自は「もっと見る」で展開
  *  - 「アレルゲンなし」を明示的に選べる（未入力と区別するため）
+ *  - 見た目は Material Design 3 のフィルターチップ（文字だけ。選ぶと ✓ が付く）
  */
 'use client'
 
 import { useState, useMemo } from 'react'
+import Icon from '@/components/Icon'
 import {
   REQUIRED_ALLERGENS,
   OPTIONAL_ALLERGENS,
@@ -68,11 +70,11 @@ export default function AllergenPicker({
         onClick={readOnly ? undefined : () => onToggle?.(a.key)}
         aria-pressed={readOnly ? undefined : on}
         disabled={readOnly}
-        className={`fa-chip${on ? ' is-on' : ''}`}
+        className={`fa-chip${on ? ' is-on' : ''}${a.required ? ' is-required' : ''}`}
         style={readOnly ? { cursor: 'default' } : undefined}
-        title={a.label}
       >
-        <span className="fa-chip-emoji">{a.emoji}</span>
+        {/* 選んだものには ✓ を付ける（Material Design 3 のフィルターチップ） */}
+        {on && <Icon name="check" className="fa-chip-check" />}
         <span className="fa-chip-label">{a.label}</span>
       </button>
     )

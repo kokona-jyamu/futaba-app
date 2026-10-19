@@ -10,19 +10,7 @@
 }
 .fa-alggroup:first-child { margin-top: 0; }
 
-/* 28品目に増えるので、丸を少し小さくして折り返す */
-.fa-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.fa-chip { width: 52px; height: 52px; }
-.fa-chip-emoji { font-size: 17px; }
-.fa-chip-label {
-  font-size: 8.5px; line-height: 1.1; text-align: center;
-  max-width: 46px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-@media (min-width: 700px) {
-  .fa-chip { width: 58px; height: 58px; }
-  .fa-chip-emoji { font-size: 19px; }
-  .fa-chip-label { font-size: 9px; max-width: 52px; }
-}
+/* チップの形は futaba.css（Material Design 3 のフィルターチップ）で決めている */
 
 /* 展開ボタン */
 .fa-expand {

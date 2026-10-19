@@ -235,26 +235,31 @@ body {
 }
 
 /* アレルギー丸チップ */
+/* アレルゲンのチップ：Material Design 3 のフィルターチップ
+   （高さ32px・角丸8px・枠線1px。選ぶと色で塗り、先頭に ✓ が付く） */
 .fa-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .fa-chip {
-  width: 56px; height: 56px; padding: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  border: 2px solid #EBE7DE; border-radius: 50%;
-  background: #F6F5F1; color: #A9B2AD; font: inherit; cursor: pointer;
-  transition: transform .15s, background .15s, border-color .15s, color .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 14px;
+  border: 1px solid #CFCBC1; border-radius: 8px;
+  background: var(--fa-card); color: var(--fa-ink);
+  font: inherit; font-size: 13px; font-weight: 500; line-height: 1;
+  white-space: nowrap; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
 }
-.fa-chip:hover { transform: translateY(-2px); }
+.fa-chip:hover { background: #F4F2EC; }
+.fa-chip:focus-visible { outline: 2px solid var(--fa-matcha); outline-offset: 2px; }
+/* 表示義務8品目は文字を太くして見分ける */
+.fa-chip.is-required { font-weight: 700; }
 .fa-chip.is-on {
-  background: #fff; border-color: var(--fa-apricot); color: var(--fa-apricot-ink);
-  box-shadow: 0 2px 8px rgba(224, 161, 92, .22);
+  padding-left: 8px;
+  border-color: transparent;
+  background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
 }
-.fa-chip-emoji { font-size: 19px; filter: grayscale(.7); opacity: .55; transition: filter .15s, opacity .15s; }
-.fa-chip.is-on .fa-chip-emoji { filter: none; opacity: 1; }
-.fa-chip-label { font-size: 9px; font-weight: 700; }
-@media (min-width: 1080px) {
-  .fa-chip { width: 60px; height: 60px; }
-  .fa-chip-emoji { font-size: 21px; }
-}
+.fa-chip.is-on:hover { background: #FBE7CF; }
+.fa-chip-check { flex: 0 0 auto; }
+/* 絵文字は使わない（まだ書き換えていない画面のぶんも隠す） */
+.fa-chip-emoji { display: none; }
 
 /* ==================================================================
    6. ボタン
