@@ -675,7 +675,12 @@ export default function AdminPage() {
 
         {/* ---------- 月間まとめて登録 ---------- */}
         {activeTab === 'bulk' && (
-          <MenuBulkPanel onNotify={notify} onDone={fetchMenus} />
+          <MenuBulkPanel
+            kinds={photoKinds}
+            library={dishLibrary}
+            onNotify={notify}
+            onDone={() => { fetchMenus(); fetchDishes() }}
+          />
         )}
 
         {/* ---------- 編集 ---------- */}

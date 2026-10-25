@@ -102,6 +102,15 @@ export type BulkChildResult =
   | { ok: true; login_no: string; name: string; class_name: string | null; pin: string }
   | { ok: false; login_no: string; name: string; error: string }
 
+/** 月間献立の一括登録の結果 */
+export type MenusBulkResponse = {
+  inserted: number
+  /** すでに献立があったため登録しなかった日 */
+  skippedDates: string[]
+  /** 新しく登録した料理の数 */
+  newDishes: number
+}
+
 export type ChildrenBulkResponse = {
   results: BulkChildResult[]
   succeeded: number

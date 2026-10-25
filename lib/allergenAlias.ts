@@ -102,20 +102,39 @@ export function parseAllergenText(text: string): ParsedAllergens {
   return { status: 'listed', allergens, unknown }
 }
 
-/** 日付を 'YYYY-MM-DD' に揃える。'9/1' '9月1日' '2026-09-01' などを受ける */
+/**
+ * 年の書かれていない日付（例：1/5）の年を決める。今日（日本時間）に一番近い年にする。
+ * 12月に翌年1月分を貼ったときに、前年の日付にならないようにするため。
+ */
+function nearestYear(month: number, day: number, now = new Date()): number {
+  const { year, month: m, day: d } = nowJST(now)
+  const today = Date.UTC(year, m - 1, d)
+  return [year - 1, year, year + 1].reduce((best, y) =>
+    Math.abs(Date.UTC(y, month - 1, day) - today) < Math.abs(Date.UTC(best, month - 1, day) - today) ? y : best
+  )
+}
+
+/**
+ * 日付を 'YYYY-MM-DD' に揃える。'9/1' '9月1日(月)' '2026-09-01' などを受ける。
+ * 年がないときは fallbackYear、なければ今日に一番近い年にする。
+ */
 export function parseDate(text: string, fallbackYear?: number): string | null {
   const s = (text ?? '').trim()
   if (!s) return null
 
-  const year = fallbackYear ?? nowJST().year
-
-  /* 2026-09-01 / 2026/9/1 */
+  /* 2026-09-01 / 2026/9/1 / 2026年9月1日 */
   let m = s.match(/^(\d{4})[-/年.](\d{1,2})[-/月.](\d{1,2})/)
   if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`
 
   /* 9/1 / 9月1日 */
   m = s.match(/^(\d{1,2})[-/月.](\d{1,2})/)
-  if (m) return `${year}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`
+  if (m) {
+    const month = Number(m[1])
+    const day = Number(m[2])
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null
+    const year = fallbackYear ?? nearestYear(month, day)
+    return `${year}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`
+  }
 
   /* Excel のシリアル値（1900年起算） */
   if (/^\d{5}$/.test(s)) {

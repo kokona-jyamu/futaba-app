@@ -1,122 +1,141 @@
 /* components/MenuBulkPanel.tsx — 月間献立をまとめて登録する
  *
- * Excel から貼り付けた行を解析し、プレビューで確認してから登録する。
- * アレルゲンが未記入の行は登録しない。
+ * Excel（わんぱくランチ などから書き出したもの）を貼り付け、プレビューで確認してから登録する。
+ *  - 列の並びは帳票ごとに違うので、列ごとに「何の列か」を選べる（1行目が見出しなら自動で読む）
+ *  - 選んだ列の並びはこのパソコンに覚えておき、次回も使う
+ *  - 主食・主菜などの列は料理として登録し、献立に付ける（セルの中の改行で1品ずつ）
+ *  - 日付が空欄の行は、すぐ上の日の続きとして読む
+ * アレルゲンが未記入の日は登録しない。
  */
 'use client'
 
 import { useState, useMemo } from 'react'
-import { parseAllergenText, parseDate } from '@/lib/allergenAlias'
 import { findAllergen } from '@/lib/allergens'
 import { formatDate } from '@/lib/menu'
+import { fetchJson } from '@/lib/useLoadEffect'
+import { sortKinds, type PhotoKind } from '@/lib/menuPhotos'
+import {
+  BASE_FIELDS, defaultColumns, detectHeader, groupDays, parseTable,
+  type ColumnField,
+} from '@/lib/menuImport'
+import type { DishSummary, MenusBulkResponse } from '@/lib/apiTypes'
 
-type ParsedRow = {
-  lineNo: number
-  served_date: string | null
-  title: string
-  ingredients: string[] | null
-  kcal: number | null
-  protein: number | null
-  fat: number | null
-  carb: number | null
-  salt: number | null
-  calcium: number | null
-  allergens: Record<string, boolean> | null
-  allergenStatus: 'none' | 'listed' | 'empty'
-  unknownAllergens: string[]
-  error: string | null
-}
-
-const toNum = (s?: string) => {
-  const v = Number.parseFloat((s ?? '').replace(/[^\d.-]/g, ''))
-  return Number.isFinite(v) ? v : null
-}
-
-export default function MenuBulkPanel({
-  onNotify,
-  onDone,
-}: {
+type Props = {
+  kinds: PhotoKind[]
+  library: DishSummary[]
   onNotify: (msg: string, isError?: boolean) => void
+  /** 登録したあと（献立と料理の一覧を取り直すため） */
   onDone: () => void
-}) {
+}
+
+/** 選んだ列の並びを覚えておく場所（このパソコンのブラウザ） */
+const STORAGE_KEY = 'futaba.menuBulk.columns'
+
+const loadSavedColumns = (): ColumnField[] | null => {
+  try {
+    const v = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
+    return Array.isArray(v) ? v : null
+  } catch {
+    return null
+  }
+}
+
+const saveColumns = (columns: ColumnField[]) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columns)) } catch { /* 覚えられなくても登録はできる */ }
+}
+
+export default function MenuBulkPanel({ kinds, library, onNotify, onDone }: Props) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ inserted: number; skippedDates: string[] } | null>(null)
+  const [result, setResult] = useState<MenusBulkResponse | null>(null)
+  /** 画面で選び直した列の並び（選んでいなければ自動） */
+  const [chosen, setChosen] = useState<ColumnField[] | null>(null)
+  /** 1行目を見出しとして扱うか（null は自動判定） */
+  const [headerChoice, setHeaderChoice] = useState<boolean | null>(null)
 
-  const rows = useMemo<ParsedRow[]>(() => {
-    return text
-      .split('\n')
-      .map((line, i) => ({ line: line.trim(), i }))
-      .filter(({ line }) => line)
-      .map(({ line, i }) => {
-        const cols = line.includes('\t') ? line.split('\t') : line.split(',')
-        const served_date = parseDate(cols[0] ?? '')
-        const title = (cols[1] ?? '').trim()
-        const ing = (cols[2] ?? '').trim()
-        const parsed = parseAllergenText(cols[9] ?? '')
-
-        let error: string | null = null
-        if (!served_date) error = '日付が読み取れません'
-        else if (!title) error = '献立名がありません'
-        else if (parsed.status === 'empty') error = 'アレルゲンが未記入です'
-
-        return {
-          lineNo: i + 1,
-          served_date,
-          title,
-          ingredients: ing
-            ? ing.split(/[・,、\/]+/).map((s) => s.trim()).filter(Boolean)
-            : null,
-          kcal: toNum(cols[3]),
-          protein: toNum(cols[4]),
-          fat: toNum(cols[5]),
-          carb: toNum(cols[6]),
-          salt: toNum(cols[7]),
-          calcium: toNum(cols[8]),
-          allergens: parsed.allergens,
-          allergenStatus: parsed.status,
-          unknownAllergens: parsed.unknown,
-          error,
-        }
-      })
-  }, [text])
-
-  const valid = rows.filter((r) => !r.error)
-  const invalid = rows.filter((r) => r.error)
-  const unknownWords = useMemo(
-    () => [...new Set(rows.flatMap((r) => r.unknownAllergens))],
-    [rows]
+  const sortedKinds = useMemo(() => sortKinds(kinds), [kinds])
+  const validFields = useMemo(
+    () => new Set<string>([...BASE_FIELDS.map((f) => f.key), ...kinds.map((k) => `kind:${k.id}`), 'ignore']),
+    [kinds]
   )
+
+  const table = useMemo(() => parseTable(text), [text])
+  const colCount = useMemo(() => Math.max(0, ...table.map((r) => r.length)), [table])
+  const detected = useMemo(() => (table[0] ? detectHeader(table[0], kinds) : null), [table, kinds])
+  const hasHeader = headerChoice ?? detected !== null
+
+  const columns = useMemo<ColumnField[]>(() => {
+    const fit = (c: ColumnField[] | null) =>
+      c && c.length === colCount && c.every((f) => validFields.has(f)) ? c : null
+    return (
+      fit(chosen) ??
+      (hasHeader ? fit(detected) : null) ??
+      fit(loadSavedColumns()) ??
+      defaultColumns(colCount, kinds)
+    )
+  }, [chosen, colCount, hasHeader, detected, validFields, kinds])
+
+  const dataRows = useMemo(() => (hasHeader ? table.slice(1) : table), [table, hasHeader])
+  const days = useMemo(
+    () => groupDays(dataRows, columns, hasHeader ? 2 : 1),
+    [dataRows, columns, hasHeader]
+  )
+
+  const valid = days.filter((r) => !r.error)
+  const invalid = days.filter((r) => r.error)
+  const unknownWords = useMemo(() => [...new Set(days.flatMap((r) => r.unknownAllergens))], [days])
+
+  /* まだ登録されていない料理（登録すると新しく作られる） */
+  const known = useMemo(() => new Set(library.map((d) => `${d.kind_id}\u0000${d.name}`)), [library])
+  const isNew = (d: { kind_id: string; name: string }) => !known.has(`${d.kind_id}\u0000${d.name}`)
+  const newDishNames = [...new Set(valid.flatMap((r) => r.dishes.filter(isNew).map((d) => d.name)))]
+  const kindLabel = useMemo(() => new Map(kinds.map((k) => [k.id, k.label])), [kinds])
+  const hasDishColumn = columns.some((f) => f.startsWith('kind:'))
+  const hasDateColumn = columns.includes('date')
+
+  const setColumn = (i: number, field: ColumnField) => {
+    const next = columns.map((f, j) => (j === i ? field : f))
+    setChosen(next)
+    saveColumns(next)
+  }
+
+  const reset = () => {
+    setText('')
+    setChosen(null)
+    setHeaderChoice(null)
+  }
 
   const handleSubmit = async () => {
     if (valid.length === 0) {
-      onNotify('登録できる行がありません。', true)
+      onNotify('登録できる日がありません。', true)
       return
     }
 
     setLoading(true)
-    const res = await fetch('/api/admin/menus/bulk', {
+    const r = await fetchJson<MenusBulkResponse>('/api/admin/menus/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        rows: valid.map((r) => ({
-          served_date: r.served_date,
-          title: r.title,
-          ingredients: r.ingredients,
-          kcal: r.kcal, protein: r.protein, fat: r.fat,
-          carb: r.carb, salt: r.salt, calcium: r.calcium,
-          allergens: r.allergens ?? {},
+        rows: valid.map((d) => ({
+          served_date: d.served_date,
+          title: d.title,
+          ingredients: d.ingredients,
+          kcal: d.kcal, protein: d.protein, fat: d.fat,
+          carb: d.carb, salt: d.salt, calcium: d.calcium,
+          allergens: d.allergens ?? {},
+          dishes: d.dishes,
         })),
       }),
     })
-    const json = await res.json()
     setLoading(false)
 
-    if (!res.ok) { onNotify(json.error, true); return }
+    if (!r.ok) { onNotify(r.json.error, true); return }
 
-    setResult({ inserted: json.inserted, skippedDates: json.skippedDates ?? [] })
-    setText('')
-    onNotify(`${json.inserted}件を下書きとして登録しました。`)
+    /* 次回も同じ並びで読めるように覚えておく */
+    saveColumns(columns)
+    setResult(r.json)
+    reset()
+    onNotify(`${r.json.inserted}件を下書きとして登録しました。`)
     onDone()
   }
 
@@ -127,6 +146,7 @@ export default function MenuBulkPanel({
         <h2 className="fa-cardtitle">登録が終わりました</h2>
         <p className="fa-note" style={{ marginTop: 10 }}>
           {result.inserted}件を下書きとして登録しました。
+          {result.newDishes > 0 && `料理を${result.newDishes}品、新しく登録しました。`}
           保護者にはまだ表示されません。
           当日の朝に写真とコメントを入れて公開してください。
         </p>
@@ -137,7 +157,7 @@ export default function MenuBulkPanel({
             <p className="fa-warntext">
               {result.skippedDates.map((d) => formatDate(d)).join('、')}
               はすでに献立があるため、登録していません。
-              変更したい場合は「献立を編集」から行ってください。
+              変更したい場合は「編集」から行ってください。
             </p>
           </div>
         )}
@@ -161,25 +181,87 @@ export default function MenuBulkPanel({
       <div className="fa-card" style={{ marginBottom: 16 }}>
         <h2 className="fa-cardtitle">Excelから貼り付ける</h2>
         <p className="fa-note" style={{ marginTop: 8 }}>
-          献立表から下の順に列を選んでコピーし、貼り付けてください。
-          アレルゲンは「・」で区切り、ひとつも使っていない日は「なし」と書きます。
-          空欄のままだとその行は登録されません。
+          献立表の Excel で、表の範囲を選んでコピーし、そのまま貼り付けてください（見出しの行ごとでも大丈夫です）。
+          貼り付けたあと、列ごとに「何の列か」を選べます。
         </p>
-
-        <pre className="fa-sample" style={{ marginTop: 12 }}>{`日付 / 献立名 / 主な食材 / エネルギー / たんぱく質 / 脂質 / 炭水化物 / 食塩 / カルシウム / アレルゲン`}</pre>
+        <ul className="fa-note fa-bulkhints">
+          <li>主食・主菜などの列は、料理として登録されます。1つのセルに2品あるときは、セルの中で改行（Alt＋Enter）してください。</li>
+          <li>1日を何行かに分けて書いている表は、2行目から日付を空欄にしておけば、上の日の続きとして読みます。</li>
+          <li>アレルゲンは「・」や「、」で区切り、ひとつも使っていない日は「なし」と書きます。空欄の日は登録されません。</li>
+          <li>年のない日付（例：1/5）は、今日に一番近い年として読みます。</li>
+        </ul>
 
         <label className="fa-label">月間の献立</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={10}
-          placeholder={'2026-09-01\tさばの味噌煮定食\tさば・みそ\t642\t26.1\t18.9\t88.4\t2.1\t318\t卵・乳・小麦'}
+          placeholder={'日付\t主食\t主菜\t汁物\tエネルギー\tアレルゲン\n9/1\tごはん\tさばの味噌煮\tけんちん汁\t642\t小麦・大豆・さば'}
           className="fa-input fa-textarea"
           style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }}
         />
       </div>
 
-      {rows.length > 0 && (
+      {table.length > 0 && (
+        <div className="fa-card" style={{ marginBottom: 16 }}>
+          <div className="fa-listhead">
+            <h2 className="fa-cardtitle" style={{ marginBottom: 0 }}>列の割り当て</h2>
+            <label className="fa-note fa-bulkheadcheck">
+              <input
+                type="checkbox"
+                checked={hasHeader}
+                onChange={(e) => setHeaderChoice(e.target.checked)}
+              />
+              1行目は見出し
+            </label>
+          </div>
+          <p className="fa-note" style={{ marginTop: 6 }}>
+            {hasHeader && detected && !chosen
+              ? '見出しから自動で割り当てました。違うところがあれば選び直してください。'
+              : '列ごとに、何の列かを選んでください。選んだ並びは次回も使います。'}
+          </p>
+
+          <div className="fa-colmap">
+            {columns.map((f, i) => {
+              const sample = (hasHeader ? table[0]?.[i] : dataRows[0]?.[i]) ?? ''
+              return (
+                <div key={i} className="fa-colmap-item">
+                  <span className="fa-colmap-sample" title={sample}>
+                    {i + 1}列目{sample ? `：${sample.split(/\r?\n/)[0]}` : ''}
+                  </span>
+                  <select
+                    value={f}
+                    onChange={(e) => setColumn(i, e.target.value as ColumnField)}
+                    className={`fa-input fa-input--sm${f === 'ignore' ? ' is-ignored' : ''}`}
+                  >
+                    <option value="ignore">使わない</option>
+                    <optgroup label="献立">
+                      {BASE_FIELDS.map((b) => (
+                        <option key={b.key} value={b.key}>{b.label}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="料理">
+                      {sortedKinds.map((k) => (
+                        <option key={k.id} value={`kind:${k.id}`}>
+                          {k.label}{k.is_active ? '' : '（使っていない種類）'}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+              )
+            })}
+          </div>
+
+          {!hasDateColumn && (
+            <p className="fa-note" style={{ marginTop: 10, color: 'var(--fa-rose-ink)' }}>
+              「日付」の列を選んでください。
+            </p>
+          )}
+        </div>
+      )}
+
+      {days.length > 0 && hasDateColumn && (
         <>
           {unknownWords.length > 0 && (
             <div className="fa-warnbox" style={{ marginBottom: 16 }}>
@@ -193,14 +275,25 @@ export default function MenuBulkPanel({
 
           {invalid.length > 0 && (
             <div className="fa-warnbox" style={{ marginBottom: 16 }}>
-              <p className="fa-warntitle">
-                {invalid.length}行は登録できません
-              </p>
+              <p className="fa-warntitle">{invalid.length}日分は登録できません</p>
               <p className="fa-warntext">
                 {invalid.slice(0, 5).map((r) => (
                   `${r.lineNo}行目（${r.title || '献立名なし'}）：${r.error}`
                 )).join('　')}
-                {invalid.length > 5 && ` ほか${invalid.length - 5}行`}
+                {invalid.length > 5 && ` ほか${invalid.length - 5}日`}
+              </p>
+            </div>
+          )}
+
+          {newDishNames.length > 0 && (
+            <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
+              <p className="fa-label" style={{ marginTop: 0 }}>新しく登録する料理（{newDishNames.length}品）</p>
+              <p className="fa-note" style={{ marginTop: 4 }}>
+                {newDishNames.join('、')}
+              </p>
+              <p className="fa-note" style={{ marginTop: 4 }}>
+                すでにある料理と名前が少し違うだけのもの（例：「みそ汁」と「味噌汁」）は別の料理になります。
+                あとから「料理」タブで直せます。
               </p>
             </div>
           )}
@@ -209,12 +302,12 @@ export default function MenuBulkPanel({
             <div className="fa-listhead">
               <h2 className="fa-cardtitle" style={{ marginBottom: 0 }}>読み取り結果</h2>
               <span className="fa-note">
-                {rows.length}件中 {valid.length}件が登録できます
+                {days.length}日中 {valid.length}日が登録できます
               </span>
             </div>
 
             <div className="fa-bulklist">
-              {rows.map((r) => (
+              {days.map((r) => (
                 <div
                   key={r.lineNo}
                   className={`fa-bulkrow${r.error ? ' is-error' : ''}`}
@@ -222,25 +315,39 @@ export default function MenuBulkPanel({
                   <span className="fa-bulkdate">
                     {r.served_date ? formatDate(r.served_date) : `${r.lineNo}行目`}
                   </span>
-                  <span className="fa-bulktitle">{r.title || '（献立名なし）'}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span className="fa-bulktitle">{r.title || '（献立名なし）'}</span>
+                    {r.dishes.length > 0 && (
+                      <span className="fa-bulkdishes">
+                        {r.dishes.map((d) => (
+                          <span key={`${d.kind_id}-${d.name}`} className="fa-tag fa-tag--plain">
+                            {kindLabel.get(d.kind_id)}：{d.name}{isNew(d) && '（新）'}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
                   <span className="fa-bulkkcal">{r.kcal ?? '—'}</span>
                   <span className="fa-bulkalg">
                     {r.error ? (
                       <span className="fa-tag fa-tag--err">{r.error}</span>
                     ) : r.allergenStatus === 'none' ? (
-                      <span className="fa-tag fa-tag--none">✓ 該当なし</span>
+                      <span className="fa-tag fa-tag--none">該当なし</span>
                     ) : (
-                      Object.keys(r.allergens ?? {}).map((k) => {
-                        const a = findAllergen(k)
-                        return (
-                          <span key={k} className="fa-tag">{a.label}</span>
-                        )
-                      })
+                      Object.keys(r.allergens ?? {}).map((k) => (
+                        <span key={k} className="fa-tag">{findAllergen(k).label}</span>
+                      ))
                     )}
                   </span>
                 </div>
               ))}
             </div>
+
+            {!hasDishColumn && (
+              <p className="fa-note" style={{ marginTop: 10 }}>
+                料理（主食・主菜など）の列が選ばれていないため、料理は付きません。献立名だけ登録されます。
+              </p>
+            )}
 
             <div className="fa-btnrow">
               <button
@@ -248,12 +355,9 @@ export default function MenuBulkPanel({
                 disabled={loading || valid.length === 0}
                 className="fa-btn fa-btn--primary"
               >
-                {loading ? '登録中…' : `${valid.length}件を下書きとして登録`}
+                {loading ? '登録中…' : `${valid.length}日分を下書きとして登録`}
               </button>
-              <button
-                onClick={() => setText('')}
-                className="fa-btn fa-btn--ghost"
-              >
+              <button onClick={reset} className="fa-btn fa-btn--ghost">
                 やり直す
               </button>
             </div>

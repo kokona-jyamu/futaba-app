@@ -247,11 +247,29 @@
 .fa-bulkdate { font-weight: 700; color: var(--fa-matcha); font-size: 11.5px; }
 .fa-bulkrow.is-error .fa-bulkdate { color: var(--fa-rose-ink); }
 .fa-bulktitle {
-  font-weight: 700; color: var(--fa-ink);
+  display: block; font-weight: 700; color: var(--fa-ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .fa-bulkkcal { text-align: right; color: var(--fa-muted); font-size: 11.5px; }
 .fa-bulkalg { display: flex; flex-wrap: wrap; gap: 4px; }
+.fa-bulkdishes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+/* 貼り付けの案内 */
+.fa-bulkhints { margin: 8px 0 0; padding-left: 1.2em; }
+.fa-bulkhints li + li { margin-top: 2px; }
+.fa-bulkheadcheck { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+/* 列の割り当て */
+.fa-colmap {
+  display: grid; gap: 8px; margin-top: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.fa-colmap-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fa-colmap-sample {
+  font-size: 11.5px; color: var(--fa-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fa-colmap .is-ignored { color: var(--fa-muted); }
 
 .fa-tag--err {
   background: var(--fa-rose-soft); color: var(--fa-rose-ink);
