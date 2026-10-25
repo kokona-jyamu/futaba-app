@@ -2,12 +2,14 @@
  *
  * レシピは料理に付くので、直すとその料理を使ったすべての日に反映される。
  * 移し替えで仮に付けた料理名（例：「さばの味噌煮定食」）も、ここで直せる。
+ * kinds を渡したときは、料理の種類（主食・主菜 など）も変えられる（料理の一覧画面で使う）。
  */
 'use client'
 
 import { useCallback, useState } from 'react'
 import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
 import type { DishResponse } from '@/lib/apiTypes'
+import { sortKinds, type PhotoKind } from '@/lib/menuPhotos'
 
 type Props = {
   dishId: string
@@ -15,10 +17,13 @@ type Props = {
   /** 保存したあと（料理名の変更を一覧に反映するため） */
   onSaved: (dish: DishResponse['dish']) => void
   onClose: () => void
+  /** 渡すと、料理の種類も変えられる */
+  kinds?: PhotoKind[]
 }
 
 type Draft = {
   name: string
+  kindId: string
   servings: string
   ingredients: { name: string; amount: string }[]
   /** 作り方は1行に1手順で入力する */
@@ -26,16 +31,17 @@ type Draft = {
   tip: string
 }
 
-export default function RecipeEditor({ dishId, onNotify, onSaved, onClose }: Props) {
+export default function RecipeEditor({ dishId, onNotify, onSaved, onClose, kinds }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
 
   const request = useCallback(() => fetchJson<DishResponse>(`/api/admin/dishes/${dishId}`), [dishId])
   useLoadEffect(request, (r) => {
     if (!r.ok) { onNotify(r.json.error, true); return }
-    const { name, recipe } = r.json.dish
+    const { name, kind_id, recipe } = r.json.dish
     setDraft({
       name,
+      kindId: kind_id,
       servings: recipe.servings ?? '',
       ingredients: recipe.ingredients.length > 0 ? recipe.ingredients : [{ name: '', amount: '' }],
       stepsText: recipe.steps.join('\n'),
@@ -56,6 +62,7 @@ export default function RecipeEditor({ dishId, onNotify, onSaved, onClose }: Pro
       body: JSON.stringify({
         id: dishId,
         name: draft.name,
+        ...(kinds ? { kind_id: draft.kindId } : {}),
         recipe: {
           servings: draft.servings,
           ingredients: draft.ingredients,
@@ -83,6 +90,26 @@ export default function RecipeEditor({ dishId, onNotify, onSaved, onClose }: Pro
         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         className="fa-input"
       />
+
+      {kinds && (
+        <>
+          <label className="fa-label">種類</label>
+          <select
+            value={draft.kindId}
+            onChange={(e) => setDraft({ ...draft, kindId: e.target.value })}
+            className="fa-input"
+          >
+            {sortKinds(kinds).map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.label}{k.is_active ? '' : '（使っていない種類）'}
+              </option>
+            ))}
+          </select>
+          <p className="fa-note" style={{ marginTop: 4 }}>
+            種類を変えると、この料理を出した過去の日の表示も変わります。
+          </p>
+        </>
+      )}
 
       <label className="fa-label">何人分</label>
       <input

@@ -2,7 +2,7 @@
  *
  * 園の料理（種類＝タグ・料理名・保護者向けのレシピ）の一覧・登録・変更。
  * 料理は献立をまたいで使い回す。レシピを直すと、その料理を使った日すべてに反映される。
- * 過去の献立から外れないよう、料理の削除はしない。
+ * 献立に使った料理は、過去の献立から外れないよう削除しない（使っていない料理だけ削除できる）。
  */
 
 import { NextResponse } from 'next/server'
@@ -124,4 +124,47 @@ export async function PATCH(req: Request) {
   return NextResponse.json<DishResponse>({
     dish: { id: data.id, kind_id: data.kind_id, name: data.name, recipe: toRecipe(data) },
   })
+}
+
+/* ================================================================
+   DELETE: 料理を削除する（一度も献立に使っていない料理だけ）
+   間違えて登録した料理の片付け用。使った料理は過去の献立から消えないよう削除しない。
+   body: { id }
+   ================================================================ */
+export async function DELETE(req: Request) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
+
+  const body: Body = (await req.json().catch(() => null)) ?? {}
+  const id = String(body.id ?? '')
+  if (!id) return NextResponse.json({ error: 'id が必要です' }, { status: 400 })
+
+  const { count } = await supabaseAdmin
+    .from('menu_dishes')
+    .select('id', { count: 'exact', head: true })
+    .eq('dish_id', id)
+  if ((count ?? 0) > 0) {
+    return NextResponse.json(
+      { error: 'この料理は献立に使われているため削除できません。' },
+      { status: 400 }
+    )
+  }
+
+  /* 他園の料理を消せないよう school_id で絞る */
+  const { data, error } = await supabaseAdmin
+    .from('dishes')
+    .delete()
+    .eq('id', id)
+    .eq('school_id', staff.school_id)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    /* 確認のあとに献立に使われた場合も、DB の制約で止まる */
+    const msg = error.code === '23503' ? 'この料理は献立に使われているため削除できません。' : error.message
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+  if (!data) return NextResponse.json({ error: '対象の料理が見つかりません' }, { status: 404 })
+
+  return NextResponse.json({ ok: true })
 }

@@ -315,7 +315,7 @@
 }
 @media (min-width: 700px) {
   .fa-head .fa-tabs--6 {
-    grid-template-columns: repeat(9, minmax(56px, max-content));
+    grid-template-columns: repeat(10, minmax(56px, max-content));
     justify-content: end;
   }
 }
@@ -741,4 +741,27 @@
 @media (min-width: 700px) {
   .fa-head.fa-head--admin { display: block; }
   .fa-head--admin .fa-tabs--6 { justify-content: start; }
+}
+
+
+/* ===== 料理の一覧（管理画面「料理」タブ）  components/DishesPanel.tsx ===== */
+.fa-dishfilters { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 14px; }
+.fa-dishfilters select { width: auto; }
+.fa-dishlist { display: flex; flex-direction: column; gap: 8px; }
+.fa-dishrow {
+  padding: 12px; border: 1px solid var(--fa-line); border-radius: 12px; background: var(--fa-card);
+}
+.fa-dishrow-main { display: flex; align-items: flex-start; gap: 12px; }
+.fa-dishrow-photo {
+  flex: 0 0 auto; width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+}
+.fa-dishrow-photo.is-empty {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--fa-matcha-soft); color: var(--fa-matcha); font-size: 11px;
+}
+.fa-dishrow-name { font-size: 14px; font-weight: 700; color: var(--fa-ink); overflow-wrap: anywhere; }
+.fa-dishrow-meta { margin-top: 4px; font-size: 11.5px; color: var(--fa-ink-2); }
+.fa-dishrow-actions { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; }
+@media (max-width: 699px) {
+  .fa-dishrow-photo { width: 52px; height: 52px; }
 }

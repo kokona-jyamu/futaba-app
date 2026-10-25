@@ -27,6 +27,7 @@ import MenuPicker from '@/components/MenuPicker'
 import MessagesPanel from '@/components/MessagesPanel'
 import MenuBulkPanel from '@/components/MenuBulkPanel'
 import MenuPrintPanel from '@/components/MenuPrintPanel'
+import DishesPanel from '@/components/DishesPanel'
 import TodayDraft from '@/components/TodayDraft'
 import EventsPanel from '@/components/EventsPanel'
 import AttendancePanel from '@/components/AttendancePanel'
@@ -75,7 +76,7 @@ const requestDishes = () => fetchJson<DishesResponse>('/api/admin/dishes')
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'events' | 'messages' | 'children' | 'settings'>('meals')
+    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'dishes' | 'events' | 'messages' | 'children' | 'settings'>('meals')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -460,6 +461,13 @@ export default function AdminPage() {
             onClick={() => setActiveTab('print')}
           >
             献立表
+          </button>
+          <button
+            role="tab" aria-selected={activeTab === 'dishes'}
+            className={`fa-tab${activeTab === 'dishes' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('dishes')}
+          >
+            料理
           </button>
           <button
             role="tab" aria-selected={activeTab === 'events'}
@@ -847,6 +855,11 @@ export default function AdminPage() {
         {/* ---------- 献立表（印刷・PDF） ---------- */}
         {activeTab === 'print' && (
           <MenuPrintPanel menus={allMenus} />
+        )}
+
+        {/* ---------- 料理（種類・料理名・レシピ） ---------- */}
+        {activeTab === 'dishes' && (
+          <DishesPanel kinds={photoKinds} library={dishLibrary} onNotify={notify} onChange={fetchDishes} />
         )}
 
         {activeTab === 'events' && (
