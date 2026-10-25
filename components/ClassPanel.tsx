@@ -322,7 +322,7 @@ export default function ClassPanel({
             </button>
             {active.length > 0 && classes.length > 0 && (
               <button onClick={startPromote} className="fa-filterbtn">
-                🌸 進級・卒園の処理
+                進級・卒園の処理
               </button>
             )}
           </div>

@@ -171,12 +171,12 @@ if (!guardian || !child) {
 
       <nav className="fa-tabs fa-tabs--5" role="tablist">
         {([
-          ['child', '👶', '園児'],
-          ['allergy', '⚠️', 'アレルギー'],
-          ['favorites', '⭐', 'お気に入り'],
-          ['questions', '💬', '質問'],
-          ['settings', '⚙️', '設定'],
-        ] as const).map(([key, icon, label]) => (
+          ['child', '園児'],
+          ['allergy', 'アレルギー'],
+          ['favorites', 'お気に入り'],
+          ['questions', '質問'],
+          ['settings', '設定'],
+        ] as const).map(([key, label]) => (
           <button
             key={key}
             role="tab"
@@ -184,7 +184,7 @@ if (!guardian || !child) {
             className={`fa-tab${tab === key ? ' is-on' : ''}`}
             onClick={() => setTab(key)}
           >
-            <span className="fa-tab-icon">{icon}</span>{label}
+            {label}
           </button>
         ))}
       </nav>
@@ -262,7 +262,7 @@ if (!guardian || !child) {
           <>
             {favorites.length === 0 && (
               <p className="fa-empty">
-                まだお気に入りがありません。献立の詳細から⭐を押すと、ここに集まります。
+                まだお気に入りがありません。献立の詳細で「お気に入りに登録する」を押すと、ここに集まります。
               </p>
             )}
             <div className="fa-grid">
@@ -326,7 +326,7 @@ if (!guardian || !child) {
                   ) : (
                     q.replies.map((r) => (
                       <div key={r.id} className="fa-bubble fa-bubble--reply">
-                        <p className="fa-sender">🌿 栄養士より</p>
+                        <p className="fa-sender">栄養士より</p>
                         <p className="fa-body">{r.body}</p>
                       </div>
                     ))

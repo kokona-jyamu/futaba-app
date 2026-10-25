@@ -820,7 +820,7 @@ export default function AdminPage() {
                           <span className="fa-tag fa-tag--none">✓ 該当なし</span>
                         ) : (
                           usedAllergens(menu.allergens).map((a) => (
-                            <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+                            <span key={a.key} className="fa-tag">{a.label}</span>
                           ))
                         )}
                       </div>

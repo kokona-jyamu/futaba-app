@@ -117,7 +117,7 @@ export default function MenuPrintPanel({ menus }: Props) {
         <div className="fa-sheet">
           <header className="fa-sheethead">
             <div>
-              <p className="fa-sheetbrand">🌱 ふたば保育園</p>
+              <p className="fa-sheetbrand">ふたば保育園</p>
               <h1 className="fa-sheettitle">{label}　給食こんだて表</h1>
             </div>
             <p className="fa-sheetnote">

@@ -79,7 +79,7 @@ export default function TodayDraft({
           <span className="fa-tag fa-tag--none">✓ アレルゲン該当なし</span>
         ) : (
           used.map((a) => (
-            <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+            <span key={a.key} className="fa-tag">{a.label}</span>
           ))
         )}
         {menu.kcal != null && <span className="fa-tag fa-tag--plain">{menu.kcal} kcal</span>}

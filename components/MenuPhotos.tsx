@@ -57,13 +57,13 @@ export default function MenuPhotos({ title, mainUrl, dishes }: Props) {
           />
           {hasDishes && (
             <span className="fa-menuphotos-hint">
-              {open ? '▲ 閉じる' : `📷 料理ごとの写真（${dishes.length}品）`}
+              {open ? '▲ 閉じる' : `料理ごとの写真（${dishes.length}品）`}
             </span>
           )}
         </button>
       ) : (
         <div className="fa-event-photo--empty" style={{ borderRadius: 'var(--fa-r)' }}>
-          🍽 写真準備中
+          写真準備中
         </div>
       )}
 
@@ -93,7 +93,7 @@ export default function MenuPhotos({ title, mainUrl, dishes }: Props) {
                     onClick={() => setRecipeOf(recipeOf === d.id ? null : d.id)}
                     aria-expanded={recipeOf === d.id}
                   >
-                    {recipeOf === d.id ? '▲ レシピを閉じる' : '🍳 レシピを見る'}
+                    {recipeOf === d.id ? '▲ レシピを閉じる' : 'レシピを見る'}
                   </button>
                 )}
               </figcaption>

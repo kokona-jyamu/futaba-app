@@ -353,7 +353,7 @@ export default function ChildrenPanel({
         <div className="fa-slips">
           {issued.map((s) => (
             <div key={s.login_no} className="fa-slip">
-              <p className="fa-slip-brand">🌱 ふたば保育園　給食・食育ポータル</p>
+              <p className="fa-slip-brand">ふたば保育園　給食・食育ポータル</p>
               <p className="fa-slip-name">
                 {s.class_name && <span className="fa-slip-class">{s.class_name}　</span>}
                 {s.name} さん の保護者さまへ
@@ -460,10 +460,10 @@ export default function ChildrenPanel({
                 {(c.pin_status === 'legacy' || c.lock) && (
                   <div className="fa-tagrow">
                     {c.lock === 'hard' && (
-                      <span className="fa-tag fa-tag--err">🔒 ロック中（PINの再発行が必要）</span>
+                      <span className="fa-tag fa-tag--err">ロック中（PINの再発行が必要）</span>
                     )}
                     {c.lock === 'temp' && (
-                      <span className="fa-tag fa-tag--unknown">🔒 一時ロック中（15分）</span>
+                      <span className="fa-tag fa-tag--unknown">一時ロック中（15分）</span>
                     )}
                     {c.pin_status === 'legacy' && (
                       <span className="fa-tag fa-tag--plain">
@@ -501,7 +501,7 @@ export default function ChildrenPanel({
                         <span className="fa-tag fa-tag--plain">アレルギーの登録なし</span>
                       ) : (
                         usedAllergens(c.allergens).map((a) => (
-                          <span key={a.key} className="fa-tag">{a.emoji} {a.label}</span>
+                          <span key={a.key} className="fa-tag">{a.label}</span>
                         ))
                       )}
                     </div>

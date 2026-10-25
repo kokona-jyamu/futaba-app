@@ -54,7 +54,7 @@ export default async function AllergenMenuPage({ params }: Props) {
           <p className={`fa-algstate fa-algstate--${state}`}>
             {state === 'safe'
               ? `✓ ${allergen.label}は使っていません`
-              : `⚠️ ${allergen.label}を使っています`}
+              : `${allergen.label}を使っています`}
           </p>
 
           {used.length > 0 && (
@@ -64,7 +64,7 @@ export default async function AllergenMenuPage({ params }: Props) {
                   key={a.key}
                   className={`fa-tag${a.key === key ? ' fa-tag--hit' : ''}`}
                 >
-                  {a.emoji} {a.label}
+                  {a.label}
                 </span>
               ))}
             </div>
@@ -82,7 +82,7 @@ export default async function AllergenMenuPage({ params }: Props) {
 
       <div className="fa-pagehead">
         <h1 className="fa-title">
-          {allergen.emoji} {allergen.label}で絞り込み
+          {allergen.label}で絞り込み
         </h1>
         <p className="fa-lead">
           {allergen.label}を使っていない献立が{safe.length}件あります。
@@ -128,7 +128,7 @@ export default async function AllergenMenuPage({ params }: Props) {
       {contains.length > 0 && (
         <>
           <h2 className="fa-subtitle">
-            ⚠️ {allergen.label}を使っている献立（{contains.length}件）
+            {allergen.label}を使っている献立（{contains.length}件）
           </h2>
           <div className="fa-grid">
             {contains.map((m) => renderCard(m, 'contains'))}

@@ -54,14 +54,14 @@ export default function MessagesPanel({ messages, onReply }: Props) {
           className={`fa-tab${box === 'open' ? ' is-on' : ''}`}
           onClick={() => setBox('open')}
         >
-          <span className="fa-tab-icon">📮</span>未回答
+          未回答
           {open.length > 0 && <span className="fa-badge">{open.length}</span>}
         </button>
         <button
           className={`fa-tab${box === 'done' ? ' is-on' : ''}`}
           onClick={() => setBox('done')}
         >
-          <span className="fa-tab-icon">✓</span>回答済み
+          回答済み
           {done.length > 0 && <span className="fa-badge">{done.length}</span>}
         </button>
       </div>
@@ -85,7 +85,7 @@ export default function MessagesPanel({ messages, onReply }: Props) {
 
             <div className="fa-bubble">
               <p className="fa-sender">
-                👤 {q.sender_name ?? '保護者'}
+                {q.sender_name ?? '保護者'}
                 <span className="fa-msgtime">{formatDateTime(q.created_at)}</span>
               </p>
               <p className="fa-body">{q.body}</p>
@@ -95,7 +95,7 @@ export default function MessagesPanel({ messages, onReply }: Props) {
             {q.replies.map((r) => (
               <div key={r.id} className="fa-bubble fa-bubble--reply">
                 <p className="fa-sender">
-                  🌿 返信済み
+                  返信済み
                   <span className="fa-msgtime">{formatDateTime(r.created_at)}</span>
                 </p>
                 <p className="fa-body">{r.body}</p>

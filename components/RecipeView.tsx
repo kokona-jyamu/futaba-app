@@ -5,7 +5,7 @@ import type { Recipe } from '@/lib/apiTypes'
 export default function RecipeView({ name, recipe }: { name: string; recipe: Recipe }) {
   return (
     <div className="fa-recipeview">
-      <p className="fa-recipe-title">🍳 {name}</p>
+      <p className="fa-recipe-title">{name}</p>
       {recipe.servings && <p className="fa-recipe-servings">{recipe.servings}</p>}
 
       {recipe.ingredients.length > 0 && (
@@ -32,7 +32,7 @@ export default function RecipeView({ name, recipe }: { name: string; recipe: Rec
       )}
 
       {recipe.tip && (
-        <p className="fa-recipe-tip">💡 {recipe.tip}</p>
+        <p className="fa-recipe-tip"><strong>ポイント</strong>　{recipe.tip}</p>
       )}
     </div>
   )

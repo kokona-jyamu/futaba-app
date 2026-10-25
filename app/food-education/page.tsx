@@ -13,6 +13,7 @@ import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
 import Image from 'next/image'
+import Icon from '@/components/Icon'
 
 type Event = {
   id: string
@@ -128,7 +129,7 @@ function FoodEducation() {
       <Link href="/" className="fa-back">← 給食だよりに戻る</Link>
 
       <div className="fa-pagehead">
-        <h1 className="fa-title">🌾 食育のあしあと</h1>
+        <h1 className="fa-title">食育のあしあと</h1>
         <p className="fa-lead">ふたば保育園の食育活動の記録と、おうちで試せるレシピです。</p>
       </div>
 
@@ -138,14 +139,14 @@ function FoodEducation() {
           className={`fa-tab${tab === 'records' ? ' is-on' : ''}`}
           onClick={() => setTab('records')}
         >
-          <span className="fa-tab-icon">📷</span>記録・予告
+          記録・予告
         </button>
         <button
           role="tab" aria-selected={tab === 'recipes'}
           className={`fa-tab${tab === 'recipes' ? ' is-on' : ''}`}
           onClick={() => setTab('recipes')}
         >
-          <span className="fa-tab-icon">🍳</span>家でやる食育
+          家でやる食育
           {withRecipe.length > 0 && <span className="fa-badge">{withRecipe.length}</span>}
         </button>
       </nav>
@@ -158,7 +159,7 @@ function FoodEducation() {
             {/* 本日開催 */}
             {today.length > 0 && (
               <>
-                <h2 className="fa-subtitle">🎉 本日の食育イベント</h2>
+                <h2 className="fa-subtitle">本日の食育イベント</h2>
                 <div className="fa-grid fa-grid--2">
                   {today.map((e) => (
                     <div key={e.id} className="fa-notice fa-notice--today">
@@ -175,7 +176,7 @@ function FoodEducation() {
             {/* これからの予告 */}
             {upcoming.length > 0 && (
               <>
-                <h2 className="fa-subtitle">📅 次回の食育イベント</h2>
+                <h2 className="fa-subtitle">次回の食育イベント</h2>
                 <div className="fa-grid fa-grid--2">
                   {upcoming.map((e) => (
                     <div key={e.id} className="fa-notice">
@@ -192,7 +193,7 @@ function FoodEducation() {
             {/* これまでの記録 */}
             {past.length > 0 && (
               <>
-                <h2 className="fa-subtitle">📷 これまでの食育のあしあと</h2>
+                <h2 className="fa-subtitle">これまでの食育のあしあと</h2>
                 <div className="fa-grid">
                   {past.map((e) => (
                     <article key={e.id} className="fa-event">
@@ -206,7 +207,7 @@ function FoodEducation() {
                           className="fa-event-photo"
                         />
                       ) : (
-                        <div className="fa-event-photo--empty">🌾 写真準備中</div>
+                        <div className="fa-event-photo--empty">写真準備中</div>
                       )}
                       <div className="fa-event-body">
                         <p className="fa-date">{formatDate(e.event_date)}</p>
@@ -219,13 +220,13 @@ function FoodEducation() {
                             className={`fa-like${myLikes.has(e.id) ? ' is-on' : ''}`}
                             aria-label={myLikes.has(e.id) ? 'いいねを取り消す' : 'いいねする'}
                           >
-                            <span className="fa-like-icon">{myLikes.has(e.id) ? '❤️' : '🤍'}</span>
+                            <Icon name={myLikes.has(e.id) ? 'favorite' : 'favorite_border'} size={18} className="fa-like-icon" />
                             <span className="fa-like-count">{likeCounts[e.id] || 0}</span>
                           </button>
 
                           {e.recipe_title && (
                             <button onClick={() => setTab('recipes')} className="fa-textlink">
-                              🍳 家でも作れるレシピを見る →
+                              家でも作れるレシピを見る →
                             </button>
                           )}
                         </div>
@@ -252,7 +253,7 @@ function FoodEducation() {
               {withRecipe.map((e) => (
                 <article key={e.id} className="fa-recipe">
                   <p className="fa-recipe-from">{e.title}より</p>
-                  <p className="fa-recipe-title">🍳 {e.recipe_title}</p>
+                  <p className="fa-recipe-title">{e.recipe_title}</p>
 
                   {e.recipe_ingredients && e.recipe_ingredients.length > 0 && (
                     <>

@@ -226,7 +226,6 @@ export default function EventsPanel({
             <AdminImg src={photoPreview} alt="選んだ写真" className="fa-preview" />
           ) : (
             <div className="fa-drop-empty">
-              <span className="fa-drop-icon">📷</span>
               <span className="fa-drop-text">タップして写真を選ぶ</span>
               <span className="fa-drop-sub">行事のあとで足せます</span>
             </div>
@@ -328,7 +327,6 @@ export default function EventsPanel({
       </div>
 
       <button onClick={startNew} className="fa-reusebtn" style={{ marginBottom: 16 }}>
-        <span className="fa-reuseicon">🌾</span>
         <span>
           <span className="fa-reusetitle">食育イベントを登録する</span>
           <span className="fa-reusesub">予告として先に登録し、あとで写真を足せます</span>
@@ -361,7 +359,7 @@ export default function EventsPanel({
                   <span className="fa-tag fa-tag--unknown">写真がまだ</span>
                 )}
                 {e.recipe_title && (
-                  <span className="fa-tag fa-tag--none">🍳 レシピあり</span>
+                  <span className="fa-tag fa-tag--none">レシピあり</span>
                 )}
               </div>
 

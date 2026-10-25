@@ -99,7 +99,6 @@ export default function LoginPage() {
     <main className="fa-page" style={{ maxWidth: 420 }}>
       <div style={{ paddingTop: '8vh' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <p style={{ fontSize: 40, marginBottom: 8 }}>🌱</p>
           <h1 className="fa-title">ふたば保育園</h1>
           <p className="fa-lead">給食・食育ポータル</p>
         </div>

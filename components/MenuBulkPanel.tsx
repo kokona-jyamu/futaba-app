@@ -233,7 +233,7 @@ export default function MenuBulkPanel({
                       Object.keys(r.allergens ?? {}).map((k) => {
                         const a = findAllergen(k)
                         return (
-                          <span key={k} className="fa-tag">{a.emoji} {a.label}</span>
+                          <span key={k} className="fa-tag">{a.label}</span>
                         )
                       })
                     )}

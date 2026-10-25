@@ -20,7 +20,7 @@ export type ApiError = { error: string }
 
 /* ---------- /api/admin/attendance：食数と欠席・遅刻 ---------- */
 
-export type AllergenTag = { key: string; label: string; emoji: string }
+export type AllergenTag = { key: string; label: string }
 
 /** 食数画面に並べる園児 */
 export type AttendanceChild = {

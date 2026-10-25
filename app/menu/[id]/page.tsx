@@ -101,7 +101,6 @@ export default async function MenuDetail({ params }: Props) {
             <div className="fa-chips" style={{ marginTop: 12 }}>
               {used.map((a) => (
                 <span key={a.key} className="fa-chip is-on">
-                  <span className="fa-chip-emoji">{a.emoji}</span>
                   <span className="fa-chip-label">{a.label}</span>
                 </span>
               ))}
@@ -150,7 +149,7 @@ export default async function MenuDetail({ params }: Props) {
       {/* 栄養士コメント */}
       {menu.nutritionist_comment && (
         <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
-          <h2 className="fa-tinttitle">🌿 栄養士より</h2>
+          <h2 className="fa-tinttitle">栄養士より</h2>
           <p style={{ fontSize: 14, lineHeight: 1.85, color: 'var(--fa-ink)' }}>
             {menu.nutritionist_comment}
           </p>
@@ -160,7 +159,7 @@ export default async function MenuDetail({ params }: Props) {
       {/* 食べっぷり */}
       {menu.why_eat_note && (
         <div className="fa-tint fa-tint--apricot" style={{ marginBottom: 16 }}>
-          <h2 className="fa-tinttitle fa-tinttitle--apricot">🍴 今日の食べっぷり</h2>
+          <h2 className="fa-tinttitle fa-tinttitle--apricot">今日の食べっぷり</h2>
           <p style={{ fontSize: 14, lineHeight: 1.85, color: 'var(--fa-ink)' }}>
             {menu.why_eat_note}
           </p>

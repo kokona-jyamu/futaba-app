@@ -57,7 +57,6 @@ export default function MenuPicker({ menus, kinds, onPick }: Props) {
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className="fa-reusebtn">
-        <span className="fa-reuseicon">📋</span>
         <span>
           <span className="fa-reusetitle">過去の献立から選ぶ</span>
           <span className="fa-reusesub">

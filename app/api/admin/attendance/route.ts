@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     const mine = individualAllergens(allergens)
     const allMine = STANDARD_ALLERGENS
       .filter((al) => allergens[al.key] === true)
-      .map((al) => ({ key: al.key, label: al.label, emoji: al.emoji }))
+      .map((al) => ({ key: al.key, label: al.label }))
 
     const base: AttendanceChild = {
       id: c.id, name: c.name, class_name: c.class_name,
@@ -204,7 +204,7 @@ export async function GET(req: Request) {
   const allergyCounts = STANDARD_ALLERGENS
     .filter((a) => (allergyCount.get(a.key) ?? 0) > 0)
     .map((a) => ({
-      key: a.key, label: a.label, emoji: a.emoji,
+      key: a.key, label: a.label,
       count: allergyCount.get(a.key)!,
     }))
 

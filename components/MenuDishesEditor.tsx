@@ -70,7 +70,6 @@ function PhotoSlot({
           <AdminImg src={url} alt={`${label ?? '料理'}の写真`} className="fa-preview" />
         ) : (
           <div className="fa-drop-empty">
-            <span className="fa-drop-icon">📷</span>
             <span className="fa-drop-text">タップして選ぶ</span>
           </div>
         )}
@@ -183,9 +182,10 @@ export default function MenuDishesEditor({
           <div className="fa-dishsearch-list">
             {candidates.map((d) => (
               <button key={d.id} type="button" onClick={() => addDish(d)} className="fa-dishsearch-item">
-                <span className="fa-dishsearch-name">{d.name}{d.has_recipe && ' 🍳'}</span>
+                <span className="fa-dishsearch-name">{d.name}</span>
                 <span className="fa-dishsearch-meta">
                   {d.last_served_date ? `前回 ${formatShort(d.last_served_date)}・${d.times_served}回` : 'まだ出していない'}
+                  {d.has_recipe && '・レシピあり'}
                 </span>
               </button>
             ))}
@@ -252,7 +252,7 @@ export default function MenuDishesEditor({
                       onRemove={() => setPhoto(item.dish_id, null)}
                     />
                     <div className="fa-dishitem-body">
-                      <p className="fa-dishitem-name">{item.name}{lib?.has_recipe && ' 🍳'}</p>
+                      <p className="fa-dishitem-name">{item.name}</p>
                       <div className="fa-dishitem-actions">
                         {!item.photo_url && lib?.last_photo_url && (
                           <button

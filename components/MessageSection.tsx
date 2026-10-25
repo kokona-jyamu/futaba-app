@@ -15,6 +15,7 @@ import type { GuardianQuestion, QuestionsResponse } from '@/lib/apiTypes'
 import { supabase } from '@/lib/supabase'
 import { useGuardian } from '@/lib/useGuardian'
 import { WEEKLY_LIMIT, SCHOOL_TEL, nextMondayLabel } from '@/lib/questionLimit'
+import Icon from '@/components/Icon'
 
 export default function MessageSection({ menuId }: { menuId: string }) {
   const { guardian } = useGuardian()
@@ -118,13 +119,13 @@ export default function MessageSection({ menuId }: { menuId: string }) {
             className={`fa-fav${isFavorite ? ' is-on' : ''}`}
             aria-pressed={isFavorite}
           >
-            <span className="fa-fav-icon">{isFavorite ? '⭐' : '☆'}</span>
+            <Icon name={isFavorite ? 'star' : 'star_border'} size={18} className="fa-fav-icon" />
             {isFavorite ? 'お気に入りに登録ずみ' : 'お気に入りに登録する'}
           </button>
         </div>
       )}
 
-      <h2 className="fa-sectiontitle">💬 栄養士さんに聞いてみる</h2>
+      <h2 className="fa-sectiontitle">栄養士さんに聞いてみる</h2>
 
       {questions.length > 0 && (
         <div className="fa-thread">
@@ -135,7 +136,7 @@ export default function MessageSection({ menuId }: { menuId: string }) {
             </div>,
             ...q.replies.map((r) => (
               <div key={r.id} className="fa-msg fa-msg--staff">
-                <p className="fa-sender">🌿 {r.sender_name ?? '栄養士'}</p>
+                <p className="fa-sender">{r.sender_name ?? '栄養士'}</p>
                 <p className="fa-body">{r.body}</p>
               </div>
             )),
@@ -162,7 +163,7 @@ export default function MessageSection({ menuId }: { menuId: string }) {
             <p className="fa-limittext" style={{ marginTop: 6 }}>
               アレルギーなど緊急性の高いご相談は、園まで直接ご連絡ください。
               <a href={`tel:${SCHOOL_TEL.replace(/-/g, '')}`} className="fa-tel">
-                📞 {SCHOOL_TEL}
+                <Icon name="call" size={16} /> {SCHOOL_TEL}
               </a>
             </p>
           </div>

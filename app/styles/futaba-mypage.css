@@ -138,4 +138,5 @@
   background: var(--fa-apricot-soft); border-color: var(--fa-apricot);
   color: var(--fa-apricot-ink);
 }
-.fa-fav-icon { font-size: 15px; }
+/* お気に入り：Material Symbols の星 */
+.fa-fav-icon { flex: 0 0 auto; }

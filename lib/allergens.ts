@@ -11,7 +11,6 @@
 export type AllergenDef = {
   key: string
   label: string
-  emoji: string
   /** 表示義務品目かどうか */
   required: boolean
 }
@@ -34,38 +33,38 @@ export const toAllergenMap = (value: unknown): AllergenMap => {
 
 /** 表示義務8品目：投稿画面でも常に表示する */
 export const REQUIRED_ALLERGENS: AllergenDef[] = [
-  { key: 'egg',       label: '卵',     emoji: '🥚', required: true },
-  { key: 'milk',      label: '乳',     emoji: '🥛', required: true },
-  { key: 'wheat',     label: '小麦',   emoji: '🌾', required: true },
-  { key: 'buckwheat', label: 'そば',   emoji: '🍜', required: true },
-  { key: 'peanut',    label: '落花生', emoji: '🥜', required: true },
-  { key: 'shrimp',    label: 'えび',   emoji: '🦐', required: true },
-  { key: 'crab',      label: 'かに',   emoji: '🦀', required: true },
-  { key: 'walnut',    label: 'くるみ', emoji: '🌰', required: true },
+  { key: 'egg',       label: '卵', required: true },
+  { key: 'milk',      label: '乳', required: true },
+  { key: 'wheat',     label: '小麦', required: true },
+  { key: 'buckwheat', label: 'そば', required: true },
+  { key: 'peanut',    label: '落花生', required: true },
+  { key: 'shrimp',    label: 'えび', required: true },
+  { key: 'crab',      label: 'かに', required: true },
+  { key: 'walnut',    label: 'くるみ', required: true },
 ]
 
 /** 表示推奨20品目：「もっと見る」で展開する */
 export const OPTIONAL_ALLERGENS: AllergenDef[] = [
-  { key: 'almond',    label: 'アーモンド', emoji: '🌰', required: false },
-  { key: 'abalone',   label: 'あわび',     emoji: '🐚', required: false },
-  { key: 'squid',     label: 'いか',       emoji: '🦑', required: false },
-  { key: 'salmonroe', label: 'いくら',     emoji: '🍣', required: false },
-  { key: 'orange',    label: 'オレンジ',   emoji: '🍊', required: false },
-  { key: 'cashew',    label: 'カシューナッツ', emoji: '🌱', required: false },
-  { key: 'kiwi',      label: 'キウイ',     emoji: '🥝', required: false },
-  { key: 'beef',      label: '牛肉',       emoji: '🥩', required: false },
-  { key: 'sesame',    label: 'ごま',       emoji: '🫘', required: false },
-  { key: 'salmon',    label: 'さけ',       emoji: '🐟', required: false },
-  { key: 'mackerel',  label: 'さば',       emoji: '🐟', required: false },
-  { key: 'soy',       label: '大豆',       emoji: '🫛', required: false },
-  { key: 'chicken',   label: '鶏肉',       emoji: '🍗', required: false },
-  { key: 'banana',    label: 'バナナ',     emoji: '🍌', required: false },
-  { key: 'pork',      label: '豚肉',       emoji: '🐖', required: false },
-  { key: 'matsutake', label: 'まつたけ',   emoji: '🍄', required: false },
-  { key: 'peach',     label: 'もも',       emoji: '🍑', required: false },
-  { key: 'yam',       label: 'やまいも',   emoji: '🍠', required: false },
-  { key: 'apple',     label: 'りんご',     emoji: '🍎', required: false },
-  { key: 'gelatin',   label: 'ゼラチン',   emoji: '🍮', required: false },
+  { key: 'almond',    label: 'アーモンド', required: false },
+  { key: 'abalone',   label: 'あわび', required: false },
+  { key: 'squid',     label: 'いか', required: false },
+  { key: 'salmonroe', label: 'いくら', required: false },
+  { key: 'orange',    label: 'オレンジ', required: false },
+  { key: 'cashew',    label: 'カシューナッツ', required: false },
+  { key: 'kiwi',      label: 'キウイ', required: false },
+  { key: 'beef',      label: '牛肉', required: false },
+  { key: 'sesame',    label: 'ごま', required: false },
+  { key: 'salmon',    label: 'さけ', required: false },
+  { key: 'mackerel',  label: 'さば', required: false },
+  { key: 'soy',       label: '大豆', required: false },
+  { key: 'chicken',   label: '鶏肉', required: false },
+  { key: 'banana',    label: 'バナナ', required: false },
+  { key: 'pork',      label: '豚肉', required: false },
+  { key: 'matsutake', label: 'まつたけ', required: false },
+  { key: 'peach',     label: 'もも', required: false },
+  { key: 'yam',       label: 'やまいも', required: false },
+  { key: 'apple',     label: 'りんご', required: false },
+  { key: 'gelatin',   label: 'ゼラチン', required: false },
 ]
 
 /** 標準28品目 */
@@ -79,6 +78,7 @@ export type CustomAllergen = {
   id: string
   key: string
   label: string
+  /** DB の列。画面では使わない（アレルゲンは文字だけで表示する） */
   emoji: string | null
   sort_order: number
 }
@@ -89,7 +89,6 @@ export const mergeAllergens = (custom: CustomAllergen[] = []): AllergenDef[] => 
   ...custom.map((c) => ({
     key: c.key,
     label: c.label,
-    emoji: c.emoji ?? '🍽️',
     required: false,
   })),
 ]
@@ -102,7 +101,6 @@ export const findAllergen = (
   mergeAllergens(custom).find((a) => a.key === key) ?? {
     key,
     label: key,
-    emoji: '🍽️',
     required: false,
   }
 

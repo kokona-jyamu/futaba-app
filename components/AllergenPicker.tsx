@@ -47,7 +47,6 @@ export default function AllergenPicker({
       ...custom.map((c) => ({
         key: c.key,
         label: c.label,
-        emoji: c.emoji ?? '🍽️',
         required: false,
       })),
     ],

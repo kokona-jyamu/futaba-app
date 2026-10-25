@@ -234,7 +234,9 @@
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 0; border: none; background: none; font: inherit; cursor: pointer;
 }
-.fa-like-icon { font-size: 16px; }
+/* いいね：Material Symbols のハート。押したものだけ色を付ける */
+.fa-like-icon { flex: 0 0 auto; color: var(--fa-muted); }
+.fa-like.is-on .fa-like-icon { color: var(--fa-rose-ink); }
 .fa-like-count { font-size: 12px; color: var(--fa-muted); }
 .fa-like.is-on .fa-like-count { color: var(--fa-rose-ink); }
 .fa-textlink {

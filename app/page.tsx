@@ -107,7 +107,7 @@ export default function Home() {
         <div className="fa-topbar-inner">
           <div className="fa-topbar-row">
             <div>
-              <p className="fa-brand">🌱 ふたば保育園</p>
+              <p className="fa-brand">ふたば保育園</p>
               <p className="fa-brandsub">給食・食育ポータル</p>
             </div>
             <Link href="/mypage" className="fa-avatarbtn">
@@ -139,7 +139,6 @@ export default function Home() {
         {/* 出欠連絡への導線：どのタブにいても最上部に出す */}
         <Link href="/attendance" className="fa-link">
           <div className={`fa-attbanner${todayAtt ? ' is-reported' : ''}`}>
-            <span className="fa-attbanner-icon">🗓</span>
             <span style={{ minWidth: 0 }}>
               <span className="fa-attbanner-title">
                 {todayAtt
@@ -278,8 +277,8 @@ export default function Home() {
               <h2 className="fa-subtitle">食育メニュー</h2>
               <div className="fa-rows">
                 {[
-                  { label: '📷 食育のあしあと（記録）', href: '/food-education' },
-                  { label: '🍳 家でやる食育・レシピ', href: '/food-education?tab=recipes' },
+                  { label: '食育のあしあと（記録）', href: '/food-education' },
+                  { label: '家でやる食育・レシピ', href: '/food-education?tab=recipes' },
                 ].map((item) => (
                   <Link key={item.href} href={item.href} className="fa-link">
                     <div className="fa-row">
@@ -325,7 +324,6 @@ export default function Home() {
           {/* ===== 地域だより ===== */}
           {activeTab === '地域だより' && (
             <div className="fa-soon">
-              <p className="fa-soon-icon">🏘️</p>
               <p className="fa-soon-title">地域だより</p>
               <p className="fa-soon-text">
                 地域のお店・施設の最新情報を<br />ここでお届けする予定です。

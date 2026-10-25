@@ -10,6 +10,7 @@ import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type { SettingsResponse, SchoolSettings, EnrolledAllergen } from '@/lib/apiTypes'
 import { STANDARD_ALLERGENS, findAllergen } from '@/lib/allergens'
 import PhotoKindsPanel from '@/components/PhotoKindsPanel'
+import Icon from '@/components/Icon'
 
 const LABEL_PRESETS = [
   { value: '{name}除去', sample: '卵除去' },
@@ -100,7 +101,7 @@ export default function SettingsPanel({
               return (
                 <div key={e.key} className="fa-attrow">
                   <div className="fa-childline">
-                    <span className="fa-childline-name">{a.emoji} {a.label}</span>
+                    <span className="fa-childline-name">{a.label}</span>
                     <span className="fa-childline-class">
                       {e.children.map((c) => c.name).join('、')}
                     </span>
@@ -182,7 +183,7 @@ export default function SettingsPanel({
                       aria-pressed={on}
                       disabled={saving}
                     >
-                      <span className="fa-chip-emoji">{a.emoji}</span>
+                      {on && <Icon name="check" className="fa-chip-check" />}
                       <span className="fa-chip-label">{a.label}</span>
                     </button>
                   )

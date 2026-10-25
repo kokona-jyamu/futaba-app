@@ -180,7 +180,7 @@ export default function AttendancePage() {
       <Link href="/" className="fa-back">← 給食だよりに戻る</Link>
 
       <div className="fa-pagehead">
-        <h1 className="fa-title">🗓 おやすみの連絡</h1>
+        <h1 className="fa-title">おやすみの連絡</h1>
         <p className="fa-lead">
           {child.name}さんのお休み・遅刻をお知らせできます。
           出席の日は連絡は要りません。
@@ -287,7 +287,7 @@ export default function AttendancePage() {
               className={`fa-statusbtn${status === s ? ' is-on' : ''}`}
               aria-pressed={status === s}
             >
-              {s === 'absent' ? '🏠 おやすみ' : '🕐 遅れて登園'}
+              {s === 'absent' ? 'おやすみ' : '遅れて登園'}
             </button>
           ))}
         </div>
