@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -325,20 +325,23 @@ export type Database = {
         Row: {
           created_at: string | null
           event_id: string | null
+          guardian_id: string | null
           id: string
-          liked_by: string
+          liked_by: string | null
         }
         Insert: {
           created_at?: string | null
           event_id?: string | null
+          guardian_id?: string | null
           id?: string
-          liked_by: string
+          liked_by?: string | null
         }
         Update: {
           created_at?: string | null
           event_id?: string | null
+          guardian_id?: string | null
           id?: string
-          liked_by?: string
+          liked_by?: string | null
         }
         Relationships: [
           {
@@ -346,6 +349,20 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "food_education_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_likes_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "children_with_account"
+            referencedColumns: ["guardian_id"]
+          },
+          {
+            foreignKeyName: "event_likes_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
             referencedColumns: ["id"]
           },
         ]

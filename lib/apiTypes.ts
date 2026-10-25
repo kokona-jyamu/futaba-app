@@ -271,6 +271,17 @@ export type Favorite = {
 
 export type FavoritesResponse = { favorites: Favorite[] }
 
+/* ---------- /api/events/likes：食育イベントのいいね ---------- */
+
+export type EventLikesResponse = {
+  /** イベントごとのいいねの数（自分の園のイベントだけ） */
+  counts: Record<string, number>
+  /** 自分がいいねしたイベントのID */
+  mine: string[]
+}
+
+export type EventLikeResponse = { event_id: string; liked: boolean; count: number }
+
 /* ---------- /api/passkeys：生体認証で使う端末 ---------- */
 
 export type PasskeyItem = {

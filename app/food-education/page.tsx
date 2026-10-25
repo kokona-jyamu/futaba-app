@@ -8,7 +8,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useLoadEffect } from '@/lib/useLoadEffect'
+import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import type { EventLikesResponse, EventLikeResponse } from '@/lib/apiTypes'
 import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
@@ -26,28 +27,16 @@ type Event = {
   recipe_steps: string | null
 }
 
-/** いいね用に、この端末を見分けるIDを読む（なければ作って保存する）。描画中には呼ばない */
-const getVisitorId = (): string => {
-  let id = window.localStorage.getItem('visitor_id')
-  if (!id) {
-    id = 'visitor_' + Math.random().toString(36).slice(2, 10)
-    window.localStorage.setItem('visitor_id', id)
-  }
-  return id
-}
-
-/** いいねの件数と、この端末でいいねしたイベントを読む */
+/**
+ * いいねの数と、自分がいいねしたイベントを読む（自分の園のイベントだけ）。
+ * いいねはログインした保護者に結び付いていて、付け外しはサーバー（/api/events/likes）で行う。
+ */
 const requestLikes = async () => {
-  const visitorId = getVisitorId()
-  const { data } = await supabase.from('event_likes').select('*')
-  const counts: { [key: string]: number } = {}
-  const mine = new Set<string>()
-  ;(data ?? []).forEach((like) => {
-    if (!like.event_id) return
-    counts[like.event_id] = (counts[like.event_id] || 0) + 1
-    if (like.liked_by === visitorId) mine.add(like.event_id)
-  })
-  return { counts, mine }
+  /* 端末ごとのIDで数えていた頃の名残りを片付ける */
+  try { window.localStorage.removeItem('visitor_id') } catch {}
+
+  const r = await fetchJson<EventLikesResponse>('/api/events/likes')
+  return r.ok ? { counts: r.json.counts, mine: new Set(r.json.mine) } : null
 }
 
 /* useSearchParams を使うため Suspense で囲む（静的に生成するページの決まり） */
@@ -79,9 +68,10 @@ function FoodEducation() {
     fetchEvents()
   }, [])
 
-  useLoadEffect(requestLikes, ({ counts, mine }) => {
-    setLikeCounts(counts)
-    setMyLikes(mine)
+  useLoadEffect(requestLikes, (r) => {
+    if (!r) return
+    setLikeCounts(r.counts)
+    setMyLikes(r.mine)
   })
 
   /* いいね・取り消しを1つ切り替える */
@@ -94,7 +84,6 @@ function FoodEducation() {
 
   const toggleLike = async (eventId: string) => {
     const liked = myLikes.has(eventId)
-    const visitorId = getVisitorId()
 
     setMyLikes((prev) => flip(prev, eventId))
     setLikeCounts((prev) => ({
@@ -102,20 +91,24 @@ function FoodEducation() {
       [eventId]: Math.max((prev[eventId] || 0) + (liked ? -1 : 1), 0),
     }))
 
-    const { error } = liked
-      ? await supabase.from('event_likes').delete()
-          .eq('event_id', eventId).eq('liked_by', visitorId)
-      : await supabase.from('event_likes')
-          .insert({ event_id: eventId, liked_by: visitorId })
+    const r = await fetchJson<EventLikeResponse>('/api/events/likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_id: eventId, liked: !liked }),
+    })
+
+    /* 保存できたら、サーバーの数に合わせる（同時に押した人がいても正しい数になる） */
+    if (r.ok) {
+      setLikeCounts((prev) => ({ ...prev, [eventId]: r.json.count }))
+      return
+    }
 
     /* 保存できなかったら元に戻す */
-    if (error) {
-      setMyLikes((prev) => flip(prev, eventId))
-      setLikeCounts((prev) => ({
-        ...prev,
-        [eventId]: Math.max((prev[eventId] || 0) + (liked ? 1 : -1), 0),
-      }))
-    }
+    setMyLikes((prev) => flip(prev, eventId))
+    setLikeCounts((prev) => ({
+      ...prev,
+      [eventId]: Math.max((prev[eventId] || 0) + (liked ? 1 : -1), 0),
+    }))
   }
 
   /* 日付で振り分ける */
