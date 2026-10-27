@@ -16,6 +16,7 @@ import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
 import Image from 'next/image'
 import Icon from '@/components/Icon'
+import EventVideo from '@/components/EventVideo'
 
 type Event = {
   id: string
@@ -26,6 +27,8 @@ type Event = {
   recipe_title: string | null
   recipe_ingredients: string[] | null
   recipe_steps: string | null
+  /** 動画の場所（あれば「動画を見る」を出す。再生はサーバーが発行する URL で行う） */
+  video_path: string | null
 }
 
 /**
@@ -165,6 +168,7 @@ function FoodEducation() {
                       <p className="fa-notice-date">{formatDate(e.event_date)}</p>
                       <p className="fa-notice-title">{e.title}</p>
                       {e.description && <p className="fa-notice-body">{e.description}</p>}
+                      {e.video_path && <EventVideo eventId={e.id} />}
                     </div>
                   ))}
                 </div>
@@ -211,6 +215,7 @@ function FoodEducation() {
                         <p className="fa-date">{formatDate(e.event_date)}</p>
                         <p className="fa-event-title">{e.title}</p>
                         {e.description && <p className="fa-event-text">{e.description}</p>}
+                        {e.video_path && <EventVideo eventId={e.id} />}
 
                         <div className="fa-event-foot">
                           <button

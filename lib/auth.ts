@@ -85,6 +85,18 @@ export async function requireStaff(): Promise<Staff | NextResponse> {
   return { ...profile, school_id: profile.school_id }
 }
 
+/**
+ * 園の関係者（保護者・職員）であることを確認し、その園を返す。
+ * 保護者と職員の両方が見るもの（食育の動画など）に使う。職員は2段階認証まで確かめる。
+ */
+export async function requireSchoolMember(): Promise<{ school_id: string } | NextResponse> {
+  const guardian = await requireGuardian()
+  if (!(guardian instanceof NextResponse)) return { school_id: guardian.school_id }
+  /* ログインしていなければ、職員かどうかを調べるまでもない */
+  if (guardian.status === 401) return guardian
+  return requireStaff()
+}
+
 /** 保護者であることを確認し、紐づく園児・園を返す */
 export async function requireGuardian(): Promise<GuardianAccount | NextResponse> {
   const userId = await currentUserId()

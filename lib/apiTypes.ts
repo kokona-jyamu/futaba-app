@@ -110,6 +110,12 @@ export type PhotoUploadUrlResponse = {
   publicUrl: string
 }
 
+/** 食育の動画のアップロード先（1回だけ使える URL） */
+export type VideoUploadUrlResponse = { path: string; token: string }
+
+/** 食育の動画の再生用 URL（時間で切れる） */
+export type VideoUrlResponse = { url: string }
+
 /** 使われていない写真（片付けの前の確認） */
 export type PhotoCleanupResponse = {
   count: number

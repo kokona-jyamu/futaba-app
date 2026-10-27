@@ -347,3 +347,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .fa-page * { transition: none !important; animation: none !important; }
 }
+/* ------------------------------------------------------------------
+   食育の動画
+   ------------------------------------------------------------------ */
+.fa-event-video {
+  display: block; width: 100%; max-height: 70vh; margin-top: 10px;
+  border-radius: 12px; background: #000;
+}
+.fa-event-videobox { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
