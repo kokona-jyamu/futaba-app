@@ -102,6 +102,19 @@ export type BulkChildResult =
   | { ok: true; login_no: string; name: string; class_name: string | null; pin: string }
   | { ok: false; login_no: string; name: string; error: string }
 
+/** 使われていない写真（片付けの前の確認） */
+export type PhotoCleanupResponse = {
+  count: number
+  /** 合計の大きさ（バイト） */
+  bytes: number
+  /** アップロードしてからこの日数がたっていない写真は対象にしない */
+  graceDays: number
+  /** 見本（新しいものから最大12枚） */
+  samples: { url: string; created_at: string | null }[]
+}
+
+export type PhotoCleanupDoneResponse = { deleted: number }
+
 /** 月間献立の一括登録の結果 */
 export type MenusBulkResponse = {
   inserted: number

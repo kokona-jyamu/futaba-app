@@ -10,6 +10,7 @@ import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type { SettingsResponse, SchoolSettings, EnrolledAllergen } from '@/lib/apiTypes'
 import { STANDARD_ALLERGENS, findAllergen } from '@/lib/allergens'
 import PhotoKindsPanel from '@/components/PhotoKindsPanel'
+import PhotoCleanupPanel from '@/components/PhotoCleanupPanel'
 import Icon from '@/components/Icon'
 
 const LABEL_PRESETS = [
@@ -215,6 +216,9 @@ export default function SettingsPanel({
           style={{ maxWidth: 160 }}
         />
       </section>
+
+      {/* 使っていない写真の片付け */}
+      <PhotoCleanupPanel onNotify={onNotify} />
     </section>
   )
 }

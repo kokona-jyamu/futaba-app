@@ -783,3 +783,15 @@
 @media (max-width: 699px) {
   .fa-dishrow-photo { width: 52px; height: 52px; }
 }
+
+/* ------------------------------------------------------------------
+   使っていない写真の片付け
+   ------------------------------------------------------------------ */
+.fa-cleanupgrid {
+  display: grid; gap: 6px; margin-top: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+}
+.fa-cleanupthumb {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: 8px; background: var(--fa-card);
+}
