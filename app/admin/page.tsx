@@ -9,6 +9,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { uploadPhoto as uploadPhotoFile } from '@/lib/uploadPhoto'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type {
   AdminMenu, MenusResponse, AdminQuestion, RepliesResponse,
@@ -16,7 +17,7 @@ import type {
   DishSummary, DishesResponse,
 } from '@/lib/apiTypes'
 import {
-  NUTRIENTS, SCHOOL_ID, num, formatDate,
+  NUTRIENTS, num, formatDate,
   parseIngredients, formatIngredients,
 } from '@/lib/menu'
 import { emptyAllergenState, usedAllergens, toAllergenMap, type AllergenMap } from '@/lib/allergens'
@@ -162,15 +163,12 @@ export default function AdminPage() {
 
 
   const uploadPhoto = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop()
-    const fileName = `${SCHOOL_ID}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('menu-photos').upload(fileName, file)
-    if (error) {
-      notify('写真をアップロードできませんでした。' + error.message, true)
+    const r = await uploadPhotoFile(file)
+    if (!r.ok) {
+      notify('写真をアップロードできませんでした。' + r.error, true)
       return null
     }
-    const { data } = supabase.storage.from('menu-photos').getPublicUrl(fileName)
-    return data.publicUrl
+    return r.url
   }
 
   /* ---------------- 下書きの公開 ---------------- */

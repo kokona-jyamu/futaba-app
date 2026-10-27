@@ -8,8 +8,8 @@
 import { useState, useMemo } from 'react'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
 import type { EventsResponse, FoodEvent } from '@/lib/apiTypes'
-import { supabase } from '@/lib/supabase'
-import { SCHOOL_ID, formatDate } from '@/lib/menu'
+import { uploadPhoto as uploadPhotoFile } from '@/lib/uploadPhoto'
+import { formatDate } from '@/lib/menu'
 import { phaseOf, phaseLabel, isAhead } from '@/lib/eventStatus'
 import AdminImg from '@/components/AdminImg'
 
@@ -80,15 +80,12 @@ export default function EventsPanel({
   }
 
   const uploadPhoto = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop()
-    const fileName = `${SCHOOL_ID}/event-${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('menu-photos').upload(fileName, file)
-    if (error) {
-      onNotify('写真をアップロードできませんでした。' + error.message, true)
+    const r = await uploadPhotoFile(file, 'event')
+    if (!r.ok) {
+      onNotify('写真をアップロードできませんでした。' + r.error, true)
       return null
     }
-    const { data } = supabase.storage.from('menu-photos').getPublicUrl(fileName)
-    return data.publicUrl
+    return r.url
   }
 
   /* ---------------- 保存 ---------------- */

@@ -102,6 +102,14 @@ export type BulkChildResult =
   | { ok: true; login_no: string; name: string; class_name: string | null; pin: string }
   | { ok: false; login_no: string; name: string; error: string }
 
+/** 写真のアップロード先（1回だけ使える URL） */
+export type PhotoUploadUrlResponse = {
+  path: string
+  token: string
+  /** アップロード後に表示に使う URL */
+  publicUrl: string
+}
+
 /** 使われていない写真（片付けの前の確認） */
 export type PhotoCleanupResponse = {
   count: number

@@ -9,6 +9,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
+import { useGuardian } from '@/lib/useGuardian'
 import type { EventLikesResponse, EventLikeResponse } from '@/lib/apiTypes'
 import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
@@ -57,16 +58,20 @@ function FoodEducation() {
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
 
+  /* 保護者の園の食育だけを読む */
+  const schoolId = useGuardian().guardian?.school_id
   useEffect(() => {
+    if (!schoolId) return
     const fetchEvents = async () => {
       const { data } = await supabase
         .from('food_education_events')
         .select('*')
+        .eq('school_id', schoolId)
         .order('event_date', { ascending: false })
       if (data) setEvents(data)
     }
     fetchEvents()
-  }, [])
+  }, [schoolId])
 
   useLoadEffect(requestLikes, (r) => {
     if (!r) return

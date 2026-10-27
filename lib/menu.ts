@@ -1,7 +1,5 @@
 /* lib/menu.ts — 献立まわりの共通定義（管理画面・保護者画面の両方から使う） */
 
-export const SCHOOL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
-
 /* アレルゲンの定義は lib/allergens.ts に一本化している（標準28品目） */
 
 export const NUTRIENTS = [

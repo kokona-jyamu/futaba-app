@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { SCHOOL_ID, formatDate } from '@/lib/menu'
+import { formatDate } from '@/lib/menu'
 import AllergenTiles from '@/components/AllergenTiles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -43,23 +43,27 @@ export default function Home() {
     })
   }, [router])
 
+  /* 献立と食育は、保護者の園のものだけを読む */
+  const schoolId = guardian?.school_id
   useEffect(() => {
+    if (!schoolId) return
     const fetchData = async () => {
       const { data: menuData } = await supabase
         .from('menus')
         .select('id, served_date, title, nutritionist_comment')
-        .eq('school_id', SCHOOL_ID)
+        .eq('school_id', schoolId)
         .order('served_date', { ascending: false })
       if (menuData) setMenus(menuData)
 
       const { data: eventData } = await supabase
         .from('food_education_events')
         .select('*')
+        .eq('school_id', schoolId)
         .order('event_date', { ascending: false })
       if (eventData) setEvents(eventData)
     }
     fetchData()
-  }, [])
+  }, [schoolId])
 
   /* これから先の出欠連絡（トップに出すため） */
   useEffect(() => {
