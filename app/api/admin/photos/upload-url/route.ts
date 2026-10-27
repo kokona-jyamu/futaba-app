@@ -3,6 +3,7 @@
  * 写真をアップロードするための、1回だけ使える URL を発行する（管理画面）。
  * 保存先のフォルダ（園ごと）はサーバーで決める。画面に園の ID を持たせないため。
  * 画面はこの URL に直接ファイルを送る（大きな写真をサーバー経由で運ばない）。
+ * 食育の写真（prefix: 'event'）は子どもが写るので、園の関係者だけが見られる非公開の場所に入れる。
  * body: { name: 元のファイル名, prefix?: 'event' }
  */
 
@@ -10,6 +11,7 @@ import { NextResponse } from 'next/server'
 import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { PHOTO_BUCKET } from '@/lib/photoCleanup'
+import { EVENT_PHOTO_BUCKET } from '@/lib/eventMedia'
 import { str, type Body } from '@/lib/parse'
 import type { PhotoUploadUrlResponse } from '@/lib/apiTypes'
 
@@ -26,10 +28,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '写真のファイル（jpg・png など）を選んでください' }, { status: 400 })
   }
 
-  const prefix = body.prefix === 'event' ? 'event-' : ''
-  const path = `${staff.school_id}/${prefix}${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
+  const isEvent = body.prefix === 'event'
+  const bucket = isEvent ? EVENT_PHOTO_BUCKET : PHOTO_BUCKET
+  const path = `${staff.school_id}/${isEvent ? 'event-' : ''}${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
 
-  const { data, error } = await supabaseAdmin.storage.from(PHOTO_BUCKET).createSignedUploadUrl(path)
+  const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUploadUrl(path)
   if (error || !data) {
     return NextResponse.json({ error: error?.message ?? 'アップロードの準備ができませんでした' }, { status: 500 })
   }
@@ -37,6 +40,6 @@ export async function POST(req: Request) {
   return NextResponse.json<PhotoUploadUrlResponse>({
     path: data.path,
     token: data.token,
-    publicUrl: supabaseAdmin.storage.from(PHOTO_BUCKET).getPublicUrl(data.path).data.publicUrl,
+    publicUrl: isEvent ? null : supabaseAdmin.storage.from(PHOTO_BUCKET).getPublicUrl(data.path).data.publicUrl,
   })
 }

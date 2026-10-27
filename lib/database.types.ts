@@ -413,6 +413,7 @@ export type Database = {
           description: string | null
           event_date: string
           id: string
+          photo_path: string | null
           photo_url: string | null
           recipe_ingredients: string[] | null
           recipe_steps: string | null
@@ -427,6 +428,7 @@ export type Database = {
           description?: string | null
           event_date: string
           id?: string
+          photo_path?: string | null
           photo_url?: string | null
           recipe_ingredients?: string[] | null
           recipe_steps?: string | null
@@ -441,6 +443,7 @@ export type Database = {
           description?: string | null
           event_date?: string
           id?: string
+          photo_path?: string | null
           photo_url?: string | null
           recipe_ingredients?: string[] | null
           recipe_steps?: string | null

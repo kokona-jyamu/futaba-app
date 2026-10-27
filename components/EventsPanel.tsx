@@ -2,14 +2,15 @@
  *
  * 食育イベントの登録・編集・削除。
  * 予告と記録は event_date で自動判定するので、切り替え操作は不要。
- * 動画は1件に1本。園の保護者・職員だけが見られる（非公開の保存場所に置く）。
+ * 写真と動画（1件に1本）は、園の保護者・職員だけが見られる非公開の保存場所に置く。
+ * 初めのころの写真は誰でも見られる場所にあるので、一覧の上に「移す」ボタンを出す。
  */
 'use client'
 
 import { useState, useMemo } from 'react'
 import { useLoadEffect, fetchJson, type FetchResult } from '@/lib/useLoadEffect'
-import type { EventsResponse, FoodEvent } from '@/lib/apiTypes'
-import { uploadPhoto as uploadPhotoFile } from '@/lib/uploadPhoto'
+import type { EventsResponse, FoodEvent, MoveEventPhotosResponse } from '@/lib/apiTypes'
+import { uploadEventPhoto } from '@/lib/uploadPhoto'
 import { uploadVideo } from '@/lib/uploadVideo'
 import { VIDEO_EXTENSIONS, VIDEO_MAX_MB, videoExtOf } from '@/lib/videos'
 import EventVideo from '@/components/EventVideo'
@@ -22,6 +23,9 @@ const emptyForm = () => ({
   event_date: '',
   title: '',
   description: '',
+  /** 保存済みの写真の場所（園の関係者だけが見られる場所） */
+  photo_path: '',
+  /** 初めのころの写真（誰でも見られる場所）の URL */
   photo_url: '',
   recipe_title: '',
   recipe_ingredients: '',
@@ -69,7 +73,7 @@ export default function EventsPanel({
 
   /* 終わったのに写真がないもの＝記録の入力待ち */
   const needsRecord = useMemo(
-    () => events.filter((e) => phaseOf(e.event_date) === 'past' && !e.photo_url),
+    () => events.filter((e) => phaseOf(e.event_date) === 'past' && !e.photo_view_url),
     [events]
   )
 
@@ -89,12 +93,32 @@ export default function EventsPanel({
   }
 
   const uploadPhoto = async (file: File): Promise<string | null> => {
-    const r = await uploadPhotoFile(file, 'event')
+    const r = await uploadEventPhoto(file)
     if (!r.ok) {
       onNotify('写真をアップロードできませんでした。' + r.error, true)
       return null
     }
-    return r.url
+    return r.path
+  }
+
+  /* ---------------- 古い写真を移す ---------------- */
+
+  /** 誰でも見られる場所に残っている写真の数 */
+  const publicPhotos = events.filter((e) => e.photo_url && !e.photo_path).length
+  const [moving, setMoving] = useState(false)
+
+  const movePhotos = async () => {
+    setMoving(true)
+    const r = await fetchJson<MoveEventPhotosResponse>('/api/admin/events/move-photos', { method: 'POST' })
+    setMoving(false)
+    if (!r.ok) { onNotify(r.json.error, true); return }
+    onNotify(
+      r.json.failed > 0
+        ? `${r.json.moved}件を移しました。${r.json.failed}件は移せませんでした（もう一度押すと、残りをやり直します）。`
+        : `${r.json.moved}件の写真を、園の関係者だけが見られる場所へ移しました。`,
+      r.json.failed > 0
+    )
+    fetchEvents()
   }
 
   /* ---------------- 動画 ---------------- */
@@ -141,6 +165,7 @@ export default function EventsPanel({
       event_date: e.event_date ?? '',
       title: e.title ?? '',
       description: e.description ?? '',
+      photo_path: e.photo_path ?? '',
       photo_url: e.photo_url ?? '',
       recipe_title: e.recipe_title ?? '',
       recipe_ingredients: toText(e.recipe_ingredients),
@@ -149,7 +174,7 @@ export default function EventsPanel({
     })
     setEditing(true)
     setPhotoFile(null)
-    setPhotoPreview(e.photo_url ?? null)
+    setPhotoPreview(e.photo_view_url)
     setVideoFile(null)
     setVideoPreview(null)
   }
@@ -171,12 +196,12 @@ export default function EventsPanel({
 
     setLoading(true)
 
-    let photoUrl = form.photo_url || null
+    let photoPath = form.photo_path || null
     if (photoFile) {
       setSavingStep('写真を送っています…')
       const uploaded = await uploadPhoto(photoFile)
       if (!uploaded) { setLoading(false); setSavingStep(null); return }
-      photoUrl = uploaded
+      photoPath = uploaded
     }
 
     let videoPath = form.video_path || null
@@ -198,7 +223,8 @@ export default function EventsPanel({
       event_date: form.event_date,
       title: form.title.trim(),
       description: form.description,
-      photo_url: photoUrl,
+      photo_path: photoPath,
+      photo_url: form.photo_url || null,
       recipe_title: form.recipe_title,
       recipe_ingredients: toArray(form.recipe_ingredients),
       recipe_steps: form.recipe_steps,
@@ -366,6 +392,25 @@ export default function EventsPanel({
      ================================================================ */
   return (
     <section>
+      {publicPhotos > 0 && (
+        <div className="fa-warnbox" style={{ marginBottom: 18 }}>
+          <p className="fa-warntitle">
+            {publicPhotos}件の写真が、URL を知っていれば誰でも見られる場所にあります
+          </p>
+          <p className="fa-warntext">
+            園の保護者と職員だけが見られる場所へ移します。保護者の画面の見た目は変わりません。
+          </p>
+          <button
+            onClick={movePhotos}
+            disabled={moving}
+            className="fa-btn fa-btn--sky"
+            style={{ marginTop: 10, flex: '0 0 auto' }}
+          >
+            {moving ? '移しています…' : '園の関係者だけが見られる場所へ移す'}
+          </button>
+        </div>
+      )}
+
       {needsRecord.length > 0 && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
@@ -430,7 +475,7 @@ export default function EventsPanel({
           const phase = phaseOf(e.event_date)
           return (
             <article key={e.id} className="fa-card">
-              {e.photo_url && <AdminImg src={e.photo_url} alt="" className="fa-thumb" />}
+              {e.photo_view_url && <AdminImg src={e.photo_view_url} alt="" className="fa-thumb" />}
 
               <p className="fa-date">
                 {formatDate(e.event_date)}
@@ -439,7 +484,7 @@ export default function EventsPanel({
               <p className="fa-menuname">{e.title}</p>
 
               <div className="fa-tagrow">
-                {phase === 'past' && !e.photo_url && (
+                {phase === 'past' && !e.photo_view_url && (
                   <span className="fa-tag fa-tag--unknown">写真がまだ</span>
                 )}
                 {e.recipe_title && (

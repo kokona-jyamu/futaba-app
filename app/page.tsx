@@ -13,11 +13,11 @@ import { phaseOf, isAhead } from '@/lib/eventStatus'
 import { STATUS_LABEL, type AttendanceStatus } from '@/lib/attendance'
 import { todayStr, nowJST, monthEnd } from '@/lib/date'
 import type { Tables } from '@/lib/database.types'
-import type { Attendance } from '@/lib/apiTypes'
+import type { Attendance, EventsResponse, FoodEvent } from '@/lib/apiTypes'
+import { fetchJson } from '@/lib/useLoadEffect'
 
 /* 一覧に使う列だけを DB の型から取り出す */
 type Menu = Pick<Tables<'menus'>, 'id' | 'served_date' | 'title' | 'nutritionist_comment'>
-type Event = Tables<'food_education_events'>
 
 const TABS = ['給食', '食育', 'アレルゲン', '地域だより'] as const
 type Tab = (typeof TABS)[number]
@@ -29,7 +29,7 @@ export default function Home() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('給食')
   const [menus, setMenus] = useState<Menu[]>([])
-  const [events, setEvents] = useState<Event[]>([])
+  const [events, setEvents] = useState<FoodEvent[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   /* currentMonth は 0〜11（カレンダー描画用） */
   const [currentYear, setCurrentYear] = useState(() => nowJST().year)
@@ -55,12 +55,9 @@ export default function Home() {
         .order('served_date', { ascending: false })
       if (menuData) setMenus(menuData)
 
-      const { data: eventData } = await supabase
-        .from('food_education_events')
-        .select('*')
-        .eq('school_id', schoolId)
-        .order('event_date', { ascending: false })
-      if (eventData) setEvents(eventData)
+      /* 食育はサーバーから読む（写真は園の関係者だけが見られる場所にあるため） */
+      const r = await fetchJson<EventsResponse>('/api/events')
+      if (r.ok) setEvents(r.json.events)
     }
     fetchData()
   }, [schoolId])

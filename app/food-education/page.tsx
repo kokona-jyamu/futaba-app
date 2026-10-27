@@ -5,12 +5,10 @@
  */
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
-import { useGuardian } from '@/lib/useGuardian'
-import type { EventLikesResponse, EventLikeResponse } from '@/lib/apiTypes'
+import type { EventLikesResponse, EventLikeResponse, EventsResponse } from '@/lib/apiTypes'
 import { formatDate } from '@/lib/menu'
 import { phaseOf } from '@/lib/eventStatus'
 import Link from 'next/link'
@@ -23,7 +21,8 @@ type Event = {
   event_date: string
   title: string
   description: string | null
-  photo_url: string | null
+  /** 写真の表示用 URL（時間で切れる。サーバーが付けて返す） */
+  photo_view_url: string | null
   recipe_title: string | null
   recipe_ingredients: string[] | null
   recipe_steps: string | null
@@ -43,6 +42,12 @@ const requestLikes = async () => {
   return r.ok ? { counts: r.json.counts, mine: new Set(r.json.mine) } : null
 }
 
+/**
+ * 自分の園の食育を読む。写真は園の関係者だけが見られる場所にあるので、
+ * サーバーが時間で切れる表示用の URL を付けて返す。
+ */
+const requestEvents = () => fetchJson<EventsResponse>('/api/events')
+
 /* useSearchParams を使うため Suspense で囲む（静的に生成するページの決まり） */
 export default function FoodEducationPage() {
   return (
@@ -61,20 +66,9 @@ function FoodEducation() {
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
 
-  /* 保護者の園の食育だけを読む */
-  const schoolId = useGuardian().guardian?.school_id
-  useEffect(() => {
-    if (!schoolId) return
-    const fetchEvents = async () => {
-      const { data } = await supabase
-        .from('food_education_events')
-        .select('*')
-        .eq('school_id', schoolId)
-        .order('event_date', { ascending: false })
-      if (data) setEvents(data)
-    }
-    fetchEvents()
-  }, [schoolId])
+  useLoadEffect(requestEvents, (r) => {
+    if (r.ok) setEvents(r.json.events)
+  })
 
   useLoadEffect(requestLikes, (r) => {
     if (!r) return
@@ -199,9 +193,10 @@ function FoodEducation() {
                 <div className="fa-grid">
                   {past.map((e) => (
                     <article key={e.id} className="fa-event">
-                      {e.photo_url ? (
+                      {e.photo_view_url ? (
                         <Image
-                          src={e.photo_url}
+                          src={e.photo_view_url}
+                          unoptimized
                           alt={e.title}
                           width={600}
                           height={400}

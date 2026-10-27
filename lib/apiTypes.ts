@@ -106,8 +106,8 @@ export type BulkChildResult =
 export type PhotoUploadUrlResponse = {
   path: string
   token: string
-  /** アップロード後に表示に使う URL */
-  publicUrl: string
+  /** アップロード後に表示に使う URL（非公開の場所に入れたときは null） */
+  publicUrl: string | null
 }
 
 /** 食育の動画のアップロード先（1回だけ使える URL） */
@@ -226,8 +226,12 @@ export type PhotoKindResponse = { kind: PhotoKind }
 
 /* ---------- /api/admin/events・/api/admin/menus/list ---------- */
 
-export type FoodEvent = Tables<'food_education_events'>
+/** 食育。写真は非公開の場所にあるので、表示には photo_view_url（時間で切れる URL）を使う */
+export type FoodEvent = Tables<'food_education_events'> & { photo_view_url: string | null }
 export type EventsResponse = { events: FoodEvent[] }
+
+/** 食育の古い写真を、園の関係者だけが見られる場所へ移した結果 */
+export type MoveEventPhotosResponse = { moved: number; failed: number }
 
 export type Menu = Tables<'menus'>
 
