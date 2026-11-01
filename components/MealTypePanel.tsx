@@ -164,7 +164,7 @@ export default function MealTypePanel({
         </p>
 
         {showTypeForm && (
-          <div className="fa-tint fa-tint--green" style={{ marginTop: 14 }}>
+          <div className="fa-tint fa-tint--soft" style={{ marginTop: 14 }}>
             <label className="fa-label" style={{ marginTop: 0 }}>区分の名前</label>
             <input
               type="text"

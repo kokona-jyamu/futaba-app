@@ -342,7 +342,7 @@ export default function EventsPanel({
           onChange={handleVideo} hidden
         />
 
-        <div className="fa-tint fa-tint--green" style={{ marginTop: 18 }}>
+        <div className="fa-tint fa-tint--soft" style={{ marginTop: 18 }}>
           <h3 className="fa-tinttitle">おうちで作れるレシピ（任意）</h3>
           <p className="fa-note" style={{ marginBottom: 10 }}>
             入力すると、保護者の「家でやる食育」タブに出ます。

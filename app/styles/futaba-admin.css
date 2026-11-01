@@ -16,7 +16,7 @@
   flex: 0 0 auto;
   width: 44px; height: 44px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
   font-size: 18px; font-weight: 700;
 }
 .fa-childstatus {
@@ -47,7 +47,7 @@
   break-inside: avoid;
 }
 .fa-slip-brand {
-  font-size: 11px; font-weight: 700; color: var(--fa-matcha);
+  font-size: 11px; font-weight: 700; color: var(--fa-brand-deep);
   letter-spacing: .04em;
 }
 .fa-slip-name {
@@ -58,15 +58,15 @@
 .fa-slip-box {
   display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
   margin: 14px 0; padding: 14px;
-  border-radius: 12px; background: var(--fa-matcha-soft);
+  border-radius: 12px; background: var(--fa-brand-soft);
 }
 .fa-slip-label {
-  font-size: 10.5px; font-weight: 700; color: var(--fa-matcha-deep); opacity: .8;
+  font-size: 10.5px; font-weight: 700; color: var(--fa-brand-deep); opacity: .8;
 }
 .fa-slip-value {
   margin-top: 3px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 26px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 26px; font-weight: 700; color: var(--fa-brand-deep);
   letter-spacing: .1em; line-height: 1.2;
 }
 .fa-slip-note {
@@ -127,15 +127,15 @@
   background: var(--fa-card); color: var(--fa-ink-2);
   font-size: 12px; font-weight: 700; cursor: pointer;
 }
-.fa-filter:hover { border-color: var(--fa-matcha); }
-.fa-filter input { accent-color: var(--fa-matcha-deep); cursor: pointer; }
+.fa-filter:hover { border-color: var(--fa-brand); }
+.fa-filter input { accent-color: var(--fa-brand-deep); cursor: pointer; }
 
 /* 状態タグ */
 .fa-tag--unknown {
-  background: #F1F0EC; color: #74807A;
+  background: #F3F1F0; color: #6B6461;
 }
 .fa-tag--none {
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-safe-soft); color: var(--fa-safe-deep);
 }
 
 /* ==================================================================
@@ -152,11 +152,11 @@
   transition: border-color .15s, background .15s;
 }
 .fa-reusebtn:hover {
-  border-color: var(--fa-matcha); background: var(--fa-matcha-soft);
+  border-color: var(--fa-brand); background: var(--fa-brand-soft);
 }
 .fa-reuseicon { font-size: 22px; flex: 0 0 auto; }
 .fa-reusetitle {
-  display: block; font-size: 14px; font-weight: 700; color: var(--fa-matcha-deep);
+  display: block; font-size: 14px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-reusesub {
   display: block; margin-top: 2px; font-size: 11.5px; color: var(--fa-muted);
@@ -179,7 +179,7 @@
   transition: border-color .15s, background .15s;
 }
 .fa-reuseitem:hover {
-  border-color: var(--fa-matcha); background: var(--fa-matcha-soft);
+  border-color: var(--fa-brand); background: var(--fa-brand-soft);
 }
 .fa-reuseitem-main { min-width: 0; }
 .fa-reuseitem-title {
@@ -192,13 +192,13 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .fa-reuseitem-arrow {
-  flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--fa-matcha);
+  flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--fa-brand-deep);
 }
 
 /* 複製直後の案内 */
 .fa-copied {
   margin-bottom: 14px; padding: 10px 14px; border-radius: 10px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-safe-soft); color: var(--fa-safe-deep);
   font-size: 12.5px; line-height: 1.7; font-weight: 700;
 }
 
@@ -215,9 +215,9 @@
 .fa-bubble--reply {
   margin-top: 8px; padding: 12px 14px;
   border-radius: 14px 14px 4px 14px;
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
-.fa-bubble--reply .fa-sender { color: var(--fa-matcha-deep); }
+.fa-bubble--reply .fa-sender { color: var(--fa-brand-deep); }
 .fa-bubble--reply .fa-body { color: var(--fa-ink); }
 
 /* ==================================================================
@@ -244,7 +244,7 @@
 .fa-bulkrow:last-child { border-bottom: none; }
 .fa-bulkrow.is-error { background: var(--fa-rose-soft); }
 
-.fa-bulkdate { font-weight: 700; color: var(--fa-matcha); font-size: 11.5px; }
+.fa-bulkdate { font-weight: 700; color: var(--fa-brand-deep); font-size: 11.5px; }
 .fa-bulkrow.is-error .fa-bulkdate { color: var(--fa-rose-ink); }
 .fa-bulktitle {
   display: block; font-weight: 700; color: var(--fa-ink);
@@ -275,7 +275,7 @@
   background: var(--fa-rose-soft); color: var(--fa-rose-ink);
 }
 .fa-tag--plain {
-  background: #F1F0EC; color: #6B7772;
+  background: #F3F1F0; color: #6B6461;
 }
 
 @media (max-width: 700px) {
@@ -289,7 +289,7 @@
    ------------------------------------------------------------------ */
 .fa-todaycard {
   margin-bottom: 20px; padding: 18px 20px;
-  border: 2px solid var(--fa-matcha); border-radius: var(--fa-r);
+  border: 2px solid var(--fa-brand); border-radius: var(--fa-r);
   background: var(--fa-card); box-shadow: var(--fa-shadow);
 }
 @media (min-width: 700px) { .fa-todaycard { padding: 22px 24px; } }
@@ -300,7 +300,7 @@
 }
 .fa-todaylabel {
   display: flex; align-items: center; gap: 8px;
-  font-size: 11.5px; font-weight: 700; color: var(--fa-matcha);
+  font-size: 11.5px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-draftbadge {
   padding: 2px 9px; border-radius: 999px;
@@ -321,10 +321,10 @@
   font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap;
   cursor: pointer; transition: border-color .15s, background .15s, color .15s;
 }
-.fa-filterbtn:hover { border-color: var(--fa-matcha); color: var(--fa-matcha-deep); }
+.fa-filterbtn:hover { border-color: var(--fa-brand); color: var(--fa-brand-deep); }
 .fa-filterbtn.is-on {
-  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
-  color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); border-color: var(--fa-brand);
+  color: var(--fa-brand-deep);
 }
 
 /* 管理画面のタブが5つに増えたぶんの調整 */
@@ -359,10 +359,10 @@
 .fa-sheethead {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 20px; padding-bottom: 12px; margin-bottom: 14px;
-  border-bottom: 2px solid var(--fa-matcha-deep);
+  border-bottom: 2px solid var(--fa-brand-deep);
 }
 .fa-sheetbrand {
-  font-size: 11px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 11px; font-weight: 700; color: var(--fa-brand-deep);
   letter-spacing: .06em;
 }
 .fa-sheettitle {
@@ -378,7 +378,7 @@
 }
 .fa-sheettable th {
   padding: 5px 4px; text-align: left; font-weight: 700; font-size: 10px;
-  color: #444; background: #F2F4F2;
+  color: #444; background: #F5F3F2;
   border-bottom: 1px solid #999;
 }
 .fa-sheettable td {
@@ -402,7 +402,7 @@
 .fa-sheeting {
   display: block; margin-top: 2px; font-size: 9.5px; color: #666; line-height: 1.5;
 }
-.fa-sheetnone { color: #2C7A5A; font-weight: 700; }
+.fa-sheetnone { color: #256B4C; font-weight: 700; }
 .fa-sheetunknown { color: #999; }
 
 .fa-sheetlegend {
@@ -471,7 +471,7 @@
 }
 .fa-todaymark {
   padding: 2px 9px; border-radius: 999px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
   font-size: 10.5px; font-weight: 700;
 }
 
@@ -482,15 +482,15 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: 20px; flex-wrap: wrap;
   margin-bottom: 18px; padding: 20px 24px;
-  border: 2px solid var(--fa-matcha); border-radius: var(--fa-r);
+  border: 2px solid var(--fa-brand); border-radius: var(--fa-r);
   background: var(--fa-card); box-shadow: var(--fa-shadow);
 }
 .fa-totallabel {
-  font-size: 12px; font-weight: 700; color: var(--fa-matcha);
+  font-size: 12px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-totalnum {
   margin-top: 2px;
-  font-size: 44px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 44px; font-weight: 700; color: var(--fa-brand-deep);
   line-height: 1.1; font-variant-numeric: tabular-nums;
 }
 .fa-totalunit {
@@ -512,19 +512,19 @@
 .fa-mealcount {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 14px 8px; border-radius: 12px;
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
-.fa-mealcount.is-unset { background: #F1F0EC; }
+.fa-mealcount.is-unset { background: #F3F1F0; }
 .fa-mealname {
-  font-size: 11.5px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 11.5px; font-weight: 700; color: var(--fa-brand-deep);
   text-align: center;
 }
-.fa-mealcount.is-unset .fa-mealname { color: #74807A; }
+.fa-mealcount.is-unset .fa-mealname { color: #6B6461; }
 .fa-mealnum {
-  font-size: 26px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 26px; font-weight: 700; color: var(--fa-brand-deep);
   line-height: 1; font-variant-numeric: tabular-nums;
 }
-.fa-mealcount.is-unset .fa-mealnum { color: #74807A; }
+.fa-mealcount.is-unset .fa-mealnum { color: #6B6461; }
 
 /* アレルギー除去の人数 */
 .fa-allergycount {
@@ -540,7 +540,7 @@
    ------------------------------------------------------------------ */
 .fa-countbadge {
   margin-left: 6px; padding: 2px 9px; border-radius: 999px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
   font-size: 11px; font-weight: 700;
 }
 .fa-attlist {
@@ -549,7 +549,7 @@
 .fa-attrow {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 10px; padding: 10px 12px;
-  border-radius: 10px; background: #FAFAF8;
+  border-radius: 10px; background: #FAFAFA;
 }
 .fa-attname {
   font-size: 13.5px; font-weight: 700; color: var(--fa-ink);
@@ -567,11 +567,11 @@
 
 .fa-lunchmark {
   flex: 0 0 auto; padding: 3px 10px; border-radius: 999px;
-  background: #F1F0EC; color: #74807A;
+  background: #F3F1F0; color: #6B6461;
   font-size: 10.5px; font-weight: 700; white-space: nowrap;
 }
 .fa-lunchmark.is-on {
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
 }
 
 /* ------------------------------------------------------------------
@@ -587,10 +587,10 @@
   font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
 }
-.fa-typechip:hover { border-color: var(--fa-matcha); }
+.fa-typechip:hover { border-color: var(--fa-brand); }
 .fa-typechip.is-on {
-  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
-  color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); border-color: var(--fa-brand);
+  color: var(--fa-brand-deep);
 }
 .fa-babymark {
   padding: 1px 7px; border-radius: 999px;
@@ -609,12 +609,12 @@
 .fa-promoterow {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; padding: 9px 12px;
-  border-radius: 10px; background: #FAFAF8;
+  border-radius: 10px; background: #FAFAFA;
   border-left: 3px solid transparent;
 }
 .fa-promoterow.is-changed {
-  background: var(--fa-matcha-soft);
-  border-left-color: var(--fa-matcha);
+  background: var(--fa-brand-soft);
+  border-left-color: var(--fa-brand);
 }
 .fa-promoterow.is-grad {
   background: var(--fa-apricot-soft);
@@ -632,7 +632,7 @@
 
 /* クラスの人数バッジ（食事区分のものを流用） */
 .fa-typechip .fa-babymark {
-  background: var(--fa-card); color: var(--fa-matcha-deep);
+  background: var(--fa-card); color: var(--fa-brand-deep);
 }
 
 /* ==================================================================
@@ -648,25 +648,25 @@
 .fa-mealblock-head {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 11px 14px;
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
-.fa-mealblock.is-unset .fa-mealblock-head { background: #F1F0EC; }
+.fa-mealblock.is-unset .fa-mealblock-head { background: #F3F1F0; }
 
 .fa-mealblock-name {
-  font-size: 14px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 14px; font-weight: 700; color: var(--fa-brand-deep);
   min-width: 68px;
 }
-.fa-mealblock.is-unset .fa-mealblock-name { color: #74807A; }
+.fa-mealblock.is-unset .fa-mealblock-name { color: #6B6461; }
 
 .fa-mealblock-num {
-  font-size: 22px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 22px; font-weight: 700; color: var(--fa-brand-deep);
   line-height: 1; font-variant-numeric: tabular-nums;
 }
-.fa-mealblock.is-unset .fa-mealblock-num { color: #74807A; }
+.fa-mealblock.is-unset .fa-mealblock-num { color: #6B6461; }
 .fa-mealblock-unit { margin-left: 2px; font-size: 12px; }
 
 .fa-mealblock-sub {
-  margin-left: auto; font-size: 11.5px; color: var(--fa-matcha-deep); opacity: .85;
+  margin-left: auto; font-size: 11.5px; color: var(--fa-brand-deep); opacity: .85;
 }
 
 .fa-mealblock-body {
@@ -708,7 +708,7 @@
 
 /* ===== 献立の料理の登録欄  components/MenuDishesEditor.tsx・RecipeEditor.tsx ===== */
 .fa-kindblock { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--fa-line); }
-.fa-kindblock-head { font-size: 13px; font-weight: 700; color: var(--fa-matcha-deep); }
+.fa-kindblock-head { font-size: 13px; font-weight: 700; color: var(--fa-brand-deep); }
 .fa-dishitem {
   display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start;
   margin-top: 8px;
@@ -720,7 +720,7 @@
 .fa-dishitem-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
 .fa-dishsearch {
-  margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--fa-matcha-soft);
+  margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--fa-brand-soft);
 }
 .fa-dishsearch-list {
   display: flex; flex-direction: column; gap: 4px;
@@ -731,7 +731,7 @@
   padding: 8px 10px; border: 1px solid var(--fa-line); border-radius: 10px;
   background: #fff; text-align: left; cursor: pointer;
 }
-.fa-dishsearch-item:hover { border-color: var(--fa-matcha); }
+.fa-dishsearch-item:hover { border-color: var(--fa-brand); }
 .fa-dishsearch-name { font-size: 13px; font-weight: 700; color: var(--fa-ink); }
 .fa-dishsearch-meta { font-size: 11px; color: var(--fa-ink-2); white-space: nowrap; }
 
@@ -775,7 +775,7 @@
 }
 .fa-dishrow-photo.is-empty {
   display: flex; align-items: center; justify-content: center;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha); font-size: 11px;
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep); font-size: 11px;
 }
 .fa-dishrow-name { font-size: 14px; font-weight: 700; color: var(--fa-ink); overflow-wrap: anywhere; }
 .fa-dishrow-meta { margin-top: 4px; font-size: 11.5px; color: var(--fa-ink-2); }

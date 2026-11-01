@@ -215,10 +215,10 @@ export default function Home() {
 
                 <div className="fa-legend">
                   <span className="fa-legend-item">
-                    <span className="fa-legend-dot" style={{ background: 'var(--fa-matcha)' }} />給食あり
+                    <span className="fa-legend-dot" style={{ background: 'var(--fa-brand)' }} />給食あり
                   </span>
                   <span className="fa-legend-item">
-                    <span className="fa-legend-dot" style={{ background: 'var(--fa-matcha-deep)' }} />選択中
+                    <span className="fa-legend-dot" style={{ background: 'var(--fa-brand-deep)' }} />選択中
                   </span>
                   {upcomingAtt.length > 0 && (
                     <span className="fa-legend-item">

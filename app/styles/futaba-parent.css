@@ -11,7 +11,7 @@
    ================================================================== */
 .fa-topbar {
   position: sticky; top: 0; z-index: 10;
-  background: var(--fa-matcha-deep);
+  background: var(--fa-brand-deep);
   padding-top: 14px;
 }
 .fa-topbar-inner {
@@ -55,14 +55,14 @@
    2. 見出し・戻るリンク
    ================================================================== */
 .fa-back {
-  display: inline-block; font-size: 13px; color: var(--fa-matcha);
+  display: inline-block; font-size: 13px; color: var(--fa-brand-deep);
   text-decoration: none; font-weight: 700;
 }
 .fa-back:hover { text-decoration: underline; }
 .fa-pagehead { margin: 12px 0 20px; }
 .fa-lead { margin-top: 4px; font-size: 13px; color: var(--fa-ink-2); line-height: 1.7; }
 .fa-subtitle {
-  margin: 20px 0 10px; font-size: 13px; font-weight: 700; color: var(--fa-matcha-deep);
+  margin: 20px 0 10px; font-size: 13px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-subtitle:first-child { margin-top: 0; }
 
@@ -82,7 +82,7 @@
   background: transparent; color: var(--fa-muted);
   font: inherit; font-size: 20px; line-height: 1; cursor: pointer; transition: background .15s;
 }
-.fa-cal-nav:hover { background: var(--fa-matcha-soft); color: var(--fa-matcha-deep); }
+.fa-cal-nav:hover { background: var(--fa-brand-soft); color: var(--fa-brand-deep); }
 .fa-cal-week, .fa-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .fa-cal-week { text-align: center; margin-bottom: 4px; }
 .fa-cal-wd { padding: 2px 0; font-size: 11px; color: var(--fa-muted); }
@@ -99,17 +99,17 @@
 .fa-day.is-sun { color: var(--fa-rose-ink); }
 .fa-day.is-sat { color: var(--fa-sky-ink); }
 .fa-day.has-menu {
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
   font-weight: 700; cursor: pointer;
 }
 .fa-day.has-menu:hover { filter: brightness(.97); }
-.fa-day.is-today { box-shadow: inset 0 0 0 1.5px var(--fa-matcha); }
+.fa-day.is-today { box-shadow: inset 0 0 0 1.5px var(--fa-brand); }
 .fa-day.is-selected {
-  background: var(--fa-matcha-deep); color: #fff; font-weight: 700;
+  background: var(--fa-brand-deep); color: #fff; font-weight: 700;
 }
 .fa-dot {
   position: absolute; bottom: 4px;
-  width: 4px; height: 4px; border-radius: 50%; background: var(--fa-matcha);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--fa-brand);
 }
 .fa-day.is-selected .fa-dot { background: #fff; }
 .fa-legend { display: flex; gap: 14px; margin-top: 10px; }
@@ -139,14 +139,14 @@
   transition: border-color .15s, transform .15s;
   height: 100%;
 }
-.fa-link:hover .fa-linkcard { border-color: var(--fa-matcha); transform: translateY(-2px); }
+.fa-link:hover .fa-linkcard { border-color: var(--fa-brand); transform: translateY(-2px); }
 .fa-linktitle { font-size: 15px; font-weight: 700; color: var(--fa-ink); }
 .fa-linktext {
   margin-top: 6px; font-size: 13px; line-height: 1.7; color: var(--fa-ink-2);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .fa-more {
-  margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--fa-matcha);
+  margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--fa-brand-deep);
   text-align: right;
 }
 
@@ -156,9 +156,9 @@
   border: 1px solid var(--fa-line); border-radius: var(--fa-r);
   transition: border-color .15s;
 }
-.fa-link:hover .fa-row { border-color: var(--fa-matcha); }
+.fa-link:hover .fa-row { border-color: var(--fa-brand); }
 .fa-rowlabel { font-size: 14px; color: var(--fa-ink); }
-.fa-rowarrow { font-size: 13px; color: var(--fa-matcha); }
+.fa-rowarrow { font-size: 13px; color: var(--fa-brand-deep); }
 .fa-rows { display: grid; grid-template-columns: 1fr; gap: 8px; }
 @media (min-width: 700px) { .fa-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -182,13 +182,13 @@
 .fa-tile {
   display: flex; align-items: center; justify-content: space-between; gap: 4px;
   min-height: 48px; padding: 0 8px 0 14px;
-  border: 1px solid #CFCBC1; border-radius: 8px;
+  border: 1px solid #D6D0CD; border-radius: 8px;
   background: var(--fa-card); color: var(--fa-ink);
   text-decoration: none;
   transition: background .15s, border-color .15s;
 }
-.fa-tile:hover { background: #F4F2EC; }
-.fa-tile:focus-visible { outline: 2px solid var(--fa-matcha); outline-offset: 2px; }
+.fa-tile:hover { background: #F5F3F2; }
+.fa-tile:focus-visible { outline: 2px solid var(--fa-brand); outline-offset: 2px; }
 .fa-tile-label {
   min-width: 0; font-size: 14px; font-weight: 500; line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -201,7 +201,7 @@
    6. 予告・イベント
    ================================================================== */
 .fa-notice {
-  padding: 14px 16px; border: 1px solid #F2D9B4; border-radius: var(--fa-r);
+  padding: 14px 16px; border: 1px solid #F0DDA0; border-radius: var(--fa-r);
   background: var(--fa-apricot-soft);
 }
 .fa-pill {
@@ -221,8 +221,8 @@
 .fa-event-photo { width: 100%; height: 140px; object-fit: cover; }
 .fa-event-photo--empty {
   display: flex; align-items: center; justify-content: center;
-  height: 100px; background: var(--fa-matcha-soft);
-  color: var(--fa-matcha); font-size: 12px;
+  height: 100px; background: var(--fa-brand-soft);
+  color: var(--fa-brand-deep); font-size: 12px;
 }
 .fa-event-body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }
 .fa-event-title { margin: 4px 0 6px; font-size: 14px; font-weight: 700; color: var(--fa-ink); }
@@ -242,7 +242,7 @@
 .fa-textlink {
   display: block; margin-top: 8px; padding: 0;
   border: none; background: none; font: inherit; font-size: 12px; font-weight: 700;
-  color: var(--fa-matcha); cursor: pointer; text-align: left;
+  color: var(--fa-brand-deep); cursor: pointer; text-align: left;
 }
 .fa-textlink:hover { text-decoration: underline; }
 
@@ -251,11 +251,11 @@
    ================================================================== */
 .fa-recipe {
   padding: 16px; border: 1px solid var(--fa-line); border-radius: var(--fa-r);
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
-.fa-recipe-from { font-size: 11px; color: var(--fa-matcha-deep); opacity: .8; }
+.fa-recipe-from { font-size: 11px; color: var(--fa-brand-deep); opacity: .8; }
 .fa-recipe-title {
-  margin: 4px 0 12px; font-size: 15px; font-weight: 700; color: var(--fa-matcha-deep);
+  margin: 4px 0 12px; font-size: 15px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-recipe-h {
   margin-bottom: 4px; font-size: 11px; font-weight: 700; color: var(--fa-ink-2);
@@ -281,13 +281,13 @@
 
 /* 本日開催のカード */
 .fa-notice--today {
-  border-color: var(--fa-matcha);
-  background: var(--fa-matcha-soft);
+  border-color: var(--fa-brand);
+  background: var(--fa-brand-soft);
 }
-.fa-notice--today .fa-notice-date { color: var(--fa-matcha-deep); }
+.fa-notice--today .fa-notice-date { color: var(--fa-brand-deep); }
 
 .fa-pill--today {
-  background: var(--fa-matcha-deep);
+  background: var(--fa-brand-deep);
 }
 
 /* 管理画面の一覧に出す状態バッジ */
@@ -299,10 +299,10 @@
   background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
 }
 .fa-phase--today {
-  background: var(--fa-matcha-deep); color: #fff;
+  background: var(--fa-brand-deep); color: #fff;
 }
 .fa-phase--past {
-  background: #F1F0EC; color: #74807A;
+  background: #F3F1F0; color: #6B6461;
 }
 
 
@@ -319,7 +319,7 @@
   transition: border-color .15s, background .15s, transform .15s;
 }
 .fa-link:hover .fa-attbanner {
-  border-color: var(--fa-matcha); background: var(--fa-matcha-soft);
+  border-color: var(--fa-brand); background: var(--fa-brand-soft);
   transform: translateY(-1px);
 }
 .fa-attbanner.is-reported {
@@ -336,7 +336,7 @@
 }
 .fa-attbanner-arrow {
   margin-left: auto; flex: 0 0 auto;
-  font-size: 15px; font-weight: 700; color: var(--fa-matcha);
+  font-size: 15px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-attbanner.is-reported .fa-attbanner-arrow { color: var(--fa-apricot-ink); }
 
@@ -347,7 +347,7 @@
 .fa-attrow {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 10px; padding: 10px 12px;
-  border-radius: 10px; background: #FAFAF8;
+  border-radius: 10px; background: #FAFAFA;
 }
 .fa-attname { font-size: 13.5px; font-weight: 700; color: var(--fa-ink); }
 .fa-attclass {
@@ -360,7 +360,7 @@
   background: var(--fa-rose-soft); color: var(--fa-rose-ink);
 }
 .fa-tag--plain {
-  background: #F1F0EC; color: #6B7772;
+  background: #F3F1F0; color: #6B6461;
 }
 
 /* カレンダーの「休」「遅」印 */
@@ -403,20 +403,20 @@
   content: '';
   flex: 0 0 auto;
   width: 20px; height: 20px; border-radius: 50%;
-  border: 2px solid #C8D3CC; background: #fff;
+  border: 2px solid #D6D0CD; background: #fff;
   transition: border-color .15s, background .15s;
 }
 .fa-statusbtn.is-on::before {
-  border-color: var(--fa-matcha-deep);
-  background: var(--fa-matcha-deep);
+  border-color: var(--fa-brand-deep);
+  background: var(--fa-brand-deep);
   box-shadow: inset 0 0 0 3.5px #fff;
 }
 
-.fa-statusbtn:hover { border-color: var(--fa-matcha); }
+.fa-statusbtn:hover { border-color: var(--fa-brand); }
 .fa-statusbtn.is-on {
-  background: var(--fa-matcha-soft);
-  border-color: var(--fa-matcha-deep);
-  color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft);
+  border-color: var(--fa-brand-deep);
+  color: var(--fa-brand-deep);
 }
 
 .fa-statusbtn--sm {
@@ -436,18 +436,18 @@
   position: relative;
   width: 52px; padding: 9px 0 8px;
   display: flex; flex-direction: column; align-items: center; gap: 1px;
-  border: 2px solid #E4E2DB; border-radius: 12px;
-  background: #F4F3EF; color: #A9B2AD;
+  border: 2px solid #E8E3E0; border-radius: 12px;
+  background: #F5F3F2; color: #A8A19E;
   font: inherit; cursor: pointer;
   transition: border-color .15s, background .15s, color .15s, opacity .15s;
   opacity: .65;
 }
-.fa-daypick:hover { border-color: var(--fa-matcha); opacity: 1; }
+.fa-daypick:hover { border-color: var(--fa-brand); opacity: 1; }
 
 /* 選ばれている日 */
 .fa-daypick.is-on {
-  background: var(--fa-matcha-deep);
-  border-color: var(--fa-matcha-deep);
+  background: var(--fa-brand-deep);
+  border-color: var(--fa-brand-deep);
   color: #fff;
   opacity: 1;
 }

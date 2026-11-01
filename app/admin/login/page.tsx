@@ -40,9 +40,9 @@ async function nextState(): Promise<State> {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 px-3 py-2 outline-none focus:border-[#3aa876]'
+  'w-full rounded-xl border border-gray-200 px-3 py-2 outline-none focus:border-[#B5472F]'
 const buttonClass =
-  'w-full rounded-full bg-[#3aa876] text-white py-2.5 font-bold disabled:opacity-50'
+  'w-full rounded-full bg-[#B5472F] text-white py-2.5 font-bold disabled:opacity-50'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -140,9 +140,9 @@ export default function AdminLoginPage() {
   )
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#eef4f1] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFFFF] p-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-sm p-8 space-y-5">
-        <h1 className="text-xl font-bold text-[#256b4c]">管理者ログイン</h1>
+        <h1 className="text-xl font-bold text-[#B5472F]">管理者ログイン</h1>
 
         {state.step === 'loading' && <p className="text-sm text-gray-500">読み込んでいます…</p>}
 

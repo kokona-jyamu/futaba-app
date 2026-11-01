@@ -595,7 +595,7 @@ export default function ChildrenPanel({
         <section className="fa-card">
           <h2 className="fa-cardtitle">名簿から一括登録する</h2>
 
-          <div className="fa-tint fa-tint--green">
+          <div className="fa-tint fa-tint--soft">
             <h3 className="fa-tinttitle">貼り付け方</h3>
             <p style={{ fontSize: 12.5, lineHeight: 1.9, color: 'var(--fa-ink-2)' }}>
               Excelで「出席番号／園児名／クラス」の3列を選んでコピーし、下の欄に貼り付けてください。
@@ -617,7 +617,7 @@ export default function ChildrenPanel({
           />
 
           {parsedRows.length > 0 && (
-            <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--fa-matcha-deep)', fontWeight: 700 }}>
+            <p style={{ marginTop: 10, fontSize: 12.5, color: 'var(--fa-brand-deep)', fontWeight: 700 }}>
               {parsedRows.length}件を読み取りました（先頭：No.{parsedRows[0].login_no} {parsedRows[0].name}）
             </p>
           )}

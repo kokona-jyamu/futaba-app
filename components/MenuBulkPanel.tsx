@@ -286,7 +286,7 @@ export default function MenuBulkPanel({ kinds, library, onNotify, onDone }: Prop
           )}
 
           {newDishNames.length > 0 && (
-            <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
+            <div className="fa-tint fa-tint--soft" style={{ marginBottom: 16 }}>
               <p className="fa-label" style={{ marginTop: 0 }}>新しく登録する料理（{newDishNames.length}品）</p>
               <p className="fa-note" style={{ marginTop: 4 }}>
                 {newDishNames.join('、')}

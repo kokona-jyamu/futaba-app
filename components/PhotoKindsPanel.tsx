@@ -164,7 +164,7 @@ export default function PhotoKindsPanel({
           枠を増やしたい場合は運営までお問い合わせください。
         </p>
       ) : (
-        <div className="fa-tint fa-tint--green" style={{ marginTop: 14 }}>
+        <div className="fa-tint fa-tint--soft" style={{ marginTop: 14 }}>
           <label className="fa-label" style={{ marginTop: 0 }}>種類を追加する</label>
           {suggestions.length > 0 && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>

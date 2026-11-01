@@ -2,7 +2,7 @@
 
 import type { Json } from '@/lib/database.types'
 
-export type ThemeKey = 'matcha' | 'sakura' | 'sky' | 'apricot' | 'lavender'
+export type ThemeKey = 'coral' | 'matcha' | 'sakura' | 'sky' | 'apricot' | 'lavender'
 
 export type Theme = {
   key: ThemeKey
@@ -14,14 +14,23 @@ export type Theme = {
 
 export const THEMES: Theme[] = [
   {
+    key: 'coral',
+    label: 'コーラル',
+    swatch: '#E2725B',
+    vars: {
+      '--fa-brand': '#E2725B',
+      '--fa-brand-deep': '#B5472F',
+      '--fa-brand-soft': '#FDEEEA',
+    },
+  },
+  {
     key: 'matcha',
     label: 'まっちゃ',
     swatch: '#6FA98D',
     vars: {
-      '--fa-matcha': '#6FA98D',
-      '--fa-matcha-deep': '#35695A',
-      '--fa-matcha-soft': '#E9F3ED',
-      '--fa-bg': '#F7F6F1',
+      '--fa-brand': '#6FA98D',
+      '--fa-brand-deep': '#35695A',
+      '--fa-brand-soft': '#E9F3ED',
     },
   },
   {
@@ -29,10 +38,9 @@ export const THEMES: Theme[] = [
     label: 'さくら',
     swatch: '#D98CA0',
     vars: {
-      '--fa-matcha': '#D98CA0',
-      '--fa-matcha-deep': '#8E4759',
-      '--fa-matcha-soft': '#FBEDF1',
-      '--fa-bg': '#FAF6F5',
+      '--fa-brand': '#D98CA0',
+      '--fa-brand-deep': '#8E4759',
+      '--fa-brand-soft': '#FBEDF1',
     },
   },
   {
@@ -40,10 +48,9 @@ export const THEMES: Theme[] = [
     label: 'そら',
     swatch: '#7FA9D6',
     vars: {
-      '--fa-matcha': '#7FA9D6',
-      '--fa-matcha-deep': '#3F6690',
-      '--fa-matcha-soft': '#EAF2FA',
-      '--fa-bg': '#F5F7FA',
+      '--fa-brand': '#7FA9D6',
+      '--fa-brand-deep': '#3F6690',
+      '--fa-brand-soft': '#EAF2FA',
     },
   },
   {
@@ -51,10 +58,9 @@ export const THEMES: Theme[] = [
     label: 'あんず',
     swatch: '#E0A15C',
     vars: {
-      '--fa-matcha': '#E0A15C',
-      '--fa-matcha-deep': '#8E5F26',
-      '--fa-matcha-soft': '#FDF2E4',
-      '--fa-bg': '#FAF7F2',
+      '--fa-brand': '#E0A15C',
+      '--fa-brand-deep': '#8E5F26',
+      '--fa-brand-soft': '#FDF2E4',
     },
   },
   {
@@ -62,15 +68,14 @@ export const THEMES: Theme[] = [
     label: 'ふじいろ',
     swatch: '#9B92C8',
     vars: {
-      '--fa-matcha': '#9B92C8',
-      '--fa-matcha-deep': '#57508A',
-      '--fa-matcha-soft': '#EFEDF7',
-      '--fa-bg': '#F7F6FA',
+      '--fa-brand': '#9B92C8',
+      '--fa-brand-deep': '#57508A',
+      '--fa-brand-soft': '#EFEDF7',
     },
   },
 ]
 
-export const DEFAULT_THEME: ThemeKey = 'matcha'
+export const DEFAULT_THEME: ThemeKey = 'coral'
 
 export const getTheme = (key?: string | null): Theme =>
   THEMES.find((t) => t.key === key) ?? THEMES[0]
@@ -105,8 +110,9 @@ export function applyTheme(key?: string | null) {
   )
 }
 
-/* ローカルにも控えておき、次回の読み込み時に一瞬でも既定色が出ないようにする */
-const STORAGE_KEY = 'futaba_theme'
+/* ローカルにも控えておき、次回の読み込み時に一瞬でも既定色が出ないようにする。
+   以前の控え（futaba_theme）は選んでいない人にも既定の緑が入っているので使わない */
+const STORAGE_KEY = 'futaba_theme_v2'
 
 export const saveThemeLocal = (key: ThemeKey) => {
   try { localStorage.setItem(STORAGE_KEY, key) } catch {}

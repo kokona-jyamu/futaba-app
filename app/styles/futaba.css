@@ -6,27 +6,32 @@
 
 :root {
   /* 色 ------------------------------------------------------------ */
-  --fa-bg: #F7F6F1;
+  --fa-bg: #FFFFFF;
   --fa-card: #FFFFFF;
-  --fa-ink: #3C4A44;
-  --fa-ink-2: #6B7772;
-  --fa-muted: #909C96;
-  --fa-line: #E9E6DD;
+  --fa-ink: #37322F;
+  --fa-ink-2: #6B6461;
+  --fa-muted: #7A7370;
+  --fa-line: #ECE6E3;
 
-  --fa-matcha: #6FA98D;
-  --fa-matcha-deep: #35695A;
-  --fa-matcha-soft: #E9F3ED;
+  --fa-brand: #E2725B;
+  --fa-brand-deep: #B5472F;
+  --fa-brand-soft: #FDEEEA;
 
-  --fa-apricot: #E0A15C;
-  --fa-apricot-ink: #96652A;
-  --fa-apricot-soft: #FDF2E4;
+  /* 安全の意味（使っていない・該当なし・できた）。画面全体の色には使わない */
+  --fa-safe: #2E7D5B;
+  --fa-safe-deep: #256B4C;
+  --fa-safe-soft: #E6F4EC;
+
+  --fa-apricot: #D9A21B;
+  --fa-apricot-ink: #8A6100;
+  --fa-apricot-soft: #FFF6DC;
 
   --fa-sky: #7FA9D6;
   --fa-sky-ink: #47719D;
   --fa-sky-soft: #EAF2FA;
 
-  --fa-rose-ink: #A96460;
-  --fa-rose-soft: #FBECEA;
+  --fa-rose-ink: #B3261E;
+  --fa-rose-soft: #FDECEA;
 
   /* 形 ------------------------------------------------------------ */
   --fa-r: 16px;
@@ -97,11 +102,11 @@ body {
 .fa-head { margin-bottom: 20px; }
 .fa-eyebrow {
   font-size: 11px; letter-spacing: .12em; font-weight: 700;
-  color: var(--fa-matcha); margin-bottom: 2px;
+  color: var(--fa-brand-deep); margin-bottom: 2px;
 }
 .fa-title {
   font-size: 22px; font-weight: 700; letter-spacing: .02em;
-  color: var(--fa-matcha-deep);
+  color: var(--fa-brand-deep);
 }
 
 /* タブ：スマホは3等分、PC/タブレットは中身に合わせた同じ形 */
@@ -120,10 +125,10 @@ body {
   cursor: pointer;
   transition: background .18s, color .18s, border-color .18s;
 }
-.fa-tab:hover { border-color: var(--fa-matcha); color: var(--fa-matcha-deep); }
+.fa-tab:hover { border-color: var(--fa-brand); color: var(--fa-brand-deep); }
 .fa-tab.is-on {
-  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
-  color: var(--fa-matcha-deep); box-shadow: inset 0 0 0 1px var(--fa-matcha);
+  background: var(--fa-brand-soft); border-color: var(--fa-brand);
+  color: var(--fa-brand-deep); box-shadow: inset 0 0 0 1px var(--fa-brand);
 }
 .fa-tab-icon { font-size: 14px; }
 .fa-badge {
@@ -151,7 +156,7 @@ body {
    ================================================================== */
 .fa-toast {
   margin-bottom: 16px; padding: 11px 14px; border-radius: 12px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-safe-soft); color: var(--fa-safe-deep);
   font-size: 13px; font-weight: 700;
 }
 .fa-toast.is-error { background: var(--fa-rose-soft); color: var(--fa-rose-ink); }
@@ -166,17 +171,17 @@ body {
 @media (min-width: 700px) { .fa-card { padding: 22px; } }
 
 .fa-cardtitle, .fa-sectiontitle {
-  font-size: 15px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 15px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-sectiontitle { margin-bottom: 14px; }
 
 .fa-tint { margin-top: 16px; padding: 14px; border-radius: 14px; }
 .fa-tint:first-child { margin-top: 0; }
-.fa-tint--green { background: var(--fa-matcha-soft); }
+.fa-tint--soft { background: var(--fa-brand-soft); }
 .fa-tint--apricot { background: var(--fa-apricot-soft); }
 .fa-tint--sky { background: var(--fa-sky-soft); }
 .fa-tinttitle {
-  font-size: 12px; font-weight: 700; color: var(--fa-matcha-deep); margin-bottom: 10px;
+  font-size: 12px; font-weight: 700; color: var(--fa-brand-deep); margin-bottom: 10px;
 }
 .fa-tinttitle--apricot { color: var(--fa-apricot-ink); }
 .fa-hint { margin-left: 8px; font-size: 10px; font-weight: 500; opacity: .75; }
@@ -197,14 +202,14 @@ body {
 .fa-input {
   display: block; width: 100%; max-width: 100%;
   padding: 11px 13px; border: 1px solid var(--fa-line); border-radius: var(--fa-r-sm);
-  background: #FDFDFB; color: var(--fa-ink);
+  background: #FFFFFF; color: var(--fa-ink);
   font: inherit; font-size: 14px; outline: none;
   -webkit-appearance: none; appearance: none;
   transition: border-color .15s, box-shadow .15s;
 }
-.fa-input::placeholder { color: #BAC3BE; }
+.fa-input::placeholder { color: #B8B1AE; }
 .fa-input:focus {
-  border-color: var(--fa-matcha); background: #fff;
+  border-color: var(--fa-brand); background: #fff;
   box-shadow: 0 0 0 3px rgba(111, 169, 141, .16);
 }
 .fa-input--sm { padding: 8px 10px; font-size: 13px; }
@@ -223,14 +228,14 @@ body {
 
 /* 写真 */
 .fa-drop {
-  margin-top: 5px; padding: 14px; border: 2px dashed #DCE5E0; border-radius: 14px;
-  background: #FBFCFA; text-align: center; cursor: pointer; transition: border-color .15s;
+  margin-top: 5px; padding: 14px; border: 2px dashed #F3D6CF; border-radius: 14px;
+  background: #FFFAF8; text-align: center; cursor: pointer; transition: border-color .15s;
 }
-.fa-drop:hover { border-color: var(--fa-matcha); }
+.fa-drop:hover { border-color: var(--fa-brand); }
 .fa-drop-empty { display: flex; flex-direction: column; gap: 3px; padding: 14px 0; }
 .fa-drop-icon { font-size: 26px; }
-.fa-drop-text { font-size: 13px; font-weight: 700; color: #7C8A84; }
-.fa-drop-sub { font-size: 11px; color: #B4BEB9; }
+.fa-drop-text { font-size: 13px; font-weight: 700; color: #6B6461; }
+.fa-drop-sub { font-size: 11px; color: #9A9390; }
 .fa-preview {
   display: block; width: 100%; max-height: 260px; border-radius: 10px; object-fit: cover;
 }
@@ -242,14 +247,14 @@ body {
 .fa-chip {
   display: inline-flex; align-items: center; gap: 6px;
   height: 32px; padding: 0 14px;
-  border: 1px solid #CFCBC1; border-radius: 8px;
+  border: 1px solid #D6D0CD; border-radius: 8px;
   background: var(--fa-card); color: var(--fa-ink);
   font: inherit; font-size: 13px; font-weight: 500; line-height: 1;
   white-space: nowrap; cursor: pointer;
   transition: background .15s, border-color .15s, color .15s;
 }
-.fa-chip:hover { background: #F4F2EC; }
-.fa-chip:focus-visible { outline: 2px solid var(--fa-matcha); outline-offset: 2px; }
+.fa-chip:hover { background: #F5F3F2; }
+.fa-chip:focus-visible { outline: 2px solid var(--fa-brand); outline-offset: 2px; }
 /* 表示義務8品目は文字を太くして見分ける */
 .fa-chip.is-required { font-weight: 700; }
 .fa-chip.is-on {
@@ -257,7 +262,7 @@ body {
   border-color: transparent;
   background: var(--fa-apricot-soft); color: var(--fa-apricot-ink);
 }
-.fa-chip.is-on:hover { background: #FBE7CF; }
+.fa-chip.is-on:hover { background: #FFEDB8; }
 .fa-chip-check { flex: 0 0 auto; }
 /* 絵文字は使わない（まだ書き換えていない画面のぶんも隠す） */
 .fa-chip-emoji { display: none; }
@@ -274,8 +279,8 @@ body {
 }
 .fa-btn:hover:not(:disabled) { filter: brightness(.96); }
 .fa-btn:disabled { opacity: .5; cursor: not-allowed; }
-.fa-btn--primary { width: 100%; background: var(--fa-matcha-deep); color: #fff; }
-.fa-btn--ghost { background: #F2F1EC; color: #86918B; }
+.fa-btn--primary { width: 100%; background: var(--fa-brand-deep); color: #fff; }
+.fa-btn--ghost { background: #F3F1F0; color: #6B6461; }
 .fa-btn--sky { background: var(--fa-sky-soft); color: var(--fa-sky-ink); padding: 10px; font-size: 13px; }
 .fa-btn--rose { background: var(--fa-rose-soft); color: var(--fa-rose-ink); padding: 10px; font-size: 13px; }
 .fa-btn--send { flex: 0 0 auto; width: auto; white-space: nowrap; }
@@ -317,7 +322,7 @@ body {
 }
 .fa-thumb { width: 100%; height: 148px; margin-bottom: 12px; border-radius: 12px; object-fit: cover; }
 @media (min-width: 700px) { .fa-thumb { height: 168px; } }
-.fa-date { font-size: 11px; font-weight: 700; color: var(--fa-matcha); }
+.fa-date { font-size: 11px; font-weight: 700; color: var(--fa-brand-deep); }
 .fa-menuname { margin-top: 4px; font-size: 15px; font-weight: 700; color: var(--fa-ink); }
 .fa-tagrow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .fa-tag {
@@ -342,7 +347,7 @@ body {
    10. アクセシビリティ
    ================================================================== */
 .fa-page :focus-visible {
-  outline: 2px solid var(--fa-matcha); outline-offset: 2px; border-radius: 8px;
+  outline: 2px solid var(--fa-brand); outline-offset: 2px; border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
   .fa-page * { transition: none !important; animation: none !important; }

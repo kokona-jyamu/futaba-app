@@ -112,7 +112,7 @@ export default function DishesPanel({ kinds, library, onNotify, onChange }: Prop
       </p>
 
       {adding && (
-        <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
+        <div className="fa-tint fa-tint--soft" style={{ marginBottom: 16 }}>
           <label className="fa-label" style={{ marginTop: 0 }}>種類</label>
           <select value={newKindId} onChange={(e) => setNewKindId(e.target.value)} className="fa-input">
             {sortedKinds.map((k) => (

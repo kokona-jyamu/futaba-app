@@ -89,7 +89,7 @@ export default async function MenuDetail({ params }: Props) {
         <h2 className="fa-cardtitle">アレルギー情報</h2>
 
         {!menu.allergen_checked ? (
-          <p className="fa-algnone" style={{ marginTop: 12, background: '#F1F0EC', color: '#74807A' }}>
+          <p className="fa-algnone" style={{ marginTop: 12, background: '#F3F1F0', color: '#6B6461' }}>
             ？ まだ登録されていません。園にお問い合わせください。
           </p>
         ) : used.length === 0 ? (
@@ -148,7 +148,7 @@ export default async function MenuDetail({ params }: Props) {
 
       {/* 栄養士コメント */}
       {menu.nutritionist_comment && (
-        <div className="fa-tint fa-tint--green" style={{ marginBottom: 16 }}>
+        <div className="fa-tint fa-tint--soft" style={{ marginBottom: 16 }}>
           <h2 className="fa-tinttitle">栄養士より</h2>
           <p style={{ fontSize: 14, lineHeight: 1.85, color: 'var(--fa-ink)' }}>
             {menu.nutritionist_comment}

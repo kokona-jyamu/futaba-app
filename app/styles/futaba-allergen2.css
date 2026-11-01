@@ -21,13 +21,13 @@
   transition: border-color .15s, color .15s;
 }
 .fa-expand:hover {
-  border-color: var(--fa-matcha); color: var(--fa-matcha-deep);
+  border-color: var(--fa-brand); color: var(--fa-brand-deep);
 }
 
 /* 未確認の警告 */
 .fa-algwarn {
   margin-bottom: 12px; padding: 9px 12px; border-radius: 10px;
-  background: #FFF6E8; color: var(--fa-apricot-ink);
+  background: #FFF6DC; color: var(--fa-apricot-ink);
   font-size: 11.5px; line-height: 1.7; font-weight: 700;
 }
 
@@ -40,15 +40,15 @@
   font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
 }
-.fa-algnonebtn:hover { border-color: var(--fa-matcha); }
+.fa-algnonebtn:hover { border-color: var(--fa-safe); }
 .fa-algnonebtn.is-on {
-  background: var(--fa-matcha-soft); border-color: var(--fa-matcha);
-  color: var(--fa-matcha-deep);
+  background: var(--fa-safe-soft); border-color: var(--fa-safe);
+  color: var(--fa-safe-deep);
 }
 
 /* 保護者画面：該当なし・未登録の表示 */
 .fa-algnone {
   padding: 10px 12px; border-radius: 10px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-safe-soft); color: var(--fa-safe-deep);
   font-size: 12.5px; font-weight: 700;
 }

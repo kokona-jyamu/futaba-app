@@ -6,13 +6,13 @@
 /* 栄養価のセル */
 .fa-nutricell {
   padding: 10px 8px; border-radius: 10px;
-  background: var(--fa-matcha-soft); text-align: center;
+  background: var(--fa-brand-soft); text-align: center;
 }
 .fa-nutrilabel {
-  font-size: 10.5px; font-weight: 700; color: var(--fa-matcha-deep); opacity: .8;
+  font-size: 10.5px; font-weight: 700; color: var(--fa-brand-deep); opacity: .8;
 }
 .fa-nutrivalue {
-  margin-top: 3px; font-size: 17px; font-weight: 700; color: var(--fa-matcha-deep);
+  margin-top: 3px; font-size: 17px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-nutriunit {
   margin-left: 2px; font-size: 10px; font-weight: 500; opacity: .75;
@@ -25,12 +25,12 @@
 .fa-msg {
   align-self: flex-start; max-width: 85%;
   padding: 11px 14px; border-radius: 14px 14px 14px 4px;
-  background: #F4F3EF;
+  background: #F5F3F2;
 }
 .fa-msg--mine {
   align-self: flex-end;
   border-radius: 14px 14px 4px 14px;
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
 .fa-msg--staff {
   align-self: flex-start;
@@ -39,7 +39,7 @@
 .fa-msg .fa-sender {
   font-size: 11px; font-weight: 700; color: var(--fa-muted); margin-bottom: 4px;
 }
-.fa-msg--mine .fa-sender { color: var(--fa-matcha-deep); }
+.fa-msg--mine .fa-sender { color: var(--fa-brand-deep); }
 .fa-msg--staff .fa-sender { color: var(--fa-sky-ink); }
 .fa-msg .fa-body {
   font-size: 13.5px; line-height: 1.75; color: var(--fa-ink);
@@ -53,16 +53,16 @@
 
 .fa-limitbox {
   padding: 12px 14px; border-radius: 12px;
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
 }
 .fa-limittitle {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
   margin-bottom: 6px;
-  font-size: 12.5px; font-weight: 700; color: var(--fa-matcha-deep);
+  font-size: 12.5px; font-weight: 700; color: var(--fa-brand-deep);
 }
 .fa-limitcount {
   padding: 2px 9px; border-radius: 999px;
-  background: var(--fa-card); color: var(--fa-matcha-deep);
+  background: var(--fa-card); color: var(--fa-brand-deep);
   font-size: 11px; font-weight: 700;
 }
 .fa-limitcount.is-out {
@@ -75,7 +75,7 @@
 .fa-tel {
   display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 10px;
   border-radius: 999px; background: var(--fa-card);
-  color: var(--fa-matcha-deep); font-weight: 700; text-decoration: none;
+  color: var(--fa-brand-deep); font-weight: 700; text-decoration: none;
   white-space: nowrap;
 }
 .fa-tel:hover { text-decoration: underline; }
@@ -165,10 +165,10 @@
 .fa-dish-nophoto {
   display: flex; align-items: center; justify-content: center;
   height: 140px; border-radius: 12px;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha); font-size: 12px;
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep); font-size: 12px;
 }
 .fa-dish figcaption { display: flex; flex-direction: column; gap: 2px; }
-.fa-dish-kind { font-size: 11px; font-weight: 700; color: var(--fa-matcha); }
+.fa-dish-kind { font-size: 11px; font-weight: 700; color: var(--fa-brand-deep); }
 .fa-dish-name { font-size: 13px; font-weight: 700; color: var(--fa-ink); }
 .fa-dish figcaption .fa-textlink { align-self: flex-start; margin-top: 2px; }
 
@@ -187,7 +187,7 @@
 .fa-rv-steps { margin: 0 0 12px; padding-left: 1.4em; font-size: 13px; line-height: 1.9; color: var(--fa-ink); }
 .fa-recipe-tip {
   padding: 10px 12px; border-radius: 10px;
-  background: var(--fa-matcha-soft); font-size: 12.5px; line-height: 1.8; color: var(--fa-ink);
+  background: var(--fa-brand-soft); font-size: 12.5px; line-height: 1.8; color: var(--fa-ink);
 }
 @media (max-width: 699px) {
   .fa-dish-nophoto { height: 120px; }

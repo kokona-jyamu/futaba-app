@@ -620,7 +620,7 @@ export default function AdminPage() {
               </section>
 
               <section className="fa-card">
-                <div className="fa-tint fa-tint--green">
+                <div className="fa-tint fa-tint--soft">
                   <h2 className="fa-tinttitle">栄養価</h2>
                   <div className="fa-nutri">
                     {NUTRIENTS.map((f) => (
@@ -766,7 +766,7 @@ export default function AdminPage() {
                         </div>
 
                         <div>
-                          <div className="fa-tint fa-tint--green">
+                          <div className="fa-tint fa-tint--soft">
                             <h3 className="fa-tinttitle">栄養価</h3>
                             <div className="fa-nutri">
                               {NUTRIENTS.map((f) => (

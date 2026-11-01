@@ -157,7 +157,7 @@ export default function SettingsPanel({
               ))}
             </div>
 
-            <div className="fa-tint fa-tint--green" style={{ marginTop: 16 }}>
+            <div className="fa-tint fa-tint--soft" style={{ marginTop: 16 }}>
               <div className="fa-listhead">
                 <h3 className="fa-tinttitle" style={{ marginBottom: 0 }}>
                   全員分から外している食材

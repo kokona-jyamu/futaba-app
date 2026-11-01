@@ -12,13 +12,13 @@
 
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { applyTheme, loadThemeLocal, saveThemeLocal, themeOfSettings } from '@/lib/theme'
+import { DEFAULT_THEME, applyTheme, loadThemeLocal, saveThemeLocal, themeOfSettings } from '@/lib/theme'
 
 export default function ThemeProvider() {
   useEffect(() => {
     /* 管理画面ではテーマを適用しない（保護者の設定が混ざるため） */
     if (window.location.pathname.startsWith('/admin')) {
-      applyTheme('matcha')
+      applyTheme(DEFAULT_THEME)
       return
     }
     /* 1. 端末に控えてある色をすぐ当てる */
@@ -46,8 +46,8 @@ export default function ThemeProvider() {
     /* 3. ログアウトしたら既定色に戻す */
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
-        saveThemeLocal('matcha')
-        applyTheme('matcha')
+        saveThemeLocal(DEFAULT_THEME)
+        applyTheme(DEFAULT_THEME)
       }
     })
 

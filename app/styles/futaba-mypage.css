@@ -10,7 +10,7 @@
   flex: 0 0 auto;
   width: 44px; height: 44px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--fa-matcha-soft); color: var(--fa-matcha-deep);
+  background: var(--fa-brand-soft); color: var(--fa-brand-deep);
   font-size: 18px; font-weight: 700; line-height: 1;
 }
 .fa-avatar--lg { width: 56px; height: 56px; font-size: 22px; }
@@ -27,7 +27,7 @@
 .fa-avatarbtn:hover { background: rgba(255, 255, 255, .22); }
 .fa-avatarbtn .fa-avatar {
   width: 30px; height: 30px; font-size: 13px;
-  background: rgba(255, 255, 255, .9); color: var(--fa-matcha-deep);
+  background: rgba(255, 255, 255, .9); color: var(--fa-brand-deep);
 }
 .fa-avatarbtn-name {
   font-size: 12.5px; font-weight: 700; white-space: nowrap;
@@ -84,10 +84,10 @@
 
 /* 吹き出し（自分・栄養士） */
 .fa-bubble--mine {
-  background: var(--fa-matcha-soft);
+  background: var(--fa-brand-soft);
   border-radius: 14px 14px 4px 14px;
 }
-.fa-bubble--mine .fa-sender { color: var(--fa-matcha-deep); }
+.fa-bubble--mine .fa-sender { color: var(--fa-brand-deep); }
 .fa-bubble--mine .fa-body { color: var(--fa-ink); }
 
 .fa-bubble--reply {
@@ -114,7 +114,7 @@
 }
 .fa-theme:hover { transform: translateY(-2px); }
 .fa-theme.is-on {
-  border-color: var(--fa-matcha); color: var(--fa-matcha-deep);
+  border-color: var(--fa-brand); color: var(--fa-brand-deep);
   box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
 }
 .fa-theme-dot {
