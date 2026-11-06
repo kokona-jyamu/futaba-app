@@ -329,11 +329,11 @@
 
 /* 管理画面のタブが5つに増えたぶんの調整 */
 .fa-head .fa-tabs--6 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 @media (min-width: 700px) {
   .fa-head .fa-tabs--6 {
-    grid-template-columns: repeat(10, minmax(56px, max-content));
+    grid-template-columns: repeat(11, minmax(56px, max-content));
     justify-content: end;
   }
 }
@@ -795,3 +795,44 @@
   width: 100%; aspect-ratio: 1; object-fit: cover;
   border-radius: 8px; background: var(--fa-card);
 }
+
+/* ------------------------------------------------------------------
+   ホーム（開いたときに最初に出す画面）
+   ------------------------------------------------------------------ */
+.fa-homedate { font-size: 13px; font-weight: 700; color: var(--fa-ink-2); margin-bottom: 10px; }
+.fa-homegrid { display: grid; gap: 14px; margin-bottom: 14px; }
+@media (min-width: 700px) { .fa-homegrid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+
+.fa-homecount {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  text-align: left; font: inherit; color: inherit; cursor: pointer;
+}
+.fa-homecount:hover { border-color: var(--fa-brand); }
+.fa-homecount-num { font-size: 40px; font-weight: 700; line-height: 1.1; color: var(--fa-brand-deep); }
+.fa-homecount-num small { font-size: 15px; margin-left: 2px; }
+.fa-homecount-more {
+  margin-top: auto; display: inline-flex; align-items: center; gap: 2px;
+  font-size: 12px; font-weight: 700; color: var(--fa-brand-deep);
+}
+
+.fa-todolist { display: flex; flex-direction: column; gap: 8px; }
+.fa-todo {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 12px 14px; border: 1px solid var(--fa-line); border-radius: 12px;
+  background: var(--fa-card); text-align: left; font: inherit; color: var(--fa-ink); cursor: pointer;
+}
+.fa-todo:hover { border-color: var(--fa-brand); background: var(--fa-brand-soft); }
+.fa-todo-label { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; }
+.fa-todo-sub { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 400; color: var(--fa-ink-2); }
+.fa-todo-arrow { flex: 0 0 auto; color: var(--fa-ink-2); }
+
+.fa-homemenu { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 700px) { .fa-homemenu { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.fa-homemenu-item {
+  display: flex; flex-direction: column; gap: 4px; min-height: 76px;
+  padding: 12px 14px; border: 1px solid var(--fa-line); border-radius: 12px;
+  background: var(--fa-card); text-align: left; font: inherit; color: var(--fa-ink); cursor: pointer;
+}
+.fa-homemenu-item:hover { border-color: var(--fa-brand); background: var(--fa-brand-soft); }
+.fa-homemenu-label { font-size: 15px; font-weight: 700; color: var(--fa-brand-deep); display: flex; align-items: center; gap: 6px; }
+.fa-homemenu-sub { font-size: 11.5px; line-height: 1.5; color: var(--fa-ink-2); }

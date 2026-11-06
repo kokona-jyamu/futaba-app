@@ -27,6 +27,7 @@ import ChildrenPanel from '@/components/ChildrenPanel'
 import MenuPicker from '@/components/MenuPicker'
 import MessagesPanel from '@/components/MessagesPanel'
 import MenuBulkPanel from '@/components/MenuBulkPanel'
+import AdminHome, { type AdminTab } from '@/components/AdminHome'
 import MenuPrintPanel from '@/components/MenuPrintPanel'
 import DishesPanel from '@/components/DishesPanel'
 import TodayDraft from '@/components/TodayDraft'
@@ -77,7 +78,7 @@ const requestDishes = () => fetchJson<DishesResponse>('/api/admin/dishes')
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] =
-    useState<'meals' | 'post' | 'bulk' | 'edit' | 'print' | 'dishes' | 'events' | 'messages' | 'children' | 'settings'>('meals')
+    useState<AdminTab>('home')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
@@ -425,6 +426,13 @@ export default function AdminPage() {
         </div>
         <nav className="fa-tabs fa-tabs--6" role="tablist">
           <button
+            role="tab" aria-selected={activeTab === 'home'}
+            className={`fa-tab${activeTab === 'home' ? ' is-on' : ''}`}
+            onClick={() => setActiveTab('home')}
+          >
+            ホーム
+          </button>
+          <button
             role="tab" aria-selected={activeTab === 'meals'}
             className={`fa-tab${activeTab === 'meals' ? ' is-on' : ''}`}
             onClick={() => setActiveTab('meals')}
@@ -509,7 +517,7 @@ export default function AdminPage() {
       )}
 
       {/* 今日の下書き：どのタブにいても最上部に出す */}
-      {activeTab !== 'print' && todayDrafts.map((m) => (
+      {activeTab !== 'print' && activeTab !== 'home' && todayDrafts.map((m) => (
         <TodayDraft
           key={m.id}
           menu={m}
@@ -522,7 +530,7 @@ export default function AdminPage() {
         />
       ))}
 
-      {allergyPending.length > 0 && activeTab !== 'children' && activeTab !== 'print' && (
+      {allergyPending.length > 0 && activeTab !== 'children' && activeTab !== 'print' && activeTab !== 'home' && (
         <div className="fa-warnbox fa-noprint" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
             保護者が変更したアレルギー情報が{allergyPending.length}件あります（未確認）
@@ -542,7 +550,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {uncheckedMenus.length > 0 && activeTab !== 'edit' && activeTab !== 'print' && (
+      {uncheckedMenus.length > 0 && activeTab !== 'edit' && activeTab !== 'print' && activeTab !== 'home' && (
         <div className="fa-warnbox" style={{ marginBottom: 18 }}>
           <p className="fa-warntitle">
             アレルギー情報が未確認の献立が{uncheckedMenus.length}件あります
@@ -562,6 +570,32 @@ export default function AdminPage() {
       )}
 
       <div className="fa-panel-area">
+        {activeTab === 'home' && (
+          <AdminHome
+            menus={allMenus}
+            openQuestions={openCount}
+            allergyPending={allergyPending.length}
+            uncheckedMenus={uncheckedMenus.length}
+            todayDraft={todayDrafts.map((m) => (
+              <TodayDraft
+                key={m.id}
+                menu={m}
+                photoKinds={photoKinds}
+                library={dishLibrary}
+                onPublish={publishDraft}
+                onUploadPhoto={uploadPhoto}
+                onNotify={notify}
+                onLibraryChange={fetchDishes}
+              />
+            ))}
+            onGo={(tab, opts) => {
+              if (opts?.filter) setListFilter(opts.filter)
+              setActiveTab(tab)
+              window.scrollTo({ top: 0 })
+            }}
+          />
+        )}
+
         {activeTab === 'meals' && (
           <AttendancePanel onNotify={notify} />
         )}
