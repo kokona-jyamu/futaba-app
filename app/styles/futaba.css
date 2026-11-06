@@ -171,7 +171,7 @@ body {
 @media (min-width: 700px) { .fa-card { padding: 22px; } }
 
 .fa-cardtitle, .fa-sectiontitle {
-  font-size: 15px; font-weight: 700; color: var(--fa-brand-deep);
+  font-size: 15px; font-weight: 700; color: var(--fa-ink);
 }
 .fa-sectiontitle { margin-bottom: 14px; }
 

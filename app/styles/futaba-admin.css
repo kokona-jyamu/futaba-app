@@ -834,5 +834,5 @@
   background: var(--fa-card); text-align: left; font: inherit; color: var(--fa-ink); cursor: pointer;
 }
 .fa-homemenu-item:hover { border-color: var(--fa-brand); background: var(--fa-brand-soft); }
-.fa-homemenu-label { font-size: 15px; font-weight: 700; color: var(--fa-brand-deep); display: flex; align-items: center; gap: 6px; }
+.fa-homemenu-label { font-size: 15px; font-weight: 700; color: var(--fa-ink); display: flex; align-items: center; gap: 6px; }
 .fa-homemenu-sub { font-size: 11.5px; line-height: 1.5; color: var(--fa-ink-2); }

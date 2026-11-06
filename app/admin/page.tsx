@@ -424,10 +424,12 @@ export default function AdminPage() {
             ログアウト
           </button>
         </div>
+        {/* ホームでは、メニューから各画面へ入るのでタブを出さない */}
+        {activeTab !== 'home' && (
         <nav className="fa-tabs fa-tabs--6" role="tablist">
           <button
-            role="tab" aria-selected={activeTab === 'home'}
-            className={`fa-tab${activeTab === 'home' ? ' is-on' : ''}`}
+            role="tab" aria-selected={false}
+            className="fa-tab"
             onClick={() => setActiveTab('home')}
           >
             ホーム
@@ -508,6 +510,7 @@ export default function AdminPage() {
             設定
           </button>
         </nav>
+        )}
       </header>
 
       {message && (
