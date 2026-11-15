@@ -215,6 +215,23 @@ export default function SettingsPanel({
           className="fa-input"
           style={{ maxWidth: 160 }}
         />
+
+        <label className="fa-label" htmlFor="school-phone">園の電話番号</label>
+        <p className="fa-note" style={{ marginBottom: 6 }}>
+          締め切りを過ぎた連絡のとき、保護者の画面に「園に電話する」ボタンを出します（押すと電話がかかります）。
+        </p>
+        <input
+          id="school-phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="off"
+          value={settings.phone ?? ''}
+          onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+          onBlur={(e) => save({ phone: e.target.value })}
+          placeholder="例：03-1234-5678"
+          className="fa-input"
+          style={{ maxWidth: 240 }}
+        />
       </section>
 
       {/* 使っていない写真の片付け */}

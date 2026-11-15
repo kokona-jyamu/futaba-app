@@ -200,7 +200,7 @@ export type MealTypesResponse = {
 
 export type SchoolSettings = Pick<
   Tables<'schools'>,
-  'id' | 'name' | 'attendance_deadline' | 'allergy_label_format' | 'show_allergy_in_counts'
+  'id' | 'name' | 'attendance_deadline' | 'allergy_label_format' | 'show_allergy_in_counts' | 'phone'
 > & { common_free_allergens: AllergenMap }
 
 export type EnrolledAllergen = {
@@ -297,7 +297,12 @@ export type RepliesResponse = { messages: AdminQuestion[] }
 /* ---------- /api/attendance：自分の子の出欠 ---------- */
 
 export type Attendance = Tables<'attendances'>
-export type AttendanceListResponse = { attendances: Attendance[]; deadline: string }
+export type AttendanceListResponse = {
+  attendances: Attendance[]
+  deadline: string
+  /** 園の電話番号（締め切りを過ぎたときに「電話する」を出す）。未設定なら null */
+  phone: string | null
+}
 
 /* ---------- /api/guardian/favorites：お気に入り ---------- */
 

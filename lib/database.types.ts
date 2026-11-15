@@ -936,6 +936,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          phone: string | null
           photo_kind_limit: number
           prefecture: string | null
           show_allergy_in_counts: boolean
@@ -948,6 +949,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          phone?: string | null
           photo_kind_limit?: number
           prefecture?: string | null
           show_allergy_in_counts?: boolean
@@ -960,6 +962,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          phone?: string | null
           photo_kind_limit?: number
           prefecture?: string | null
           show_allergy_in_counts?: boolean

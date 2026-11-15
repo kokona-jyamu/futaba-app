@@ -39,16 +39,17 @@ export async function GET(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-  /* 締め切り時刻も一緒に返す */
+  /* 締め切り時刻と、園の電話番号も一緒に返す */
   const { data: school } = await supabaseAdmin
     .from('schools')
-    .select('attendance_deadline')
+    .select('attendance_deadline, phone')
     .eq('id', guardian.school_id)
     .maybeSingle()
 
   return NextResponse.json<AttendanceListResponse>({
     attendances: data ?? [],
     deadline: school?.attendance_deadline?.slice(0, 5) ?? '09:00',
+    phone: school?.phone ?? null,
   })
 }
 

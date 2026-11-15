@@ -1,6 +1,6 @@
 /* app/api/admin/settings/route.ts
  *
- * 園ごとの設定。アレルギー表示の呼び方と、食数への出し方を持つ。
+ * 園ごとの設定。アレルギー表示の呼び方と、食数への出し方、出欠の締め切り、園の電話番号を持つ。
  */
 
 import { NextResponse } from 'next/server'
@@ -9,6 +9,7 @@ import { requireStaff } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sanitizeAllergens, toAllergenMap } from '@/lib/allergens'
 import type { SettingsResponse } from '@/lib/apiTypes'
+import { cleanPhone } from '@/lib/phone'
 
 export async function GET() {
   const staff = await requireStaff()
@@ -16,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('schools')
-    .select('id, name, attendance_deadline, allergy_label_format, show_allergy_in_counts, common_free_allergens')
+    .select('id, name, attendance_deadline, allergy_label_format, show_allergy_in_counts, common_free_allergens, phone')
     .eq('id', staff.school_id)
     .maybeSingle()
 
@@ -71,6 +72,13 @@ export async function PATCH(req: Request) {
       )
     }
     patch.allergy_label_format = fmt
+  }
+  if (body?.phone !== undefined) {
+    const phone = cleanPhone(body.phone)
+    if (phone === undefined) {
+      return NextResponse.json({ error: '電話番号は数字とハイフンで入力してください（例：03-1234-5678）' }, { status: 400 })
+    }
+    patch.phone = phone
   }
   if (body?.show_allergy_in_counts !== undefined) {
     patch.show_allergy_in_counts = body.show_allergy_in_counts === true

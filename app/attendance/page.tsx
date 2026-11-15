@@ -18,6 +18,8 @@ import {
 import { monthStart, monthEnd } from '@/lib/date'
 import { useLoadEffect, fetchJson } from '@/lib/useLoadEffect'
 import type { Attendance, AttendanceListResponse } from '@/lib/apiTypes'
+import { telHref } from '@/lib/phone'
+import Icon from '@/components/Icon'
 
 type Mode = 'single' | 'range'
 
@@ -27,6 +29,7 @@ export default function AttendancePage() {
 
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [deadline, setDeadline] = useState('09:00')
+  const [phone, setPhone] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
   const [sending, setSending] = useState(false)
@@ -67,6 +70,7 @@ export default function AttendancePage() {
     if (!r || !r.ok) return
     setAttendances(r.json.attendances)
     setDeadline(r.json.deadline)
+    setPhone(r.json.phone)
   }
   useLoadEffect(request, apply)
   /* 送信・取り消しのあとに取り直す */
@@ -383,6 +387,13 @@ export default function AttendancePage() {
             本日の締め切り（{deadline}）を過ぎています。
             給食の準備が済んでいる場合があるため、園にもお電話ください。
           </p>
+        )}
+        {/* 押すとそのまま電話をかけられる（スマートフォン） */}
+        {pastDeadline && phone && (
+          <a href={telHref(phone)} className="fa-btn fa-callbtn">
+            <Icon name="call" size={20} />
+            園に電話する（{phone}）
+          </a>
         )}
 
         <div className="fa-actions" style={{ display: 'block' }}>
