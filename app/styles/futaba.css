@@ -118,7 +118,7 @@ body {
 }
 .fa-tab {
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-  min-width: 0; padding: 11px 6px;
+  min-width: 0; padding: 8px 6px;
   border: 1px solid var(--fa-line); border-radius: 999px;
   background: var(--fa-card); color: var(--fa-muted);
   font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap;

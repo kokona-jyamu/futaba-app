@@ -390,7 +390,7 @@
   position: relative;
   flex: 1 1 auto; min-width: 140px;
   display: flex; align-items: center; gap: 10px;
-  padding: 14px 18px 14px 14px;
+  padding: 10px 18px 10px 14px;
   border: 2px solid var(--fa-line); border-radius: 999px;
   background: var(--fa-card); color: var(--fa-ink-2);
   font: inherit; font-size: 14px; font-weight: 700;
@@ -421,7 +421,7 @@
 
 .fa-statusbtn--sm {
   flex: 0 1 auto; min-width: 0;
-  padding: 10px 14px 10px 12px; font-size: 13px; gap: 8px;
+  padding: 7px 14px 7px 12px; font-size: 13px; gap: 8px;
 }
 .fa-statusbtn--sm::before { width: 16px; height: 16px; }
 .fa-statusbtn--sm.is-on::before { box-shadow: inset 0 0 0 3px #fff; }
@@ -434,7 +434,7 @@
 }
 .fa-daypick {
   position: relative;
-  width: 52px; padding: 9px 0 8px;
+  width: 52px; padding: 6px 0 5px;
   display: flex; flex-direction: column; align-items: center; gap: 1px;
   border: 2px solid #E8E3E0; border-radius: 999px;
   background: #F5F3F2; color: #A8A19E;
