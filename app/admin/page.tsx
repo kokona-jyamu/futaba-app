@@ -257,7 +257,8 @@ export default function AdminPage() {
     setMessage('')
   }
 
-  const handleSubmit = async () => {
+  /** 1日ずつの献立を保存する。publish が false なら下書き（保護者にはまだ見えない） */
+  const handleSubmit = async (publish: boolean) => {
     if (!form.served_date || !form.title) {
       notify('日付と献立名を入力してください。', true)
       return
@@ -283,7 +284,7 @@ export default function AdminPage() {
         fat: num(form.fat), salt: num(form.salt), calcium: num(form.calcium),
         allergens: form.allergens,
         allergen_checked: true,
-        is_published: true,
+        is_published: publish,
         tray_photo_url: form.tray_photo_url,
         dishes: toApiDishes(form.dishes),
       }),
@@ -293,7 +294,7 @@ export default function AdminPage() {
 
     if (!res.ok) { notify('保存できませんでした。' + json.error, true); return }
 
-    notify('献立を公開しました。')
+    notify(publish ? '献立を公開しました。' : '下書きとして保存しました。保護者にはまだ見えません。')
     fetchDishes()
     setForm(emptyForm())
     setCopiedFrom(null)
@@ -699,8 +700,11 @@ export default function AdminPage() {
                   className="fa-input fa-textarea" />
 
                 <div className="fa-actions">
-                  <button onClick={handleSubmit} disabled={loading} className="fa-btn fa-btn--primary">
+                  <button onClick={() => handleSubmit(true)} disabled={loading} className="fa-btn fa-btn--primary">
                     {loading ? '保存中…' : '献立を公開する'}
+                  </button>
+                  <button onClick={() => handleSubmit(false)} disabled={loading} className="fa-btn fa-btn--ghost">
+                    下書きとして保存
                   </button>
                 </div>
               </section>

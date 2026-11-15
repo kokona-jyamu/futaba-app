@@ -270,7 +270,7 @@ body {
 /* ==================================================================
    6. ボタン
    ================================================================== */
-.fa-actions { margin-top: 22px; }
+.fa-actions { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
 .fa-btnrow { display: flex; gap: 8px; margin-top: 14px; }
 .fa-btn {
   flex: 1; padding: 13px 18px; border: none; border-radius: 12px;
@@ -286,7 +286,8 @@ body {
 .fa-btn--send { flex: 0 0 auto; width: auto; white-space: nowrap; }
 @media (min-width: 700px) {
   .fa-btn--primary { width: auto; min-width: 220px; }
-  .fa-actions { display: flex; justify-content: flex-end; }
+  /* パソコンでは右寄せ。主なボタン（先に書いたもの）を右端にする */
+  .fa-actions { flex-direction: row-reverse; justify-content: flex-start; }
 }
 
 /* ==================================================================
