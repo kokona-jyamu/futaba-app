@@ -419,7 +419,16 @@ export default function AdminPage() {
         <div className="fa-headrow">
           <div>
             <p className="fa-eyebrow">栄養士専用</p>
-            <h1 className="fa-title">給食管理</h1>
+            {/* 見出しを押すとホームに戻る */}
+            <h1 className="fa-title">
+              <button
+                type="button"
+                className="fa-titlebtn"
+                onClick={() => { setActiveTab('home'); window.scrollTo({ top: 0 }) }}
+              >
+                給食管理
+              </button>
+            </h1>
           </div>
           <button type="button" onClick={handleLogout} className="fa-btn fa-btn--ghost fa-logoutbtn">
             ログアウト
