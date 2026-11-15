@@ -1,4 +1,8 @@
-/* app/page.tsx */
+/* app/page.tsx — 保護者のトップ
+ *
+ * 開くと「ホーム」：いちばん上に今日のおやすみ・遅刻の連絡、その下に各メニュー（給食・食育・アレルゲン・地域だより）。
+ * メニューを押すとその画面に切り替わり、上のタブ（ホームを含む）で行き来できる。
+ */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -19,15 +23,18 @@ import { fetchJson } from '@/lib/useLoadEffect'
 /* 一覧に使う列だけを DB の型から取り出す */
 type Menu = Pick<Tables<'menus'>, 'id' | 'served_date' | 'title' | 'nutritionist_comment'>
 
-const TABS = ['給食', '食育', 'アレルゲン', '地域だより'] as const
+const TABS = ['ホーム', '給食', '食育', 'アレルゲン', '地域だより'] as const
 type Tab = (typeof TABS)[number]
+
+/** ホームのメニュー（ホーム以外の画面） */
+const MENU_TABS = TABS.filter((t): t is Exclude<Tab, 'ホーム'> => t !== 'ホーム')
 
 const toDateStr = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
 export default function Home() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Tab>('給食')
+  const [activeTab, setActiveTab] = useState<Tab>('ホーム')
   const [menus, setMenus] = useState<Menu[]>([])
   const [events, setEvents] = useState<FoodEvent[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -97,6 +104,14 @@ export default function Home() {
     setSelectedDate(null)
   }
 
+  const go = (tab: Tab) => {
+    setActiveTab(tab)
+    window.scrollTo({ top: 0 })
+  }
+
+  /** 今日の給食（公開済みのものだけ読めている） */
+  const todayMenu = menus.find((m) => m.served_date === today)
+
   const upcoming = events
     .filter(isAhead)
     .sort((a, b) => a.event_date.localeCompare(b.event_date))
@@ -107,10 +122,10 @@ export default function Home() {
       <header className="fa-topbar">
         <div className="fa-topbar-inner">
           <div className="fa-topbar-row">
-            <div>
-              <p className="fa-brand">ふたば保育園</p>
-              <p className="fa-brandsub">給食・食育ポータル</p>
-            </div>
+            <button type="button" className="fa-brandbtn" onClick={() => go('ホーム')}>
+              <span className="fa-brand">ふたば保育園</span>
+              <span className="fa-brandsub">給食・食育ポータル</span>
+            </button>
             <Link href="/mypage" className="fa-avatarbtn">
               <span className="fa-avatar">{initialOf(child?.name)}</span>
               <span className="fa-avatarbtn-name">
@@ -119,44 +134,68 @@ export default function Home() {
             </Link>
           </div>
 
-          <nav className="fa-navtabs" role="tablist">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={activeTab === tab}
-                className={`fa-navtab${activeTab === tab ? ' is-on' : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
+          {/* ホームでは、メニューから各画面へ入るのでタブを出さない */}
+          {activeTab !== 'ホーム' && (
+            <nav className="fa-navtabs" role="tablist">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  className={`fa-navtab${activeTab === tab ? ' is-on' : ''}`}
+                  onClick={() => go(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </nav>
+          )}
         </div>
       </header>
 
       <main className="fa-page">
 
-        {/* 出欠連絡への導線：どのタブにいても最上部に出す */}
-        <Link href="/attendance" className="fa-link">
-          <div className={`fa-attbanner${todayAtt ? ' is-reported' : ''}`}>
-            <span style={{ minWidth: 0 }}>
-              <span className="fa-attbanner-title">
-                {todayAtt
-                  ? `今日は「${STATUS_LABEL[todayAtt.status as AttendanceStatus]}」で連絡ずみ`
-                  : 'おやすみ・遅刻の連絡'}
-              </span>
-              <span className="fa-attbanner-sub">
-                {upcomingAtt.length > 0
-                  ? `この先${upcomingAtt.length}日分の連絡があります`
-                  : 'お休みするときは、こちらからお知らせください'}
-              </span>
-            </span>
-            <span className="fa-attbanner-arrow">→</span>
-          </div>
-        </Link>
-
         <div className="fa-panel-area">
+
+          {/* ===== ホーム ===== */}
+          {activeTab === 'ホーム' && (
+            <div>
+              {/* おやすみ・遅刻の連絡（いちばん上） */}
+              <section className={`fa-card fa-pattcard${todayAtt ? ' is-reported' : ''}`}>
+                <p className="fa-pattcard-date">{formatDate(today)}</p>
+                <p className="fa-pattcard-title">
+                  {todayAtt
+                    ? `今日は「${STATUS_LABEL[todayAtt.status as AttendanceStatus]}」で連絡ずみです`
+                    : 'おやすみ・遅刻の連絡'}
+                </p>
+                <p className="fa-pattcard-sub">
+                  {upcomingAtt.length > 0
+                    ? `この先${upcomingAtt.length}日分の連絡があります。確認・取り消しも同じ画面からできます。`
+                    : 'お休みや遅刻のときは、こちらから園にお知らせください。'}
+                </p>
+                <Link href="/attendance" className="fa-btn fa-btn--primary fa-pattcard-btn">
+                  {todayAtt ? '連絡を確認・変更する' : 'おやすみ・遅刻を連絡する'}
+                </Link>
+              </section>
+
+              <h2 className="fa-subtitle">メニュー</h2>
+              <div className="fa-pmenu">
+                {MENU_TABS.map((tab) => (
+                  <button key={tab} type="button" onClick={() => go(tab)} className="fa-pmenu-item">
+                    <span className="fa-pmenu-label">{tab}</span>
+                    <span className="fa-pmenu-sub">
+                      {tab === '給食' && (todayMenu ? `今日：${todayMenu.title}` : '献立と写真をカレンダーで見る')}
+                      {tab === '食育' && (upcoming[0]
+                        ? `次回：${formatDate(upcoming[0].event_date)} ${upcoming[0].title}`
+                        : '食育の記録とおうちでできるレシピ')}
+                      {tab === 'アレルゲン' && '使っていない献立を探す'}
+                      {tab === '地域だより' && '準備中'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ===== 給食 ===== */}
           {activeTab === '給食' && (

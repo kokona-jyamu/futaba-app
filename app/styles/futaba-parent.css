@@ -466,3 +466,37 @@
   font-size: 10px; font-weight: 700; line-height: 18px;
   text-align: center;
 }
+/* ==================================================================
+   保護者のホーム（出欠の連絡とメニュー）
+   ================================================================== */
+/* 園の名前（押すとホームに戻る） */
+.fa-brandbtn {
+  display: block; padding: 0; border: none; background: none; text-align: left;
+  font: inherit; cursor: pointer;
+}
+.fa-brandbtn .fa-brand, .fa-brandbtn .fa-brandsub { display: block; }
+.fa-brandbtn:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 6px; }
+
+.fa-pattcard { margin-bottom: 22px; border-width: 1.5px; }
+.fa-pattcard.is-reported { border-color: var(--fa-apricot); background: var(--fa-apricot-soft); }
+.fa-pattcard-date { font-size: 12px; font-weight: 700; color: var(--fa-ink-2); }
+.fa-pattcard-title { margin-top: 4px; font-size: 18px; font-weight: 700; color: var(--fa-ink); }
+.fa-pattcard.is-reported .fa-pattcard-title { color: var(--fa-apricot-ink); }
+.fa-pattcard-sub { margin-top: 4px; font-size: 13px; line-height: 1.7; color: var(--fa-ink-2); }
+.fa-pattcard-btn { display: block; margin-top: 14px; text-align: center; text-decoration: none; }
+
+.fa-pmenu { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 700px) { .fa-pmenu { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fa-pmenu-item {
+  display: flex; flex-direction: column; gap: 4px; min-height: 92px; min-width: 0;
+  padding: 14px; border: 1px solid var(--fa-line); border-radius: var(--fa-r);
+  background: var(--fa-card); box-shadow: var(--fa-shadow);
+  text-align: left; font: inherit; color: var(--fa-ink); cursor: pointer;
+}
+.fa-pmenu-item:hover { border-color: var(--fa-brand); background: var(--fa-brand-soft); }
+.fa-pmenu-item:focus-visible { outline: 2px solid var(--fa-brand); outline-offset: 2px; }
+.fa-pmenu-label { font-size: 16px; font-weight: 700; color: var(--fa-ink); }
+.fa-pmenu-sub {
+  font-size: 12px; line-height: 1.6; color: var(--fa-ink-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
