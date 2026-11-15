@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#E2725B"/>
+  <g transform="translate(0 0) scale(1)">
+    <!-- お盆 -->
+    <rect x="72" y="120" width="368" height="292" rx="52" fill="#FFFFFF"/>
+    <!-- 主菜の皿 -->
+    <ellipse cx="256" cy="200" rx="136" ry="56" fill="#F8D5CC"/>
+    <ellipse cx="256" cy="196" rx="84" ry="30" fill="#E2725B"/>
+    <!-- ごはん（左手前） -->
+    <circle cx="170" cy="318" r="62" fill="#F8D5CC"/>
+    <circle cx="170" cy="318" r="42" fill="#FFFFFF" stroke="#E2725B" stroke-width="14"/>
+    <!-- 汁物（右手前） -->
+    <circle cx="342" cy="318" r="62" fill="#F8D5CC"/>
+    <circle cx="342" cy="318" r="44" fill="#D9813F"/>
+    <!-- 確認のチェック（管理の印） -->
+    <circle cx="412" cy="120" r="62" fill="#B5472F" stroke="#FFFFFF" stroke-width="14"/>
+    <path d="M384 120 l20 20 l36 -40" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

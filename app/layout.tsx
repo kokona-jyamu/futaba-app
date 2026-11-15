@@ -26,6 +26,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ふたば保育園 給食・食育ポータル",
   description: "ふたば保育園の給食の献立・食育の記録・おやすみの連絡",
+  /* iPhone でホーム画面に追加したときの名前 */
+  appleWebApp: { title: "ふたば給食" },
 };
 
 export default function RootLayout({
