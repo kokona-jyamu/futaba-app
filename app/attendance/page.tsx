@@ -21,6 +21,12 @@ import type { Attendance, AttendanceListResponse } from '@/lib/apiTypes'
 import { telHref } from '@/lib/phone'
 import Icon from '@/components/Icon'
 
+/** 遅刻のときに選べる登園の時間（8:00〜14:00、15分ごと） */
+const ARRIVAL_TIMES = Array.from({ length: 25 }, (_, i) => {
+  const m = 8 * 60 + i * 15
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+})
+
 type Mode = 'single' | 'range'
 
 export default function AttendancePage() {
@@ -298,14 +304,20 @@ export default function AttendancePage() {
 
         {status === 'late' && (
           <>
-            <label className="fa-label">登園する時間のめやす</label>
-            <input
-              type="time"
+            <label className="fa-label" htmlFor="arrival-time">登園する時間のめやす</label>
+            {/* スマホ標準の時刻入力は「リセット」が画面に伝わらないことがあるため、15分ごとに選ぶ形にする */}
+            <select
+              id="arrival-time"
               value={arrivalTime}
               onChange={(e) => setArrivalTime(e.target.value)}
               className="fa-input"
               style={{ maxWidth: 200 }}
-            />
+            >
+              <option value="">選んでください</option>
+              {ARRIVAL_TIMES.map((t) => (
+                <option key={t} value={t}>{t.replace(/^0/, '')}ごろ</option>
+              ))}
+            </select>
 
             <label className="fa-label">給食</label>
             <div className="fa-statusrow">
